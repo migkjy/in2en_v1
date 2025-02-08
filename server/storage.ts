@@ -13,6 +13,9 @@ export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  listUsers(): Promise<User[]>;
+  updateUser(id: number, data: Partial<User>): Promise<User | undefined>;
+  deleteUser(id: number): Promise<void>;
 
   // Branch operations
   createBranch(data: Partial<Branch>): Promise<Branch>;
@@ -25,7 +28,7 @@ export interface IStorage {
   createClass(data: Partial<Class>): Promise<Class>;
   getClass(id: number): Promise<Class | undefined>;
   listClasses(branchId?: number): Promise<Class[]>;
-  deleteClass(id: number): Promise<void>; // Added deleteClass
+  deleteClass(id: number): Promise<void>;
   updateClass(id: number, data: Partial<Class>): Promise<Class | undefined>;
 
   // Assignment operations
@@ -73,6 +76,23 @@ export class DatabaseStorage implements IStorage {
   async createUser(user: InsertUser): Promise<User> {
     const [newUser] = await db.insert(users).values([user]).returning();
     return newUser;
+  }
+
+  async listUsers(): Promise<User[]> {
+    return await db.select().from(users);
+  }
+
+  async updateUser(id: number, data: Partial<User>): Promise<User | undefined> {
+    const [user] = await db
+      .update(users)
+      .set(data)
+      .where(eq(users.id, id))
+      .returning();
+    return user;
+  }
+
+  async deleteUser(id: number): Promise<void> {
+    await db.delete(users).where(eq(users.id, id));
   }
 
   // Branch operations
@@ -133,8 +153,8 @@ export class DatabaseStorage implements IStorage {
         address: branches.address,
       },
     })
-    .from(classes)
-    .leftJoin(branches, eq(classes.branchId, branches.id));
+      .from(classes)
+      .leftJoin(branches, eq(classes.branchId, branches.id));
 
     if (branchId) {
       query = query.where(eq(classes.branchId, branchId));
@@ -143,7 +163,7 @@ export class DatabaseStorage implements IStorage {
     return await query;
   }
 
-  async deleteClass(id: number): Promise<void> { // Added deleteClass
+  async deleteClass(id: number): Promise<void> {
     await db.delete(classes).where(eq(classes.id, id));
   }
 

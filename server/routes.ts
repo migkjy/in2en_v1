@@ -231,6 +231,69 @@ export function registerRoutes(app: Express): Server {
     res.json(comments);
   });
 
+  // Teacher routes
+  app.get("/api/teachers", requireRole([UserRole.ADMIN]), async (req, res) => {
+    try {
+      const users = await storage.listUsers();
+      const teachers = users.filter(user => user.role === UserRole.TEACHER);
+      res.json(teachers);
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "An unknown error occurred" });
+      }
+    }
+  });
+
+  app.post("/api/teachers", requireRole([UserRole.ADMIN]), async (req, res) => {
+    try {
+      const teacher = await storage.createUser({
+        ...req.body,
+        role: UserRole.TEACHER,
+      });
+      res.status(201).json(teacher);
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "An unknown error occurred" });
+      }
+    }
+  });
+
+  app.put("/api/teachers/:id", requireRole([UserRole.ADMIN]), async (req, res) => {
+    try {
+      const teacher = await storage.updateUser(Number(req.params.id), {
+        ...req.body,
+        role: UserRole.TEACHER,
+      });
+      if (!teacher) {
+        return res.status(404).json({ message: "Teacher not found" });
+      }
+      res.json(teacher);
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "An unknown error occurred" });
+      }
+    }
+  });
+
+  app.delete("/api/teachers/:id", requireRole([UserRole.ADMIN]), async (req, res) => {
+    try {
+      await storage.deleteUser(Number(req.params.id));
+      res.status(204).send();
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "An unknown error occurred" });
+      }
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
