@@ -88,7 +88,11 @@ export default function BranchList() {
 
           <CreateBranchDialog 
             open={isCreateDialogOpen}
-            onOpenChange={setIsCreateDialogOpen}
+            onOpenChange={(open) => {
+              setIsCreateDialogOpen(open);
+              if (!open) setSelectedBranch(null);
+            }}
+            branch={selectedBranch}
           />
         </div>
       </main>
