@@ -1,0 +1,65 @@
+2. Teacher List Page
+less
+복사
+편집
+┌───────────────────────────────────────────────────────────────────┐
+│ [Header: Admin]                                                  │
+├───────────────────────────────────────────────────────────────────┤
+│ [Teacher List Table]                                             │
+│ ┌────────────────────────────────────────────────────────────────┐│
+│ │ Teacher ID | Name        | Email              | [Detail/Edit] ││
+│ │            | (ex: John)  | john@example.com   | [Delete]      ││
+│ └────────────────────────────────────────────────────────────────┘│
+│ [Add Teacher] Button                                             │
+└───────────────────────────────────────────────────────────────────┘
+Description:
+
+Lists existing teachers with basic info (ID, Name, Email).
+Provides actions for Detail/Edit (combined or separate) and Delete.
+“Add Teacher” creates a new teacher with name, email, and auto-generated password.
+3. Add Teacher (Popup or Separate Page)
+pgsql
+복사
+편집
+┌─────────────────────────────────────────────────────────────┐
+│ [Add Teacher]                                              │
+│   1) Name: [Input Field]                                   │
+│   2) Email: [Input Field]                                  │
+│   (Optional) Additional fields (e.g., phone, subject area)  │
+│ ──────────────────────────────────────────────────────────  │
+│ [Generate Temporary Password Automatically]                │
+│ (System automatically creates a random password or link)   │
+│ ──────────────────────────────────────────────────────────  │
+│ [Save & Send Invitation] Button                            │
+└─────────────────────────────────────────────────────────────┘
+Flow:
+
+Admin enters Name and Email.
+Click [Save & Send Invitation].
+System creates the account → sends an invitation email containing:
+Temporary password OR a secure link to set up a password.
+4. Teacher Detail / Edit Page
+pgsql
+복사
+편집
+┌───────────────────────────────────────────────────────────────────┐
+│ [Header: Admin]                                                  │
+├───────────────────────────────────────────────────────────────────┤
+│ [Teacher Name: John]                                             │
+│ Email: john@example.com                                          │
+│ (Optional) Other fields, e.g., phone number, assigned subject    │
+│ ──────────────────────────────────────────────────────────────── │
+│ [Assigned Classes]                                               │
+│ ┌─────────────────────────────────────────────────────────────┐   │
+│ │ ClassID | Class Name | [Unassign]                          │   │
+│ └─────────────────────────────────────────────────────────────┘   │
+│ [Add to Class] Button (similar to “Assign Teacher” in Class)     │
+│ ──────────────────────────────────────────────────────────────── │
+│ [Edit Info] Button (if you separate Detail and Edit)             │
+│ [Delete] Button                                                  │
+└───────────────────────────────────────────────────────────────────┘
+Description:
+
+Admin can view or update the teacher’s basic info.
+Admin can see which classes the teacher is assigned to (mirrors the “Class Detail” page’s teacher assignment).
+Admin can manually unassign from classes or add them to new classes from here.

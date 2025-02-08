@@ -10,7 +10,8 @@ import {
   Upload,
   ClipboardList,
   LogOut,
-  User
+  User,
+  Users
 } from "lucide-react";
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {}
@@ -25,6 +26,7 @@ export function Sidebar({ className }: SidebarProps) {
     { href: "/admin", icon: LayoutDashboard, label: "Dashboard" },
     { href: "/admin/branches", icon: School, label: "Branches" },
     { href: "/admin/classes", icon: GraduationCap, label: "Classes" },
+    { href: "/admin/teachers", icon: Users, label: "Teachers" },
   ];
 
   const teacherLinks = [
