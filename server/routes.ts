@@ -294,6 +294,63 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Add these routes after the existing teacher routes
+  app.get("/api/teachers/:id", requireRole([UserRole.ADMIN]), async (req, res) => {
+    try {
+      const teacher = await storage.getUser(Number(req.params.id));
+      if (!teacher || teacher.role !== UserRole.TEACHER) {
+        return res.status(404).json({ message: "Teacher not found" });
+      }
+      res.json(teacher);
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "An unknown error occurred" });
+      }
+    }
+  });
+
+  app.get("/api/teachers/:id/branches", requireRole([UserRole.ADMIN]), async (req, res) => {
+    try {
+      const branches = await storage.getTeacherBranches(Number(req.params.id));
+      res.json(branches);
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "An unknown error occurred" });
+      }
+    }
+  });
+
+  app.get("/api/teachers/:id/classes", requireRole([UserRole.ADMIN]), async (req, res) => {
+    try {
+      const classes = await storage.getTeacherClasses(Number(req.params.id));
+      res.json(classes);
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "An unknown error occurred" });
+      }
+    }
+  });
+
+  app.put("/api/teachers/:id/authority", requireRole([UserRole.ADMIN]), async (req, res) => {
+    try {
+      const { branchIds, classIds } = req.body;
+      await storage.updateTeacherAuthority(Number(req.params.id), branchIds, classIds);
+      res.json({ message: "Authority updated successfully" });
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "An unknown error occurred" });
+      }
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

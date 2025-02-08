@@ -14,12 +14,14 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CreateTeacherDialog } from "./create-dialog";
+import { useLocation } from "wouter";
 
 export default function TeacherList() {
   const [isCreateTeacherDialogOpen, setIsCreateTeacherDialogOpen] = useState(false);
   const [selectedTeacher, setSelectedTeacher] = useState<User | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
 
   const { data: teachers, isLoading: isTeachersLoading } = useQuery<User[]>({
     queryKey: ["/api/teachers"],
@@ -111,6 +113,14 @@ export default function TeacherList() {
                       variant="outline"
                       size="sm"
                       className="mr-2"
+                      onClick={() => setLocation(`/admin/teachers/${teacher.id}`)}
+                    >
+                      View
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mr-2"
                       onClick={() => {
                         setSelectedTeacher(teacher);
                         setIsCreateTeacherDialogOpen(true);
@@ -133,10 +143,7 @@ export default function TeacherList() {
 
           <CreateTeacherDialog
             open={isCreateTeacherDialogOpen}
-            onOpenChange={(open) => {
-              setIsCreateTeacherDialogOpen(open);
-              if (!open) setSelectedTeacher(null);
-            }}
+            onOpenChange={setIsCreateTeacherDialogOpen}
             teacherToEdit={selectedTeacher}
           />
         </div>

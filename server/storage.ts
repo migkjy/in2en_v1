@@ -1,4 +1,4 @@
-import { users, branches, classes, assignments, submissions, comments } from "@shared/schema";
+import { users, branches, classes, assignments, submissions, comments, UserRole } from "@shared/schema";
 import type { User, Branch, Class, Assignment, Submission, Comment } from "@shared/schema";
 import type { InsertUser } from "@shared/schema";
 import session from "express-session";
@@ -48,6 +48,11 @@ export interface IStorage {
 
   // Session store
   sessionStore: any;
+
+  // Teacher authority operations
+  getTeacherBranches(teacherId: number): Promise<Branch[]>;
+  getTeacherClasses(teacherId: number): Promise<Class[]>;
+  updateTeacherAuthority(teacherId: number, branchIds: number[], classIds: number[]): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -232,6 +237,52 @@ export class DatabaseStorage implements IStorage {
       .from(comments)
       .where(eq(comments.submissionId, submissionId))
       .orderBy(comments.createdAt);
+  }
+
+  async getTeacherBranches(teacherId: number): Promise<Branch[]> {
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, teacherId));
+
+    if (!user || user.role !== UserRole.TEACHER) {
+      throw new Error("Teacher not found");
+    }
+
+    // For now, return all branches as we haven't implemented the authority tables yet
+    return await db.select().from(branches);
+  }
+
+  async getTeacherClasses(teacherId: number): Promise<Class[]> {
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, teacherId));
+
+    if (!user || user.role !== UserRole.TEACHER) {
+      throw new Error("Teacher not found");
+    }
+
+    // For now, return all classes as we haven't implemented the authority tables yet
+    return await db.select().from(classes);
+  }
+
+  async updateTeacherAuthority(
+    teacherId: number,
+    branchIds: number[],
+    classIds: number[]
+  ): Promise<void> {
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, teacherId));
+
+    if (!user || user.role !== UserRole.TEACHER) {
+      throw new Error("Teacher not found");
+    }
+
+    // For now, this is a no-op as we haven't implemented the authority tables yet
+    console.log("Updating teacher authority:", { teacherId, branchIds, classIds });
   }
 }
 

@@ -1,0 +1,37 @@
+Below is the updated **Teacher Info** page to reflect *authority-granting* instead of class assignment. Clicking **Grant Authority** allows the admin to select one or more branches (which grants access to all classes in those branches) or individual classes.
+
+---
+
+```
+┌───────────────────────────────────────────────────────────────────┐
+│ [Header: Admin]                                                  │
+├───────────────────────────────────────────────────────────────────┤
+│ [Teacher Name: John]                                             │
+│ Email: john@example.com                                          │
+│ (Optional) Other fields, e.g., phone number, assigned subject    │
+│ ──────────────────────────────────────────────────────────────── │
+│ [Assigned Authority]                                             │
+│ ┌─────────────────────────────────────────────────────────────┐   │
+│ │ Currently Granted:                                          │   │
+│ │  - Full Branch Access: (List branches teacher has)          │   │
+│ │  - Individual Classes: (List classes teacher has)           │   │
+│ └─────────────────────────────────────────────────────────────┘   │
+│ [Grant Authority] Button                                        │
+│   (Opens a popup or separate page that lets Admin pick multiple │
+│    branches and/or classes. Selecting a branch auto-grants all  │
+│    classes under it. Selecting classes individually grants only │
+│    those classes.)                                              │
+│ ──────────────────────────────────────────────────────────────── │
+│ [Edit Info] Button                                              │
+│ [Delete] Button                                                 │
+└───────────────────────────────────────────────────────────────────┘
+```
+
+### **Grant Authority (Popup/Separate Page) Concept**
+
+- **Branches** (checkbox list)
+  - If a branch is checked, the teacher has access to **all classes** in that branch.  
+- **Classes** (checkbox list)
+  - If an individual class is checked, the teacher has access to **that specific class** only.  
+
+After selecting the desired branches or classes and clicking **Save**, the system updates the teacher’s assigned authority.  
