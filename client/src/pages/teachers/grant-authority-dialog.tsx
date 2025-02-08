@@ -58,6 +58,10 @@ export function GrantAuthorityDialog({
 
   useEffect(() => {
     if (open) {
+      console.log("Setting initial selections:", {
+        branches: currentBranches.map(b => b.id),
+        classes: currentClasses.map(c => c.id)
+      });
       setSelectedBranches(currentBranches.map((b) => b.id));
       setSelectedClasses(currentClasses.map((c) => c.id));
     }
@@ -65,6 +69,12 @@ export function GrantAuthorityDialog({
 
   const updateAuthority = useMutation({
     mutationFn: async () => {
+      console.log("Updating authority with:", {
+        teacherId,
+        branchIds: selectedBranches,
+        classIds: selectedClasses,
+      });
+
       const response = await fetch(`/api/teachers/${teacherId}/authority`, {
         method: "PUT",
         headers: {
@@ -77,16 +87,29 @@ export function GrantAuthorityDialog({
       });
 
       if (!response.ok) {
-        throw new Error("Failed to update authority");
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to update authority");
       }
 
       return response.json();
     },
     onSuccess: () => {
-      // Invalidate all related queries
-      queryClient.invalidateQueries({ queryKey: ["/api/teachers", teacherId] });
-      queryClient.invalidateQueries({ queryKey: ["/api/teachers", teacherId, "branches"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/teachers", teacherId, "classes"] });
+      // Invalidate queries to refresh the data
+      queryClient.invalidateQueries({ 
+        predicate: (query) => {
+          const queryKey = query.queryKey;
+          return (
+            Array.isArray(queryKey) && 
+            (
+              queryKey[0] === "/api/teachers" ||
+              (queryKey[0] === `/api/teachers/${teacherId}`) ||
+              (queryKey[1] === teacherId && 
+                (queryKey[2] === "branches" || queryKey[2] === "classes")
+              )
+            )
+          );
+        }
+      });
 
       toast({
         title: "Success",
@@ -94,10 +117,11 @@ export function GrantAuthorityDialog({
       });
       onOpenChange(false);
     },
-    onError: () => {
+    onError: (error) => {
+      console.error("Failed to update authority:", error);
       toast({
         title: "Error",
-        description: "Failed to update authority",
+        description: error instanceof Error ? error.message : "Failed to update authority",
         variant: "destructive",
       });
     },

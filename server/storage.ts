@@ -307,30 +307,54 @@ export class DatabaseStorage implements IStorage {
       throw new Error("Teacher not found");
     }
 
+    console.log("Updating teacher authority:", { teacherId, branchIds, classIds });
+
     // Start a transaction
     await db.transaction(async (tx) => {
-      // Delete existing access records
-      await tx.delete(teacherBranchAccess).where(eq(teacherBranchAccess.teacherId, teacherId));
-      await tx.delete(teacherClassAccess).where(eq(teacherClassAccess.teacherId, teacherId));
+      try {
+        // Delete existing access records
+        const deletedBranches = await tx
+          .delete(teacherBranchAccess)
+          .where(eq(teacherBranchAccess.teacherId, teacherId))
+          .returning();
+        console.log("Deleted branch access records:", deletedBranches);
 
-      // Insert new branch access records
-      if (branchIds.length > 0) {
-        await tx.insert(teacherBranchAccess).values(
-          branchIds.map(branchId => ({
-            teacherId,
-            branchId,
-          }))
-        );
-      }
+        const deletedClasses = await tx
+          .delete(teacherClassAccess)
+          .where(eq(teacherClassAccess.teacherId, teacherId))
+          .returning();
+        console.log("Deleted class access records:", deletedClasses);
 
-      // Insert new class access records
-      if (classIds.length > 0) {
-        await tx.insert(teacherClassAccess).values(
-          classIds.map(classId => ({
-            teacherId,
-            classId,
-          }))
-        );
+        // Insert new branch access records
+        if (branchIds.length > 0) {
+          const newBranchAccess = await tx
+            .insert(teacherBranchAccess)
+            .values(
+              branchIds.map(branchId => ({
+                teacherId,
+                branchId,
+              }))
+            )
+            .returning();
+          console.log("Inserted branch access records:", newBranchAccess);
+        }
+
+        // Insert new class access records
+        if (classIds.length > 0) {
+          const newClassAccess = await tx
+            .insert(teacherClassAccess)
+            .values(
+              classIds.map(classId => ({
+                teacherId,
+                classId,
+              }))
+            )
+            .returning();
+          console.log("Inserted class access records:", newClassAccess);
+        }
+      } catch (error) {
+        console.error("Error in updateTeacherAuthority transaction:", error);
+        throw error;
       }
     });
   }
