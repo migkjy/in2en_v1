@@ -1,6 +1,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertBranchSchema } from "@shared/schema";
+import { insertBranchSchema, type Branch } from "@shared/schema";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
