@@ -30,12 +30,14 @@ export default function BranchDetail({ params }: { params: { id: string } }) {
   const { data: branch, isLoading: isBranchLoading } = useQuery<Branch>({
     queryKey: [`/api/branches/${params.id}`],
     queryFn: async () => {
+      if (!params.id) throw new Error("Branch ID is required");
       const response = await fetch(`/api/branches/${params.id}`);
       if (!response.ok) {
         throw new Error("Failed to fetch branch");
       }
       return response.json();
-    }
+    },
+    enabled: !!params.id
   });
 
   const { data: classes, isLoading: isClassesLoading } = useQuery<Class[]>({

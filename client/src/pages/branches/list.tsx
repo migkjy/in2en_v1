@@ -63,7 +63,7 @@ export default function BranchList() {
                   <TableCell>{branch.id}</TableCell>
                   <TableCell>
                     <Link href={`/admin/branches/${branch.id}`} className="text-blue-600 hover:underline">
-                      {branch.name}
+                      {branch.name || '-'}
                     </Link>
                   </TableCell>
                   <TableCell>{branch.address || '-'}</TableCell>
