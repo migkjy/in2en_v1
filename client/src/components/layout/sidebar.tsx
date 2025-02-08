@@ -25,6 +25,7 @@ export function Sidebar({ className }: SidebarProps) {
     { href: "/admin", icon: LayoutDashboard, label: "Dashboard" },
     { href: "/admin/branches", icon: School, label: "Branches" },
     { href: "/admin/classes", icon: GraduationCap, label: "Classes" },
+    { href: "/admin/class-management", icon: ClipboardList, label: "Class Management" }, // Added Class Management link
   ];
 
   const teacherLinks = [

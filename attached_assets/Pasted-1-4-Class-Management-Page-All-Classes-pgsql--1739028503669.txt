@@ -1,0 +1,46 @@
+1.4 Class Management Page (All Classes)
+pgsql
+복사
+편집
+┌───────────────────────────────────────────────────────────────────┐
+│ [Header: Admin]                                                  │
+├───────────────────────────────────────────────────────────────────┤
+│ [Class List Table]                                               │
+│ ┌─────────────────────────────────────────────────────────────┐   │
+│ │ ClassID | Class Name | Branch Name | [Detail] [Delete]     │   │
+│ └─────────────────────────────────────────────────────────────┘   │
+│ [Add Class] Button                                              │
+└───────────────────────────────────────────────────────────────────┘
+(Alternatively, classes could be managed only within each Branch Detail page.)
+
+1.4.1 Add Class (Popup/Separate Page)
+mathematica
+복사
+편집
+┌─────────────────────────────────────────────────────────┐
+│ [Select Branch] Dropdown                                │
+│ [Class Name] Input                                      │
+│ (Optional) English Level, Grade, etc.                   │
+│ [Save] Button                                           │
+└─────────────────────────────────────────────────────────┘
+1.5 Class Detail (Admin)
+pgsql
+복사
+편집
+┌───────────────────────────────────────────────────────────────────┐
+│ [Header: Admin]                                                  │
+├───────────────────────────────────────────────────────────────────┤
+│ [Class Name: Branch A - Class 1]                                 │
+│ ┌───────────────────────────────────────────────────────────┐     │
+│ │ - Assigned Teachers List (e.g. Teacher Kim, Teacher Lee)  │     │
+│ │   [Assign Teacher] Button                                 │     │
+│ └───────────────────────────────────────────────────────────┘     │
+│ [Student List Table]                                           │
+│ ┌───────────────────────────────────────────────────────────┐     │
+│ │ StudentID | Student Name | [Delete]                      │     │
+│ └───────────────────────────────────────────────────────────┘     │
+│ [Invite/Add Student] Button (invite by email or search existing) │
+└───────────────────────────────────────────────────────────────────┘
+Description:
+
+Admin can assign or remove teachers/students from the class.

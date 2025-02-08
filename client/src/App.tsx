@@ -14,6 +14,7 @@ import UploadAssignment from "@/pages/assignments/upload";
 import ReviewAssignment from "@/pages/assignments/review";
 import BranchList from "@/pages/branches/list";
 import BranchDetail from "@/pages/branches/branch-detail";
+import ClassList from "@/pages/classes/list";
 
 function Router() {
   return (
@@ -34,6 +35,11 @@ function Router() {
       <ProtectedRoute 
         path="/admin/branches/:id"
         component={BranchDetail}
+        allowedRole="ADMIN"
+      />
+      <ProtectedRoute 
+        path="/admin/classes"
+        component={ClassList}
         allowedRole="ADMIN"
       />
 
