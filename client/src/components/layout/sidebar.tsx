@@ -46,8 +46,8 @@ export function Sidebar({ className }: SidebarProps) {
     : studentLinks;
 
   return (
-    <div className={cn("pb-12 min-h-screen bg-sidebar", className)}>
-      <div className="space-y-4 py-4">
+    <div className={cn("flex flex-col h-screen bg-sidebar", className)}>
+      <div className="flex-1 space-y-4 py-4">
         <div className="px-3 py-2">
           <h2 className="mb-2 px-4 text-lg font-semibold text-sidebar-foreground">
             English Academy
@@ -67,7 +67,9 @@ export function Sidebar({ className }: SidebarProps) {
           </div>
         </div>
       </div>
-      <div className="absolute bottom-4 left-0 right-0 px-3">
+
+      {/* User profile and logout section */}
+      <div className="p-3 border-t border-sidebar-border mt-auto">
         <div className="space-y-2">
           <Link href="/profile">
             <Button variant="ghost" className="w-full justify-start">
