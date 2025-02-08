@@ -25,7 +25,8 @@ import { useToast } from "@/hooks/use-toast";
 const createStudentSchema = insertUserSchema.extend({
   phoneNumber: z.string().optional(),
   birthDate: z.string().optional(),
-}).omit({ role: true, password: true });
+  password: z.string().min(6, "Password must be at least 6 characters"),
+}).omit({ role: true });
 
 type CreateStudentForm = z.infer<typeof createStudentSchema>;
 
@@ -46,6 +47,7 @@ export function CreateStudentDialog({ open, onOpenChange }: CreateStudentDialogP
       email: "",
       phoneNumber: "",
       birthDate: "",
+      password: "",
     },
   });
 
@@ -127,6 +129,20 @@ export function CreateStudentDialog({ open, onOpenChange }: CreateStudentDialogP
                   <FormLabel>Email</FormLabel>
                   <FormControl>
                     <Input type="email" {...field} disabled={isLoading} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Temporary Password</FormLabel>
+                  <FormControl>
+                    <Input type="password" {...field} disabled={isLoading} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
