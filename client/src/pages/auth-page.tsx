@@ -31,8 +31,9 @@ export default function AuthPage() {
       : user.role === "TEACHER" 
       ? "/teacher" 
       : "/student";
-    navigate(homePath);
-    return null;
+
+    // Instead of returning null, render nothing but keep the component mounted
+    return <div style={{ display: 'none' }}>{navigate(homePath)}</div>;
   }
 
   const loginForm = useForm<z.infer<typeof loginSchema>>({
