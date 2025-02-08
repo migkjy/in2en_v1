@@ -68,15 +68,17 @@ export default function BranchList() {
                   </TableCell>
                   <TableCell>{branch.address || '-'}</TableCell>
                   <TableCell>
-                    <Link href={`/admin/branches/${branch.id}`}>
-                      <Button
-                        variant="outline" 
-                        size="sm" 
-                        className="mr-2"
-                      >
-                        Detail
-                      </Button>
-                    </Link>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="mr-2"
+                      onClick={() => {
+                        setSelectedBranch(branch);
+                        setIsCreateDialogOpen(true);
+                      }}
+                    >
+                      Edit
+                    </Button>
                     <Button 
                       variant="destructive" 
                       size="sm"
