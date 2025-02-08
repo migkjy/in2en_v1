@@ -26,21 +26,33 @@ function requireRole(roles: UserRole[]) {
 export function registerRoutes(app: Express): Server {
   setupAuth(app);
 
-  // Academy routes
-  app.get("/api/academies", requireRole([UserRole.ADMIN]), async (req, res) => {
-    const academies = await storage.listAcademies();
-    res.json(academies);
+  // Branch routes
+  app.get("/api/branches", requireRole([UserRole.ADMIN]), async (req, res) => {
+    const branches = await storage.listBranches();
+    res.json(branches);
   });
 
-  app.post("/api/academies", requireRole([UserRole.ADMIN]), async (req, res) => {
-    const academy = await storage.createAcademy(req.body);
-    res.status(201).json(academy);
+  app.post("/api/branches", requireRole([UserRole.ADMIN]), async (req, res) => {
+    try {
+      const branch = await storage.createBranch(req.body);
+      res.status(201).json(branch);
+    } catch (error) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/branches/:id", requireRole([UserRole.ADMIN]), async (req, res) => {
+    const branch = await storage.getBranch(Number(req.params.id));
+    if (!branch) {
+      return res.status(404).json({ message: "Branch not found" });
+    }
+    res.json(branch);
   });
 
   // Class routes
   app.get("/api/classes", requireRole([UserRole.ADMIN, UserRole.TEACHER]), async (req, res) => {
-    const { academyId } = req.query;
-    const classes = await storage.listClasses(academyId ? Number(academyId) : undefined);
+    const { branchId } = req.query;
+    const classes = await storage.listClasses(branchId ? Number(branchId) : undefined);
     res.json(classes);
   });
 
@@ -53,7 +65,7 @@ export function registerRoutes(app: Express): Server {
   app.post("/api/assignments", requireRole([UserRole.TEACHER]), async (req, res) => {
     const assignment = await storage.createAssignment({
       ...req.body,
-      teacherId: req.user.id
+      teacherId: req.user?.id
     });
     res.status(201).json(assignment);
   });
@@ -77,7 +89,7 @@ export function registerRoutes(app: Express): Server {
           files.map(async (file) => {
             const base64Image = file.buffer.toString("base64");
             const { text, feedback } = await extractTextFromImage(base64Image);
-            
+
             const submission = await storage.createSubmission({
               assignmentId: Number(assignmentId),
               studentId: Number(studentId),
@@ -93,14 +105,26 @@ export function registerRoutes(app: Express): Server {
 
         res.status(201).json(results);
       } catch (error) {
-        res.status(500).json({ message: error.message });
+        if (error instanceof Error) {
+          res.status(400).json({ message: error.message });
+        } else {
+          res.status(500).json({ message: "An unknown error occurred" });
+        }
       }
     }
   );
 
   app.patch("/api/submissions/:id", requireRole([UserRole.TEACHER]), async (req, res) => {
-    const submission = await storage.updateSubmission(Number(req.params.id), req.body);
-    res.json(submission);
+    try {
+      const submission = await storage.updateSubmission(Number(req.params.id), req.body);
+      res.json(submission);
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "An unknown error occurred" });
+      }
+    }
   });
 
   app.get("/api/submissions", async (req, res) => {
@@ -114,11 +138,19 @@ export function registerRoutes(app: Express): Server {
 
   // Comment routes
   app.post("/api/comments", async (req, res) => {
-    const comment = await storage.createComment({
-      ...req.body,
-      userId: req.user.id
-    });
-    res.status(201).json(comment);
+    try {
+      const comment = await storage.createComment({
+        ...req.body,
+        userId: req.user?.id
+      });
+      res.status(201).json(comment);
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "An unknown error occurred" });
+      }
+    }
   });
 
   app.get("/api/comments/:submissionId", async (req, res) => {

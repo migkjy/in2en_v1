@@ -12,6 +12,7 @@ import StudentDashboard from "@/pages/dashboard/student";
 import CreateAssignment from "@/pages/assignments/create";
 import UploadAssignment from "@/pages/assignments/upload";
 import ReviewAssignment from "@/pages/assignments/review";
+import BranchList from "@/pages/branches/list";
 
 function Router() {
   return (
@@ -22,6 +23,11 @@ function Router() {
       <ProtectedRoute 
         path="/admin" 
         component={AdminDashboard} 
+        allowedRole="ADMIN"
+      />
+      <ProtectedRoute 
+        path="/admin/branches" 
+        component={BranchList} 
         allowedRole="ADMIN"
       />
 
