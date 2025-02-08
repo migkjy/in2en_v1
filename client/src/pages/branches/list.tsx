@@ -61,11 +61,7 @@ export default function BranchList() {
               {branches?.map((branch) => (
                 <TableRow key={branch.id}>
                   <TableCell>{branch.id}</TableCell>
-                  <TableCell>
-                    <Link href={`branches/${branch.id}`}>
-                      <strong>{branch.name || "-"}</strong>
-                    </Link>
-                  </TableCell>
+                  <TableCell>{branch.name || "-"}</TableCell>
                   <TableCell>{branch.address || "-"}</TableCell>
                   <TableCell>
                     <Button

@@ -23,14 +23,28 @@ export default function ClassList() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: classes, isLoading: isClassesLoading } = useQuery<(Class & { branch?: Branch })[]>({
+  const { data: classes, isLoading: isClassesLoading } = useQuery<
+    (Class & { branch?: Branch })[]
+  >({
     queryKey: ["/api/classes"],
     queryFn: async () => {
-      const response = await fetch("/api/classes");
-      if (!response.ok) {
-        throw new Error("Failed to fetch classes");
+      const [classesResponse, branchesResponse] = await Promise.all([
+        fetch("/api/classes"),
+        fetch("/api/branches"),
+      ]);
+
+      if (!classesResponse.ok || !branchesResponse.ok) {
+        throw new Error("Failed to fetch data");
       }
-      return response.json();
+
+      const classes = await classesResponse.json();
+      const branches = await branchesResponse.json();
+
+      // Combine class data with branch data
+      return classes.map((cls: Class) => ({
+        ...cls,
+        branch: branches.find((b: Branch) => b.id === cls.branchId),
+      }));
     },
   });
 
@@ -83,10 +97,12 @@ export default function ClassList() {
 
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold">Classes</h2>
-            <Button onClick={() => {
-              setSelectedClass(null);
-              setIsCreateClassDialogOpen(true);
-            }}>
+            <Button
+              onClick={() => {
+                setSelectedClass(null);
+                setIsCreateClassDialogOpen(true);
+              }}
+            >
               Add Class
             </Button>
           </div>
@@ -106,7 +122,7 @@ export default function ClassList() {
               {classes?.map((cls) => (
                 <TableRow key={cls.id}>
                   <TableCell>{cls.id}</TableCell>
-                  <TableCell><strong>{cls.name}</strong></TableCell>
+                  <TableCell>{cls.name}</TableCell>
                   <TableCell>{cls.branch?.name || "-"}</TableCell>
                   <TableCell>{cls.englishLevel || "-"}</TableCell>
                   <TableCell>{cls.ageGroup || "-"}</TableCell>
