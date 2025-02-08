@@ -29,10 +29,24 @@ export default function BranchDetail({ params }: { params: { id: string } }) {
 
   const { data: branch, isLoading: isBranchLoading } = useQuery<Branch>({
     queryKey: [`/api/branches/${params.id}`],
+    queryFn: async () => {
+      const response = await fetch(`/api/branches/${params.id}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch branch");
+      }
+      return response.json();
+    }
   });
 
   const { data: classes, isLoading: isClassesLoading } = useQuery<Class[]>({
     queryKey: ["/api/classes", { branchId: params.id }],
+    queryFn: async () => {
+      const response = await fetch(`/api/classes?branchId=${params.id}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch classes");
+      }
+      return response.json();
+    }
   });
 
   if (isBranchLoading || isClassesLoading) {

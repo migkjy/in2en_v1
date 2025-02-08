@@ -32,8 +32,8 @@ function Router() {
         allowedRole="ADMIN"
       />
       <ProtectedRoute 
-        path="/admin/branches/:id" 
-        component={BranchDetail} 
+        path="/admin/branches/:id"
+        component={(params: { id: string }) => <BranchDetail params={params} />}
         allowedRole="ADMIN"
       />
 
