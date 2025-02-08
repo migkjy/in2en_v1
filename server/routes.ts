@@ -49,6 +49,24 @@ export function registerRoutes(app: Express): Server {
     res.json(branch);
   });
 
+  app.put("/api/branches/:id", requireRole([UserRole.ADMIN]), async (req, res) => {
+    try {
+      const branch = await storage.updateBranch(Number(req.params.id), req.body);
+      res.json(branch);
+    } catch (error) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.delete("/api/branches/:id", requireRole([UserRole.ADMIN]), async (req, res) => {
+    try {
+      await storage.deleteBranch(Number(req.params.id));
+      res.status(204).send();
+    } catch (error) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
   // Class routes
   app.get("/api/classes", requireRole([UserRole.ADMIN, UserRole.TEACHER]), async (req, res) => {
     const { branchId } = req.query;

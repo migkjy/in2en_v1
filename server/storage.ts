@@ -18,6 +18,8 @@ export interface IStorage {
   createBranch(data: Partial<Branch>): Promise<Branch>;
   getBranch(id: number): Promise<Branch | undefined>;
   listBranches(): Promise<Branch[]>;
+  updateBranch(id: number, data: Partial<Branch>): Promise<Branch | undefined>; // Added updateBranch
+  deleteBranch(id: number): Promise<void>; // Added deleteBranch
 
   // Class operations
   createClass(data: Partial<Class>): Promise<Class>;
@@ -85,6 +87,16 @@ export class DatabaseStorage implements IStorage {
   async listBranches(): Promise<Branch[]> {
     return await db.select().from(branches);
   }
+
+  async updateBranch(id: number, data: Partial<Branch>): Promise<Branch | undefined> { // Added updateBranch
+    const [updatedBranch] = await db.update(branches).set(data).where(eq(branches.id, id)).returning();
+    return updatedBranch;
+  }
+
+  async deleteBranch(id: number): Promise<void> { // Added deleteBranch
+    await db.delete(branches).where(eq(branches.id, id));
+  }
+
 
   // Class operations
   async createClass(data: Partial<Class>): Promise<Class> {

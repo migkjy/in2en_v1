@@ -24,30 +24,45 @@ import type { z } from "zod";
 type CreateBranchDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  branch?: Branch | null;
 };
 
-export function CreateBranchDialog({ open, onOpenChange }: CreateBranchDialogProps) {
+export function CreateBranchDialog({ open, onOpenChange, branch }: CreateBranchDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
   const form = useForm<z.infer<typeof insertBranchSchema>>({
     resolver: zodResolver(insertBranchSchema),
     defaultValues: {
-      name: "",
-      address: "",
+      name: branch?.name || "",
+      address: branch?.address || "",
     },
   });
 
+  useEffect(() => {
+    if (branch) {
+      form.reset({
+        name: branch.name,
+        address: branch.address || "",
+      });
+    } else {
+      form.reset({
+        name: "",
+        address: "",
+      });
+    }
+  }, [branch, form]);
+
   const createBranch = useMutation({
     mutationFn: async (data: z.infer<typeof insertBranchSchema>) => {
-      const response = await fetch("/api/branches", {
-        method: "POST",
+      const response = await fetch(branch ? `/api/branches/${branch.id}` : "/api/branches", {
+        method: branch ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
       
       if (!response.ok) {
-        throw new Error("Failed to create branch");
+        throw new Error(branch ? "Failed to update branch" : "Failed to create branch");
       }
       
       return response.json();

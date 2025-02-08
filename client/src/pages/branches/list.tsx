@@ -16,6 +16,8 @@ import { CreateBranchDialog } from "./create-dialog";
 
 export default function BranchList() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);
+  const queryClient = useQueryClient();
   
   const { data: branches, isLoading } = useQuery<Branch[]>({
     queryKey: ["/api/branches"],
@@ -53,10 +55,29 @@ export default function BranchList() {
                   <TableCell>{branch.name}</TableCell>
                   <TableCell>{branch.address || '-'}</TableCell>
                   <TableCell>
-                    <Button variant="outline" size="sm" className="mr-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="mr-2"
+                      onClick={() => {
+                        setSelectedBranch(branch);
+                        setIsCreateDialogOpen(true);
+                      }}
+                    >
                       Edit
                     </Button>
-                    <Button variant="destructive" size="sm">
+                    <Button 
+                      variant="destructive" 
+                      size="sm"
+                      onClick={async () => {
+                        if (confirm('Are you sure you want to delete this branch?')) {
+                          await fetch(`/api/branches/${branch.id}`, {
+                            method: 'DELETE',
+                          });
+                          queryClient.invalidateQueries({ queryKey: ['/api/branches'] });
+                        }
+                      }}
+                    >
                       Delete
                     </Button>
                   </TableCell>
