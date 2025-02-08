@@ -23,7 +23,7 @@ export function Sidebar({ className }: SidebarProps) {
 
   const adminLinks = [
     { href: "/admin", icon: LayoutDashboard, label: "Dashboard" },
-    { href: "/admin/academies", icon: School, label: "Academies" },
+    { href: "/admin/branches", icon: School, label: "Branches" },
     { href: "/admin/classes", icon: GraduationCap, label: "Classes" },
   ];
 

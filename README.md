@@ -37,7 +37,7 @@ npm run dev
 
 
 ## 프로젝트 설명
-Below is the complete text wireframe overview rewritten in English. Each section corresponds to the original Korean version, but all labels, descriptions, and notes are now in English.
+Below is the complete text wireframe overview rewritten in English, **now replacing all instances of “Academy” with “Branch.”** 
 
 ---
 
@@ -97,7 +97,7 @@ Below is the complete text wireframe overview rewritten in English. Each section
 ├────────────────────────────────────────────────────────────────────┤
 │ [Main Content Area]                                               │
 │   ┌───────────────────────────────────────────────────────────┐   │
-│   │ [Manage Academies] Button                                 │   │
+│   │ [Manage Branches] Button                                  │   │
 │   ├───────────────────────────────────────────────────────────┤   │
 │   │ [Manage Classes] Button                                   │   │
 │   └───────────────────────────────────────────────────────────┘   │
@@ -106,30 +106,30 @@ Below is the complete text wireframe overview rewritten in English. Each section
 ```
 **Description:**
 - First screen after Admin login.
-- Primary focus is on Academy/Class management (create, update, delete).
+- Primary focus is on Branch/Class management (create, update, delete).
 
 ---
 
-### **1.2 Academy List Page**
+### **1.2 Branch List Page**
 ```
 ┌───────────────────────────────────────────────────────────────────┐
 │ [Header: Admin]                                                  │
 ├───────────────────────────────────────────────────────────────────┤
-│ [Academy List Table]                                             │
+│ [Branch List Table]                                              │
 │ ┌─────────────────────────────────────────────────────────────┐   │
-│ │ AcademyID | Academy Name | [Detail] [Edit] [Delete]        │   │
+│ │ BranchID | Branch Name | [Detail] [Edit] [Delete]          │   │
 │ └─────────────────────────────────────────────────────────────┘   │
-│ [Add Academy] Button                                            │
+│ [Add Branch] Button                                              │
 └───────────────────────────────────────────────────────────────────┘
 ```
 **Description:**
-- View, edit, or delete existing academies.
-- A button to add a new academy.
+- View, edit, or delete existing branches.
+- A button to add a new branch.
 
-#### **1.2.1 Add Academy (Popup/Separate Page)**
+#### **1.2.1 Add Branch (Popup/Separate Page)**
 ```
 ┌─────────────────────────────────────────┐
-│ [Academy Name] Input                   │
+│ [Branch Name] Input                    │
 │ (Optional) Address, etc.              │
 │ [Save] Button                          │
 └─────────────────────────────────────────┘
@@ -137,15 +137,15 @@ Below is the complete text wireframe overview rewritten in English. Each section
 
 ---
 
-### **1.3 Academy Detail**
+### **1.3 Branch Detail**
 ```
 ┌───────────────────────────────────────────────────────────────────┐
 │ [Header: Admin]                                                  │
 ├───────────────────────────────────────────────────────────────────┤
-│ [Academy Name: Academy A]                                        │
+│ [Branch Name: Branch A]                                          │
 │ ┌───────────────────────────────────────────────────────────┐     │
 │ │ - Quick summary: Number of classes, number of teachers, etc.   │
-│ │ - [Edit Academy Info] Button                                  │
+│ │ - [Edit Branch Info] Button                                   │
 │ └───────────────────────────────────────────────────────────┘     │
 │ [Class List Table]                                              │
 │ ┌───────────────────────────────────────────────────────────┐     │
@@ -155,8 +155,8 @@ Below is the complete text wireframe overview rewritten in English. Each section
 └───────────────────────────────────────────────────────────────────┘
 ```
 **Description:**
-- Shows details about the academy and a list of its classes.
-- “Add Class” preselects the current academy for quick creation.
+- Shows details about the branch and a list of its classes.
+- “Add Class” preselects the current branch for quick creation.
 
 ---
 
@@ -167,17 +167,17 @@ Below is the complete text wireframe overview rewritten in English. Each section
 ├───────────────────────────────────────────────────────────────────┤
 │ [Class List Table]                                               │
 │ ┌─────────────────────────────────────────────────────────────┐   │
-│ │ ClassID | Class Name | Academy Name | [Detail] [Delete]    │   │
+│ │ ClassID | Class Name | Branch Name | [Detail] [Delete]     │   │
 │ └─────────────────────────────────────────────────────────────┘   │
 │ [Add Class] Button                                              │
 └───────────────────────────────────────────────────────────────────┘
 ```
-*(Alternatively, classes could be managed only within each Academy Detail page.)*
+*(Alternatively, classes could be managed only within each Branch Detail page.)*
 
 #### **1.4.1 Add Class (Popup/Separate Page)**
 ```
 ┌─────────────────────────────────────────────────────────┐
-│ [Select Academy] Dropdown                               │
+│ [Select Branch] Dropdown                                │
 │ [Class Name] Input                                      │
 │ (Optional) English Level, Grade, etc.                   │
 │ [Save] Button                                           │
@@ -191,7 +191,7 @@ Below is the complete text wireframe overview rewritten in English. Each section
 ┌───────────────────────────────────────────────────────────────────┐
 │ [Header: Admin]                                                  │
 ├───────────────────────────────────────────────────────────────────┤
-│ [Class Name: Academy A - Class 1]                                │
+│ [Class Name: Branch A - Class 1]                                 │
 │ ┌───────────────────────────────────────────────────────────┐     │
 │ │ - Assigned Teachers List (e.g. Teacher Kim, Teacher Lee)  │     │
 │ │   [Assign Teacher] Button                                 │     │
@@ -217,10 +217,10 @@ Below is the complete text wireframe overview rewritten in English. Each section
 ├─────────────────────────────────────────────────────────────────┤
 │ [Main Content Area]                                            │
 │   ┌─────────────────────────────────────────────────────────┐   │
-│   │ [List of Academies and Classes Assigned to Me]          │   │
-│   │   e.g., Academy A → Class 1, Class 2                     │   │
-│   │         Academy B → Class 1                              │   │
-│   │ (Click class name → assignment list or class info)       │   │
+│   │ [List of Branches and Classes Assigned to Me]           │   │
+│   │   e.g., Branch A → Class 1, Class 2                     │   │
+│   │         Branch B → Class 1                              │   │
+│   │ (Click class name → assignment list or class info)      │   │
 │   └─────────────────────────────────────────────────────────┘   │
 │   ┌─────────────────────────────────────────────────────────┐   │
 │   │ [Create New Assignment] Button                          │   │
@@ -270,7 +270,7 @@ Below is the complete text wireframe overview rewritten in English. Each section
 ├───────────────────────────────────────────────────────────────────┤
 │ [Assignment Title: ReadingHW]                                    │
 │ ┌─────────────────────────────────────────────────────────────┐   │
-│ │ - Class: Academy A - Class 1                               │   │
+│ │ - Class: Branch A - Class 1                                │   │
 │ │ - Due Date, brief description, etc.                        │   │
 │ └─────────────────────────────────────────────────────────────┘   │
 │ [Submission List by Students]                                   │
@@ -340,7 +340,7 @@ Below is the complete text wireframe overview rewritten in English. Each section
 │ [Main Content Area]                                            │
 │   ┌─────────────────────────────────────────────────────────┐   │
 │   │ [List of My Classes]                                    │   │
-│   │   e.g., Academy A - Class 1, Academy B - Class 1         │   │
+│   │   e.g., Branch A - Class 1, Branch B - Class 1           │   │
 │   │   (Click → see assignments for that class)               │   │
 │   └─────────────────────────────────────────────────────────┘   │
 │   ┌─────────────────────────────────────────────────────────┐   │
@@ -357,7 +357,7 @@ Below is the complete text wireframe overview rewritten in English. Each section
 ┌───────────────────────────────────────────────────────────────────┐
 │ [Header: Student]                                               │
 ├───────────────────────────────────────────────────────────────────┤
-│ [Class: Academy A - Class 1]                                    │
+│ [Class: Branch A - Class 1]                                     │
 │ ┌─────────────────────────────────────────────────────────────┐   │
 │ │ AssignmentID | Title | Status (Done/In Progress) | [Detail]│   │
 │ └─────────────────────────────────────────────────────────────┘   │
@@ -398,15 +398,15 @@ These pages outline the **minimum viable product (MVP)**. The key sections are:
 - **Common**: 
   - **Login**, **My Page**  
 - **Admin**: 
-  - **Dashboard** (links to Academy/Class management)  
-  - **Academy List & Detail** (Add/Edit/Delete Academies)  
+  - **Dashboard** (links to Branch/Class management)  
+  - **Branch List & Detail** (Add/Edit/Delete Branches)  
   - **Class List & Detail** (Add/Edit/Delete Classes, assign Teachers/Students)  
 - **Teacher**: 
-  - **Dashboard** (list of assigned Academies/Classes, button to create new assignments)  
+  - **Dashboard** (list of assigned Branches/Classes, button to create new assignments)  
   - **Create Assignment**, **Assignment List/Detail**  
   - **Bulk Upload**, **Submission Detail** (review & feedback)  
 - **Student**: 
-  - **Dashboard** (list of classes and assignments)  
+  - **Dashboard** (my Classes & Assignments)  
   - **Class-specific Assignment List**, **Assignment Detail** (view submission, feedback, comments)
 
 By structuring wireframes in this way, you have a clear blueprint for rapid MVP development. From here, you can move on to actual UI design in a tool like Figma or start coding in React, Vue, or any other framework you prefer.
