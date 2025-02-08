@@ -17,18 +17,42 @@ function Router() {
   return (
     <Switch>
       <Route path="/auth" component={AuthPage} />
-      
+
       {/* Admin Routes */}
-      <ProtectedRoute path="/admin" component={AdminDashboard} />
-      
+      <ProtectedRoute 
+        path="/admin" 
+        component={AdminDashboard} 
+        allowedRole="ADMIN"
+      />
+
       {/* Teacher Routes */} 
-      <ProtectedRoute path="/teacher" component={TeacherDashboard} />
-      <ProtectedRoute path="/assignments/create" component={CreateAssignment} />
-      <ProtectedRoute path="/assignments/upload" component={UploadAssignment} />
-      <ProtectedRoute path="/assignments/review/:id" component={ReviewAssignment} />
-      
+      <ProtectedRoute 
+        path="/teacher" 
+        component={TeacherDashboard} 
+        allowedRole="TEACHER"
+      />
+      <ProtectedRoute 
+        path="/assignments/create" 
+        component={CreateAssignment} 
+        allowedRole="TEACHER"
+      />
+      <ProtectedRoute 
+        path="/assignments/upload" 
+        component={UploadAssignment} 
+        allowedRole="TEACHER"
+      />
+      <ProtectedRoute 
+        path="/assignments/review/:id" 
+        component={ReviewAssignment} 
+        allowedRole="TEACHER"
+      />
+
       {/* Student Routes */}
-      <ProtectedRoute path="/student" component={StudentDashboard} />
+      <ProtectedRoute 
+        path="/student" 
+        component={StudentDashboard} 
+        allowedRole="STUDENT"
+      />
 
       {/* Redirect to auth by default */}
       <Route path="/">
