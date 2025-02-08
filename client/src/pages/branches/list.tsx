@@ -28,8 +28,12 @@ export default function BranchList() {
       if (!response.ok) {
         throw new Error("Failed to fetch branches");
       }
-      return response.json();
+      const data = await response.json();
+      return data;
     },
+    staleTime: 0,
+    cacheTime: 0,
+    retry: 1
   });
 
   if (isLoading) {
