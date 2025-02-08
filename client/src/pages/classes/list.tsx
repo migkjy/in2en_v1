@@ -127,9 +127,12 @@ export default function ClassList() {
                       variant="outline"
                       size="sm"
                       className="mr-2"
-                      onClick={() => setLocation(`/admin/classes/${cls.id}`)}
+                      onClick={() => {
+                        setSelectedClass(cls);
+                        setIsCreateClassDialogOpen(true);
+                      }}
                     >
-                      Detail
+                      Edit
                     </Button>
                     <Button
                       variant="destructive"
@@ -150,7 +153,6 @@ export default function ClassList() {
               setIsCreateClassDialogOpen(open);
               if (!open) setSelectedClass(null);
             }}
-            branchId={selectedClass?.branchId || 0}
             classToEdit={selectedClass}
           />
         </div>

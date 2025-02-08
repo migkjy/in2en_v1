@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertClassSchema, type Class } from "@shared/schema";
+import { insertClassSchema, type Class, type Branch } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -19,14 +19,14 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import type { z } from "zod";
 
 type CreateClassDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  branchId: number;
+  branchId?: number;
   classToEdit?: Class | null;
 };
 
@@ -34,11 +34,20 @@ export function CreateClassDialog({ open, onOpenChange, branchId, classToEdit }:
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  const { data: branches } = useQuery<Branch[]>({
+    queryKey: ["/api/branches"],
+    queryFn: async () => {
+      const response = await fetch("/api/branches");
+      if (!response.ok) throw new Error("Failed to fetch branches");
+      return response.json();
+    },
+  });
+
   const form = useForm<z.infer<typeof insertClassSchema>>({
     resolver: zodResolver(insertClassSchema),
     defaultValues: {
       name: "",
-      branchId,
+      branchId: branchId || undefined,
       englishLevel: "",
       ageGroup: "",
     },
@@ -55,7 +64,7 @@ export function CreateClassDialog({ open, onOpenChange, branchId, classToEdit }:
     } else {
       form.reset({
         name: "",
-        branchId,
+        branchId: branchId || undefined,
         englishLevel: "",
         ageGroup: "",
       });
@@ -81,9 +90,10 @@ export function CreateClassDialog({ open, onOpenChange, branchId, classToEdit }:
       return response.json();
     },
     onSuccess: () => {
-      // Update both the class list and the branch detail queries
       queryClient.invalidateQueries({ queryKey: ["/api/classes"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/branches", branchId] });
+      if (branchId) {
+        queryClient.invalidateQueries({ queryKey: ["/api/branches", branchId] });
+      }
       toast({
         title: "Success",
         description: classToEdit ? "Class updated successfully" : "Class created successfully",
@@ -118,6 +128,35 @@ export function CreateClassDialog({ open, onOpenChange, branchId, classToEdit }:
                   <FormControl>
                     <Input {...field} />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="branchId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Branch</FormLabel>
+                  <Select 
+                    onValueChange={(value) => field.onChange(Number(value))}
+                    value={field.value?.toString()}
+                    disabled={!!branchId}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select branch" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {branches?.map((branch) => (
+                        <SelectItem key={branch.id} value={branch.id.toString()}>
+                          {branch.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
