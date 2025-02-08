@@ -16,16 +16,17 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { insertUserSchema } from "@shared/schema";
 import { z } from "zod";
 
-const loginSchema = insertUserSchema.pick({ 
-  email: true, 
-  password: true 
+const loginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(1, "Password is required")
 });
+
+type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
-  const [, navigate] = useLocation();
+  const [, setLocation] = useLocation();
 
-  // Redirect if already logged in
   useEffect(() => {
     if (user) {
       const homePath = user.role === "ADMIN" 
@@ -33,11 +34,11 @@ export default function AuthPage() {
         : user.role === "TEACHER" 
         ? "/teacher" 
         : "/student";
-      navigate(homePath);
+      setLocation(homePath);
     }
-  }, [user, navigate]);
+  }, [user, setLocation]);
 
-  const loginForm = useForm<z.infer<typeof loginSchema>>({
+  const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
       email: "",
@@ -85,6 +86,11 @@ export default function AuthPage() {
                       placeholder="Email"
                       {...loginForm.register("email")}
                     />
+                    {loginForm.formState.errors.email && (
+                      <p className="text-sm text-red-500">
+                        {loginForm.formState.errors.email.message}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <Input
@@ -92,13 +98,18 @@ export default function AuthPage() {
                       placeholder="Password"
                       {...loginForm.register("password")}
                     />
+                    {loginForm.formState.errors.password && (
+                      <p className="text-sm text-red-500">
+                        {loginForm.formState.errors.password.message}
+                      </p>
+                    )}
                   </div>
                   <Button 
                     type="submit" 
                     className="w-full"
                     disabled={loginMutation.isPending}
                   >
-                    Login
+                    {loginMutation.isPending ? "Logging in..." : "Login"}
                   </Button>
                 </form>
               </TabsContent>
@@ -115,12 +126,22 @@ export default function AuthPage() {
                       placeholder="Name"
                       {...registerForm.register("name")}
                     />
+                    {registerForm.formState.errors.name && (
+                      <p className="text-sm text-red-500">
+                        {registerForm.formState.errors.name.message}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <Input
                       placeholder="Email"
                       {...registerForm.register("email")}
                     />
+                    {registerForm.formState.errors.email && (
+                      <p className="text-sm text-red-500">
+                        {registerForm.formState.errors.email.message}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <Input
@@ -128,6 +149,11 @@ export default function AuthPage() {
                       placeholder="Password"
                       {...registerForm.register("password")}
                     />
+                    {registerForm.formState.errors.password && (
+                      <p className="text-sm text-red-500">
+                        {registerForm.formState.errors.password.message}
+                      </p>
+                    )}
                   </div>
                   <select 
                     {...registerForm.register("role")}
@@ -142,7 +168,7 @@ export default function AuthPage() {
                     className="w-full"
                     disabled={registerMutation.isPending}
                   >
-                    Register
+                    {registerMutation.isPending ? "Registering..." : "Register"}
                   </Button>
                 </form>
               </TabsContent>
