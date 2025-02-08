@@ -25,16 +25,16 @@ export default function AuthPage() {
   const [, navigate] = useLocation();
 
   // Redirect if already logged in
-  if (user) {
-    const homePath = user.role === "ADMIN" 
-      ? "/admin" 
-      : user.role === "TEACHER" 
-      ? "/teacher" 
-      : "/student";
-
-    // Instead of returning null, render nothing but keep the component mounted
-    return <div style={{ display: 'none' }}>{navigate(homePath)}</div>;
-  }
+  useEffect(() => {
+    if (user) {
+      const homePath = user.role === "ADMIN" 
+        ? "/admin" 
+        : user.role === "TEACHER" 
+        ? "/teacher" 
+        : "/student";
+      navigate(homePath);
+    }
+  }, [user, navigate]);
 
   const loginForm = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
