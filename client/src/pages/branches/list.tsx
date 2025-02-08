@@ -22,20 +22,13 @@ export default function BranchList() {
   const { toast } = useToast();
 
   const { data: branches, isLoading } = useQuery<Branch[]>({
-    queryKey: ["branches"],
+    queryKey: ["/api/branches"],
     queryFn: async () => {
       const response = await fetch("/api/branches");
       if (!response.ok) {
         throw new Error("Failed to fetch branches");
       }
       return response.json();
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to load branches",
-        variant: "destructive",
-      });
     }
   });
 
