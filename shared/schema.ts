@@ -72,3 +72,5 @@ export type Class = typeof classes.$inferSelect;
 export type Assignment = typeof assignments.$inferSelect;
 export type Submission = typeof submissions.$inferSelect;
 export type Comment = typeof comments.$inferSelect;
+
+export type InsertUser = z.infer<typeof insertUserSchema>;
