@@ -19,6 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 export default function BranchDetail() {
   const [, params] = useRoute("/admin/branches/:id");
   const [isCreateClassDialogOpen, setIsCreateClassDialogOpen] = useState(false);
+  const [selectedClass, setSelectedClass] = useState<Class | null>(null);
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -109,7 +110,10 @@ export default function BranchDetail() {
 
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold">Classes</h2>
-            <Button onClick={() => setIsCreateClassDialogOpen(true)}>
+            <Button onClick={() => {
+              setSelectedClass(null);
+              setIsCreateClassDialogOpen(true);
+            }}>
               Add Class
             </Button>
           </div>
@@ -136,9 +140,12 @@ export default function BranchDetail() {
                       variant="outline"
                       size="sm"
                       className="mr-2"
-                      onClick={() => setLocation(`/admin/classes/${cls.id}`)}
+                      onClick={() => {
+                        setSelectedClass(cls);
+                        setIsCreateClassDialogOpen(true);
+                      }}
                     >
-                      Detail
+                      Edit
                     </Button>
                     <Button
                       variant="destructive"
@@ -155,8 +162,12 @@ export default function BranchDetail() {
 
           <CreateClassDialog
             open={isCreateClassDialogOpen}
-            onOpenChange={setIsCreateClassDialogOpen}
+            onOpenChange={(open) => {
+              setIsCreateClassDialogOpen(open);
+              if (!open) setSelectedClass(null);
+            }}
             branchId={Number(branchId)}
+            classToEdit={selectedClass}
           />
         </div>
       </main>

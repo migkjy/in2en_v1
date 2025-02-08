@@ -1,6 +1,7 @@
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertClassSchema } from "@shared/schema";
+import { insertClassSchema, type Class } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -26,9 +27,10 @@ type CreateClassDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   branchId: number;
+  classToEdit?: Class | null;
 };
 
-export function CreateClassDialog({ open, onOpenChange, branchId }: CreateClassDialogProps) {
+export function CreateClassDialog({ open, onOpenChange, branchId, classToEdit }: CreateClassDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -42,16 +44,38 @@ export function CreateClassDialog({ open, onOpenChange, branchId }: CreateClassD
     },
   });
 
+  useEffect(() => {
+    if (classToEdit) {
+      form.reset({
+        name: classToEdit.name,
+        branchId: classToEdit.branchId || branchId,
+        englishLevel: classToEdit.englishLevel || "",
+        ageGroup: classToEdit.ageGroup || "",
+      });
+    } else {
+      form.reset({
+        name: "",
+        branchId,
+        englishLevel: "",
+        ageGroup: "",
+      });
+    }
+  }, [classToEdit, branchId, form]);
+
   const createClass = useMutation({
     mutationFn: async (data: z.infer<typeof insertClassSchema>) => {
-      const response = await fetch("/api/classes", {
-        method: "POST",
+      const url = classToEdit 
+        ? `/api/classes/${classToEdit.id}` 
+        : "/api/classes";
+
+      const response = await fetch(url, {
+        method: classToEdit ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
 
       if (!response.ok) {
-        throw new Error("Failed to create class");
+        throw new Error(classToEdit ? "Failed to update class" : "Failed to create class");
       }
 
       return response.json();
@@ -62,7 +86,7 @@ export function CreateClassDialog({ open, onOpenChange, branchId }: CreateClassD
       queryClient.invalidateQueries({ queryKey: ["/api/branches", branchId] });
       toast({
         title: "Success",
-        description: "Class created successfully",
+        description: classToEdit ? "Class updated successfully" : "Class created successfully",
       });
       form.reset();
       onOpenChange(false);
@@ -70,7 +94,7 @@ export function CreateClassDialog({ open, onOpenChange, branchId }: CreateClassD
     onError: () => {
       toast({
         title: "Error",
-        description: "Failed to create class",
+        description: classToEdit ? "Failed to update class" : "Failed to create class",
         variant: "destructive",
       });
     },
@@ -80,7 +104,7 @@ export function CreateClassDialog({ open, onOpenChange, branchId }: CreateClassD
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create New Class</DialogTitle>
+          <DialogTitle>{classToEdit ? "Edit Class" : "Create New Class"}</DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
@@ -157,7 +181,9 @@ export function CreateClassDialog({ open, onOpenChange, branchId }: CreateClassD
                 Cancel
               </Button>
               <Button type="submit" disabled={createClass.isPending}>
-                {createClass.isPending ? "Creating..." : "Create Class"}
+                {createClass.isPending 
+                  ? (classToEdit ? "Updating..." : "Creating...") 
+                  : (classToEdit ? "Update Class" : "Create Class")}
               </Button>
             </div>
           </form>

@@ -26,6 +26,7 @@ export interface IStorage {
   getClass(id: number): Promise<Class | undefined>;
   listClasses(branchId?: number): Promise<Class[]>;
   deleteClass(id: number): Promise<void>; // Added deleteClass
+  updateClass(id: number, data: Partial<Class>): Promise<Class | undefined>;
 
   // Assignment operations
   createAssignment(data: Partial<Assignment>): Promise<Assignment>;
@@ -129,6 +130,15 @@ export class DatabaseStorage implements IStorage {
 
   async deleteClass(id: number): Promise<void> { // Added deleteClass
     await db.delete(classes).where(eq(classes.id, id));
+  }
+
+  async updateClass(id: number, data: Partial<Class>): Promise<Class | undefined> {
+    const [updatedClass] = await db
+      .update(classes)
+      .set({ ...data, branchId: data.branchId || null })
+      .where(eq(classes.id, id))
+      .returning();
+    return updatedClass;
   }
 
   // Assignment operations

@@ -29,7 +29,7 @@ export default function BranchList() {
         throw new Error("Failed to fetch branches");
       }
       return response.json();
-    }
+    },
   });
 
   if (isLoading) {
@@ -62,32 +62,38 @@ export default function BranchList() {
                 <TableRow key={branch.id}>
                   <TableCell>{branch.id}</TableCell>
                   <TableCell>
-                    <span className="text-blue-600">
-                      {branch.name || '-'}
-                    </span>
+                    <Link href={`branches/${branch.id}`}>
+                      {branch.name || "-"}
+                    </Link>
                   </TableCell>
-                  <TableCell>{branch.address || '-'}</TableCell>
+                  <TableCell>{branch.address || "-"}</TableCell>
                   <TableCell>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
+                    <Button
+                      variant="outline"
+                      size="sm"
                       className="mr-2"
                       onClick={() => {
                         setSelectedBranch(branch);
                         setIsCreateDialogOpen(true);
                       }}
                     >
-                      Detail
+                      Edit
                     </Button>
-                    <Button 
-                      variant="destructive" 
+                    <Button
+                      variant="destructive"
                       size="sm"
                       onClick={async () => {
-                        if (confirm('Are you sure you want to delete this branch?')) {
+                        if (
+                          confirm(
+                            "Are you sure you want to delete this branch?",
+                          )
+                        ) {
                           await fetch(`/api/branches/${branch.id}`, {
-                            method: 'DELETE',
+                            method: "DELETE",
                           });
-                          queryClient.invalidateQueries({ queryKey: ['/api/branches'] });
+                          queryClient.invalidateQueries({
+                            queryKey: ["/api/branches"],
+                          });
                         }
                       }}
                     >
@@ -99,7 +105,7 @@ export default function BranchList() {
             </TableBody>
           </Table>
 
-          <CreateBranchDialog 
+          <CreateBranchDialog
             open={isCreateDialogOpen}
             onOpenChange={(open) => {
               setIsCreateDialogOpen(open);

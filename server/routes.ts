@@ -108,6 +108,19 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  app.put("/api/classes/:id", requireRole([UserRole.ADMIN]), async (req, res) => {
+    try {
+      const cls = await storage.updateClass(Number(req.params.id), req.body);
+      res.json(cls);
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "An unknown error occurred" });
+      }
+    }
+  });
+
   app.delete("/api/classes/:id", requireRole([UserRole.ADMIN]), async (req, res) => {
     try {
       await storage.deleteClass(Number(req.params.id));
