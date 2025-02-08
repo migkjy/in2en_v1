@@ -1,5 +1,5 @@
-import { users, academies, classes, assignments, submissions, comments } from "@shared/schema";
-import type { User, Academy, Class, Assignment, Submission, Comment } from "@shared/schema";
+import { users, branches, classes, assignments, submissions, comments } from "@shared/schema";
+import type { User, Branch, Class, Assignment, Submission, Comment } from "@shared/schema";
 import type { InsertUser } from "@shared/schema";
 import session from "express-session";
 import { db } from "./db";
@@ -14,15 +14,15 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
 
-  // Academy operations
-  createAcademy(data: Partial<Academy>): Promise<Academy>;
-  getAcademy(id: number): Promise<Academy | undefined>;
-  listAcademies(): Promise<Academy[]>;
+  // Branch operations
+  createBranch(data: Partial<Branch>): Promise<Branch>;
+  getBranch(id: number): Promise<Branch | undefined>;
+  listBranches(): Promise<Branch[]>;
 
   // Class operations
   createClass(data: Partial<Class>): Promise<Class>;
   getClass(id: number): Promise<Class | undefined>;
-  listClasses(academyId?: number): Promise<Class[]>;
+  listClasses(branchId?: number): Promise<Class[]>;
 
   // Assignment operations
   createAssignment(data: Partial<Assignment>): Promise<Assignment>;
@@ -71,19 +71,19 @@ export class DatabaseStorage implements IStorage {
     return newUser;
   }
 
-  // Academy operations
-  async createAcademy(data: Partial<Academy>): Promise<Academy> {
-    const [academy] = await db.insert(academies).values([data]).returning();
-    return academy;
+  // Branch operations
+  async createBranch(data: Partial<Branch>): Promise<Branch> {
+    const [branch] = await db.insert(branches).values([data]).returning();
+    return branch;
   }
 
-  async getAcademy(id: number): Promise<Academy | undefined> {
-    const [academy] = await db.select().from(academies).where(eq(academies.id, id));
-    return academy;
+  async getBranch(id: number): Promise<Branch | undefined> {
+    const [branch] = await db.select().from(branches).where(eq(branches.id, id));
+    return branch;
   }
 
-  async listAcademies(): Promise<Academy[]> {
-    return await db.select().from(academies);
+  async listBranches(): Promise<Branch[]> {
+    return await db.select().from(branches);
   }
 
   // Class operations
@@ -97,10 +97,10 @@ export class DatabaseStorage implements IStorage {
     return cls;
   }
 
-  async listClasses(academyId?: number): Promise<Class[]> {
+  async listClasses(branchId?: number): Promise<Class[]> {
     let query = db.select().from(classes);
-    if (academyId) {
-      query = query.where(eq(classes.academyId, academyId));
+    if (branchId) {
+      query = query.where(eq(classes.branchId, branchId));
     }
     return await query;
   }

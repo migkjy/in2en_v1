@@ -23,7 +23,7 @@ export const users = pgTable("users", {
   role: text("role", { enum: ["ADMIN", "TEACHER", "STUDENT"] }).notNull(),
 });
 
-export const academies = pgTable("academies", {
+export const branches = pgTable("branches", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 256 }).notNull(),
   address: text("address"),
@@ -32,7 +32,7 @@ export const academies = pgTable("academies", {
 export const classes = pgTable("classes", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 256 }).notNull(),
-  academyId: integer("academy_id").references(() => academies.id),
+  branchId: integer("branch_id").references(() => branches.id),
   englishLevel: varchar("english_level", { length: 50 }),
   ageGroup: varchar("age_group", { length: 50 }),
 });
@@ -67,14 +67,14 @@ export const comments = pgTable("comments", {
 });
 
 export const insertUserSchema = createInsertSchema(users);
-export const insertAcademySchema = createInsertSchema(academies);
+export const insertBranchSchema = createInsertSchema(branches);
 export const insertClassSchema = createInsertSchema(classes);
 export const insertAssignmentSchema = createInsertSchema(assignments);
 export const insertSubmissionSchema = createInsertSchema(submissions);
 export const insertCommentSchema = createInsertSchema(comments);
 
 export type User = typeof users.$inferSelect;
-export type Academy = typeof academies.$inferSelect;
+export type Branch = typeof branches.$inferSelect;
 export type Class = typeof classes.$inferSelect;
 export type Assignment = typeof assignments.$inferSelect;
 export type Submission = typeof submissions.$inferSelect;

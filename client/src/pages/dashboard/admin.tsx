@@ -4,11 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { Link } from "wouter";
-import type { Academy, Class } from "@shared/schema";
+import type { Branch, Class } from "@shared/schema";
 
 export default function AdminDashboard() {
-  const { data: academies, isLoading: loadingAcademies } = useQuery<Academy[]>({
-    queryKey: ["/api/academies"],
+  const { data: branches, isLoading: loadingBranches } = useQuery<Branch[]>({
+    queryKey: ["/api/branches"],
   });
 
   const { data: classes, isLoading: loadingClasses } = useQuery<Class[]>({
@@ -23,32 +23,32 @@ export default function AdminDashboard() {
           <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
 
           <div className="grid grid-cols-2 gap-8">
-            {/* Academies Section */}
+            {/* Branches Section */}
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Academies</CardTitle>
-                <Link href="/admin/academies/new">
+                <CardTitle>Branches</CardTitle>
+                <Link href="/admin/branches/new">
                   <Button size="sm">
                     <Plus className="h-4 w-4 mr-1" />
-                    Add Academy
+                    Add Branch
                   </Button>
                 </Link>
               </CardHeader>
               <CardContent>
-                {loadingAcademies ? (
-                  <div>Loading academies...</div>
+                {loadingBranches ? (
+                  <div>Loading branches...</div>
                 ) : (
                   <div className="space-y-2">
-                    {academies?.map((academy) => (
+                    {branches?.map((branch) => (
                       <Link 
-                        key={academy.id} 
-                        href={`/admin/academies/${academy.id}`}
+                        key={branch.id} 
+                        href={`/admin/branches/${branch.id}`}
                       >
                         <div className="p-4 border rounded hover:bg-gray-50 cursor-pointer">
-                          <h3 className="font-medium">{academy.name}</h3>
-                          {academy.address && (
+                          <h3 className="font-medium">{branch.name}</h3>
+                          {branch.address && (
                             <p className="text-sm text-gray-500">
-                              {academy.address}
+                              {branch.address}
                             </p>
                           )}
                         </div>
