@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
 import { Branch, Class } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import {
@@ -7,12 +6,14 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { apiRequest } from "@/lib/queryClient";
 
 type GrantAuthorityDialogProps = {
   open: boolean;
@@ -65,13 +66,12 @@ export function GrantAuthorityDialog({
 
   const updateAuthority = useMutation({
     mutationFn: async () => {
-      const response = await fetch(`/api/teachers/${teacherId}/authority`, {
+      const response = await apiRequest(`/api/teachers/${teacherId}/authority`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+        data: {
           branchIds: selectedBranches,
           classIds: selectedClasses,
-        }),
+        },
       });
 
       if (!response.ok) {
@@ -104,6 +104,9 @@ export function GrantAuthorityDialog({
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>Grant Authority</DialogTitle>
+          <DialogDescription>
+            Select branches and classes to grant access to this teacher.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6">
@@ -167,7 +170,10 @@ export function GrantAuthorityDialog({
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button onClick={() => updateAuthority.mutate()} disabled={updateAuthority.isPending}>
+            <Button 
+              onClick={() => updateAuthority.mutate()} 
+              disabled={updateAuthority.isPending}
+            >
               {updateAuthority.isPending ? "Updating..." : "Save Changes"}
             </Button>
           </div>
