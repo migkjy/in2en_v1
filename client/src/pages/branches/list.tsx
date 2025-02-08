@@ -1,4 +1,3 @@
-
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Branch } from "@shared/schema";
 import { Sidebar } from "@/components/layout/sidebar";
@@ -14,12 +13,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { CreateBranchDialog } from "./create-dialog";
+import { Link } from "wouter";
 
 export default function BranchList() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);
   const queryClient = useQueryClient();
-  
+
   const { data: branches, isLoading } = useQuery<Branch[]>({
     queryKey: ["/api/branches"],
   });
@@ -53,7 +53,11 @@ export default function BranchList() {
               {branches?.map((branch) => (
                 <TableRow key={branch.id}>
                   <TableCell>{branch.id}</TableCell>
-                  <TableCell>{branch.name}</TableCell>
+                  <TableCell>
+                    <Link href={`/admin/branches/${branch.id}`} className="text-blue-600 hover:underline">
+                      {branch.name}
+                    </Link>
+                  </TableCell>
                   <TableCell>{branch.address || '-'}</TableCell>
                   <TableCell>
                     <Button 

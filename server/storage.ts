@@ -18,13 +18,14 @@ export interface IStorage {
   createBranch(data: Partial<Branch>): Promise<Branch>;
   getBranch(id: number): Promise<Branch | undefined>;
   listBranches(): Promise<Branch[]>;
-  updateBranch(id: number, data: Partial<Branch>): Promise<Branch | undefined>; // Added updateBranch
-  deleteBranch(id: number): Promise<void>; // Added deleteBranch
+  updateBranch(id: number, data: Partial<Branch>): Promise<Branch | undefined>;
+  deleteBranch(id: number): Promise<void>;
 
   // Class operations
   createClass(data: Partial<Class>): Promise<Class>;
   getClass(id: number): Promise<Class | undefined>;
   listClasses(branchId?: number): Promise<Class[]>;
+  deleteClass(id: number): Promise<void>; // Added deleteClass
 
   // Assignment operations
   createAssignment(data: Partial<Assignment>): Promise<Assignment>;
@@ -42,7 +43,7 @@ export interface IStorage {
   listComments(submissionId: number): Promise<Comment[]>;
 
   // Session store
-  sessionStore: any; // Fix session store type
+  sessionStore: any;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -88,12 +89,12 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(branches);
   }
 
-  async updateBranch(id: number, data: Partial<Branch>): Promise<Branch | undefined> { // Added updateBranch
+  async updateBranch(id: number, data: Partial<Branch>): Promise<Branch | undefined> {
     const [updatedBranch] = await db.update(branches).set(data).where(eq(branches.id, id)).returning();
     return updatedBranch;
   }
 
-  async deleteBranch(id: number): Promise<void> { // Added deleteBranch
+  async deleteBranch(id: number): Promise<void> {
     await db.delete(branches).where(eq(branches.id, id));
   }
 
@@ -115,6 +116,10 @@ export class DatabaseStorage implements IStorage {
       query = query.where(eq(classes.branchId, branchId));
     }
     return await query;
+  }
+
+  async deleteClass(id: number): Promise<void> { // Added deleteClass
+    await db.delete(classes).where(eq(classes.id, id));
   }
 
   // Assignment operations

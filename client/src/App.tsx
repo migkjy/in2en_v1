@@ -13,6 +13,7 @@ import CreateAssignment from "@/pages/assignments/create";
 import UploadAssignment from "@/pages/assignments/upload";
 import ReviewAssignment from "@/pages/assignments/review";
 import BranchList from "@/pages/branches/list";
+import BranchDetail from "@/pages/branches/branch-detail";
 
 function Router() {
   return (
@@ -28,6 +29,11 @@ function Router() {
       <ProtectedRoute 
         path="/admin/branches" 
         component={BranchList} 
+        allowedRole="ADMIN"
+      />
+      <ProtectedRoute 
+        path="/admin/branches/:id" 
+        component={BranchDetail} 
         allowedRole="ADMIN"
       />
 

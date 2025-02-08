@@ -86,8 +86,29 @@ export function registerRoutes(app: Express): Server {
   });
 
   app.post("/api/classes", requireRole([UserRole.ADMIN]), async (req, res) => {
-    const cls = await storage.createClass(req.body);
-    res.status(201).json(cls);
+    try {
+      const cls = await storage.createClass(req.body);
+      res.status(201).json(cls);
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "An unknown error occurred" });
+      }
+    }
+  });
+
+  app.delete("/api/classes/:id", requireRole([UserRole.ADMIN]), async (req, res) => {
+    try {
+      await storage.deleteClass(Number(req.params.id));
+      res.status(204).send();
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "An unknown error occurred" });
+      }
+    }
   });
 
   // Assignment routes
