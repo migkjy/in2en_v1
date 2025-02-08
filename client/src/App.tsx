@@ -33,7 +33,7 @@ function Router() {
       />
       <ProtectedRoute 
         path="/admin/branches/:id"
-        component={(params: { id: string }) => <BranchDetail params={params} />}
+        component={BranchDetail}
         allowedRole="ADMIN"
       />
 

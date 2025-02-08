@@ -12,45 +12,43 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { useLocation } from "wouter";
+import { useLocation, useRoute } from "wouter";
 import { CreateClassDialog } from "../classes/create-dialog";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-export default function BranchDetail({ params }: { params: { id: string } }) {
+export default function BranchDetail() {
+  const [, params] = useRoute("/admin/branches/:id");
   const [isCreateClassDialogOpen, setIsCreateClassDialogOpen] = useState(false);
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const branchId = params?.id;
 
   const { data: branch, isLoading: isBranchLoading } = useQuery<Branch>({
-    queryKey: ["branches", params.id],
+    queryKey: ["/api/branches", branchId],
     queryFn: async () => {
-      if (!params.id) throw new Error("Branch ID is required");
-      const response = await fetch(`/api/branches/${params.id}`);
+      if (!branchId) throw new Error("Branch ID is required");
+      const response = await fetch(`/api/branches/${branchId}`);
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || "Failed to fetch branch");
       }
       return response.json();
     },
-    enabled: !!params.id,
-    retry: 1
+    enabled: !!branchId,
+    retry: 1,
   });
 
   const { data: classes, isLoading: isClassesLoading } = useQuery<Class[]>({
-    queryKey: ["/api/classes", { branchId: params.id }],
+    queryKey: ["/api/classes", { branchId }],
     queryFn: async () => {
-      const response = await fetch(`/api/classes?branchId=${params.id}`);
+      const response = await fetch(`/api/classes?branchId=${branchId}`);
       if (!response.ok) {
         throw new Error("Failed to fetch classes");
       }
       return response.json();
-    }
+    },
+    enabled: !!branchId,
   });
 
   if (isBranchLoading || isClassesLoading) {
@@ -102,7 +100,7 @@ export default function BranchDetail({ params }: { params: { id: string } }) {
                 </div>
                 <div>
                   <p className="text-sm font-medium">Address</p>
-                  <p className="text-2xl">{branch.address || '-'}</p>
+                  <p className="text-2xl">{branch.address || "-"}</p>
                 </div>
               </div>
             </CardContent>
@@ -130,8 +128,8 @@ export default function BranchDetail({ params }: { params: { id: string } }) {
                 <TableRow key={cls.id}>
                   <TableCell>{cls.id}</TableCell>
                   <TableCell>{cls.name}</TableCell>
-                  <TableCell>{cls.englishLevel || '-'}</TableCell>
-                  <TableCell>{cls.ageGroup || '-'}</TableCell>
+                  <TableCell>{cls.englishLevel || "-"}</TableCell>
+                  <TableCell>{cls.ageGroup || "-"}</TableCell>
                   <TableCell>
                     <Button
                       variant="outline"
@@ -157,7 +155,7 @@ export default function BranchDetail({ params }: { params: { id: string } }) {
           <CreateClassDialog
             open={isCreateClassDialogOpen}
             onOpenChange={setIsCreateClassDialogOpen}
-            branchId={Number(params.id)}
+            branchId={Number(branchId)}
           />
         </div>
       </main>
