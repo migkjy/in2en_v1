@@ -17,15 +17,23 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 
 const createStudentSchema = insertUserSchema.extend({
   phoneNumber: z.string().optional(),
   birthDate: z.string().optional(),
   password: z.string().min(6, "Password must be at least 6 characters"),
+  branchId: z.number().optional(),
 }).omit({ role: true });
 
 type CreateStudentForm = z.infer<typeof createStudentSchema>;
@@ -40,6 +48,17 @@ export function CreateStudentDialog({ open, onOpenChange }: CreateStudentDialogP
   const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
 
+  const { data: branches } = useQuery({
+    queryKey: ["/api/branches"],
+    queryFn: async () => {
+      const response = await fetch("/api/branches");
+      if (!response.ok) {
+        throw new Error("Failed to fetch branches");
+      }
+      return response.json();
+    },
+  });
+
   const form = useForm<CreateStudentForm>({
     resolver: zodResolver(createStudentSchema),
     defaultValues: {
@@ -48,6 +67,7 @@ export function CreateStudentDialog({ open, onOpenChange }: CreateStudentDialogP
       phoneNumber: "",
       birthDate: "",
       password: "",
+      branchId: undefined,
     },
   });
 
@@ -144,6 +164,34 @@ export function CreateStudentDialog({ open, onOpenChange }: CreateStudentDialogP
                   <FormControl>
                     <Input type="password" {...field} disabled={isLoading} />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="branchId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Branch (Optional)</FormLabel>
+                  <Select
+                    onValueChange={(value) => field.onChange(Number(value))}
+                    value={field.value?.toString()}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a branch" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {branches?.map((branch) => (
+                        <SelectItem key={branch.id} value={branch.id.toString()}>
+                          {branch.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
