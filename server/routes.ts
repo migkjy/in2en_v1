@@ -52,9 +52,16 @@ export function registerRoutes(app: Express): Server {
   app.put("/api/branches/:id", requireRole([UserRole.ADMIN]), async (req, res) => {
     try {
       const branch = await storage.updateBranch(Number(req.params.id), req.body);
+      if (!branch) {
+        return res.status(404).json({ message: "Branch not found" });
+      }
       res.json(branch);
     } catch (error) {
-      res.status(400).json({ message: error.message });
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "An unknown error occurred" });
+      }
     }
   });
 
@@ -63,7 +70,11 @@ export function registerRoutes(app: Express): Server {
       await storage.deleteBranch(Number(req.params.id));
       res.status(204).send();
     } catch (error) {
-      res.status(400).json({ message: error.message });
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "An unknown error occurred" });
+      }
     }
   });
 
@@ -95,7 +106,7 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Submission routes
-  app.post("/api/submissions/upload", 
+  app.post("/api/submissions/upload",
     requireRole([UserRole.TEACHER]),
     upload.array("files"),
     async (req, res) => {
