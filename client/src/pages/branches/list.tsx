@@ -19,9 +19,17 @@ export default function BranchList() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const { data: branches, isLoading } = useQuery<Branch[]>({
     queryKey: ["/api/branches"],
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to load branches",
+        variant: "destructive",
+      });
+    }
   });
 
   if (isLoading) {
