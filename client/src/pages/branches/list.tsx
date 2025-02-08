@@ -62,9 +62,9 @@ export default function BranchList() {
                 <TableRow key={branch.id}>
                   <TableCell>{branch.id}</TableCell>
                   <TableCell>
-                    <Link href={`/admin/branches/${branch.id}`} className="text-blue-600 hover:underline">
+                    <span className="text-blue-600">
                       {branch.name || '-'}
-                    </Link>
+                    </span>
                   </TableCell>
                   <TableCell>{branch.address || '-'}</TableCell>
                   <TableCell>
@@ -77,7 +77,7 @@ export default function BranchList() {
                         setIsCreateDialogOpen(true);
                       }}
                     >
-                      Edit
+                      Detail
                     </Button>
                     <Button 
                       variant="destructive" 
