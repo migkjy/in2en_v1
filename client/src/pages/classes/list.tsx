@@ -118,7 +118,7 @@ export default function ClassList() {
               {classes?.map((cls) => (
                 <TableRow key={cls.id}>
                   <TableCell>{cls.id}</TableCell>
-                  <TableCell>{cls.name}</TableCell>
+                  <TableCell><strong>{cls.name}</strong></TableCell>
                   <TableCell>{cls.branch?.name || "-"}</TableCell>
                   <TableCell>{cls.englishLevel || "-"}</TableCell>
                   <TableCell>{cls.ageGroup || "-"}</TableCell>
