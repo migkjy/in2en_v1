@@ -1,0 +1,65 @@
+2. Student List Page
+less
+복사
+편집
+┌───────────────────────────────────────────────────────────────────┐
+│ [Header: Admin]                                                  │
+├───────────────────────────────────────────────────────────────────┤
+│ [Student List Table]                                             │
+│ ┌────────────────────────────────────────────────────────────────┐│
+│ │ StudentID | Name        | Email               | Phone Number   ││
+│ │           | (ex: Jane)  | jane@example.com    | 010-1234-5678  ││
+│ │ Birth Date | [Detail/Edit] [Delete]                            │
+│ └────────────────────────────────────────────────────────────────┘│
+│ [Add Student] Button                                             │
+└───────────────────────────────────────────────────────────────────┘
+Columns can include Student ID, Name, Email, Phone Number, Birth Date, plus action buttons for Detail/Edit and Delete.
+Add Student allows Admin to create a new student, similar to the teacher creation process.
+3. Add Student (Popup or Separate Page)
+mathematica
+복사
+편집
+┌────────────────────────────────────────────────────────────────┐
+│ [Add Student]                                                 │
+│   1) Name: [Input Field]                                      │
+│   2) Email: [Input Field]                                     │
+│   3) Phone Number: [Input Field] (Optional)                   │
+│   4) Date of Birth: [Input Field / Date Picker] (Optional)    │
+│ ─────────────────────────────────────────────────────────────  │
+│ [Generate Temporary Password Automatically]                    │
+│ (System automatically creates a random password or link)       │
+│ ─────────────────────────────────────────────────────────────  │
+│ [Save & Send Invitation] Button                                │
+└────────────────────────────────────────────────────────────────┘
+Flow
+
+Admin enters basic student info.
+Click [Save & Send Invitation] → System creates the account.
+The student receives an email with a temporary password or reset link.
+On first login, the student is prompted to change their password (or they can change it via “My Page” later).
+4. Student Detail / Edit Page
+pgsql
+복사
+편집
+┌───────────────────────────────────────────────────────────────────┐
+│ [Header: Admin]                                                  │
+├───────────────────────────────────────────────────────────────────┤
+│ [Student Name: Jane]                                             │
+│ Email: jane@example.com                                          │
+│ Phone Number: 010-1234-5678                                      │
+│ Date of Birth: 2005-08-15                                        │
+│ ──────────────────────────────────────────────────────────────── │
+│ [Assigned Authority or Classes]                                  │
+│ ┌─────────────────────────────────────────────────────────────┐   │
+│ │ Currently Granted:                                          │   │
+│ │  - Full Branch Access? (If relevant)                        │   │
+│ │  - Individual Classes? (List any assigned classes)          │   │
+│ └─────────────────────────────────────────────────────────────┘   │
+│ [Grant Authority] Button (Optional, if you want to assign by    │
+│   branch or by class, similar to teachers)                      │
+│ ──────────────────────────────────────────────────────────────── │
+│ [Edit Info] Button                                              │
+│ [Delete] Button                                                 │
+└───────────────────────────────────────────────────────────────────┘
+Assigned Authority approach (optional) if your system also grants specific branch/class access to students.
+Otherwise, you can have a [Assigned Classes] table where Admin can add or remove class membership for that student.
