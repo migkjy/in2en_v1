@@ -17,6 +17,7 @@ import BranchDetail from "@/pages/branches/branch-detail";
 import ClassList from "@/pages/classes/list";
 import TeacherList from "@/pages/teachers/list";
 import TeacherDetail from "@/pages/teachers/teacher-detail";
+import StudentList from "@/pages/students/list";
 
 function Router() {
   return (
@@ -52,6 +53,11 @@ function Router() {
       <ProtectedRoute 
         path="/admin/teachers/:id"
         component={TeacherDetail}
+        allowedRole="ADMIN"
+      />
+      <ProtectedRoute 
+        path="/admin/students"
+        component={StudentList}
         allowedRole="ADMIN"
       />
 
