@@ -17,8 +17,7 @@ import { useLocation } from "wouter";
 import { CreateStudentDialog } from "./create-dialog";
 
 export default function StudentList() {
-  const [isCreateStudentDialogOpen, setIsCreateStudentDialogOpen] =
-    useState(false);
+  const [isCreateStudentDialogOpen, setIsCreateStudentDialogOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<User | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -76,7 +75,7 @@ export default function StudentList() {
 
   const getBranchName = (branchId?: number) => {
     if (!branchId) return "-";
-    const branch = branches?.find((b) => b.id === branchId);
+    const branch = branches?.find(b => b.id === branchId);
     return branch?.name || "-";
   };
 
@@ -133,22 +132,20 @@ export default function StudentList() {
                       variant="outline"
                       size="sm"
                       className="mr-2"
-                      onClick={() =>
-                        setLocation(`/admin/students/${student.id}`)
-                      }
-                    >
-                      View
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="mr-2"
                       onClick={() => {
                         setSelectedStudent(student);
                         setIsCreateStudentDialogOpen(true);
                       }}
                     >
                       Edit
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mr-2"
+                      onClick={() => setLocation(`/admin/students/${student.id}`)}
+                    >
+                      View
                     </Button>
                     <Button
                       variant="destructive"
