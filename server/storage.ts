@@ -40,11 +40,11 @@ export interface IStorage {
   listComments(submissionId: number): Promise<Comment[]>;
 
   // Session store
-  sessionStore: session.SessionStore;
+  sessionStore: any; // Fix session store type
 }
 
 export class DatabaseStorage implements IStorage {
-  sessionStore: session.SessionStore;
+  sessionStore: any;
 
   constructor() {
     this.sessionStore = new PostgresSessionStore({
@@ -67,13 +67,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createUser(user: InsertUser): Promise<User> {
-    const [newUser] = await db.insert(users).values(user).returning();
+    const [newUser] = await db.insert(users).values([user]).returning();
     return newUser;
   }
 
   // Academy operations
   async createAcademy(data: Partial<Academy>): Promise<Academy> {
-    const [academy] = await db.insert(academies).values(data).returning();
+    const [academy] = await db.insert(academies).values([data]).returning();
     return academy;
   }
 
@@ -88,7 +88,7 @@ export class DatabaseStorage implements IStorage {
 
   // Class operations
   async createClass(data: Partial<Class>): Promise<Class> {
-    const [cls] = await db.insert(classes).values(data).returning();
+    const [cls] = await db.insert(classes).values([data]).returning();
     return cls;
   }
 
@@ -107,7 +107,7 @@ export class DatabaseStorage implements IStorage {
 
   // Assignment operations
   async createAssignment(data: Partial<Assignment>): Promise<Assignment> {
-    const [assignment] = await db.insert(assignments).values(data).returning();
+    const [assignment] = await db.insert(assignments).values([data]).returning();
     return assignment;
   }
 
@@ -126,7 +126,7 @@ export class DatabaseStorage implements IStorage {
 
   // Submission operations
   async createSubmission(data: Partial<Submission>): Promise<Submission> {
-    const [submission] = await db.insert(submissions).values(data).returning();
+    const [submission] = await db.insert(submissions).values([data]).returning();
     return submission;
   }
 
@@ -151,7 +151,7 @@ export class DatabaseStorage implements IStorage {
 
   // Comment operations
   async createComment(data: Partial<Comment>): Promise<Comment> {
-    const [comment] = await db.insert(comments).values(data).returning();
+    const [comment] = await db.insert(comments).values([data]).returning();
     return comment;
   }
 

@@ -2,6 +2,13 @@ import { pgTable, text, serial, integer, timestamp, varchar, boolean } from "dri
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// Session table for connect-pg-simple
+export const sessions = pgTable("session", {
+  sid: varchar("sid").primaryKey(),
+  sess: text("sess").notNull(),
+  expire: timestamp("expire").notNull(),
+});
+
 export enum UserRole {
   ADMIN = "ADMIN",
   TEACHER = "TEACHER",
