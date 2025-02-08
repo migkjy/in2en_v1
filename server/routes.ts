@@ -395,6 +395,26 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Add this route after the existing student routes
+  app.put("/api/students/:id", requireRole([UserRole.ADMIN]), async (req, res) => {
+    try {
+      const student = await storage.updateUser(Number(req.params.id), {
+        ...req.body,
+        role: UserRole.STUDENT,
+      });
+      if (!student) {
+        return res.status(404).json({ message: "Student not found" });
+      }
+      res.json(student);
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "An unknown error occurred" });
+      }
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

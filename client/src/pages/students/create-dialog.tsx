@@ -41,9 +41,10 @@ type CreateStudentForm = z.infer<typeof createStudentSchema>;
 type CreateStudentDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  student?: any; // TODO: Use proper type when available
 };
 
-export function CreateStudentDialog({ open, onOpenChange }: CreateStudentDialogProps) {
+export function CreateStudentDialog({ open, onOpenChange, student }: CreateStudentDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
@@ -62,12 +63,12 @@ export function CreateStudentDialog({ open, onOpenChange }: CreateStudentDialogP
   const form = useForm<CreateStudentForm>({
     resolver: zodResolver(createStudentSchema),
     defaultValues: {
-      name: "",
-      email: "",
-      phoneNumber: "",
-      birthDate: "",
+      name: student?.name || "",
+      email: student?.email || "",
+      phoneNumber: student?.phoneNumber || "",
+      birthDate: student?.birthDate || "",
       password: "",
-      branchId: undefined,
+      branchId: student?.branchId,
     },
   });
 
@@ -114,15 +115,62 @@ export function CreateStudentDialog({ open, onOpenChange }: CreateStudentDialogP
     },
   });
 
+  const updateStudent = useMutation({
+    mutationFn: async (data: CreateStudentForm) => {
+      setIsLoading(true);
+      try {
+        const response = await fetch(`/api/students/${student?.id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            ...data,
+            role: "STUDENT",
+          }),
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || "Failed to update student");
+        }
+
+        return response.json();
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/students"] });
+      toast({
+        title: "Success",
+        description: "Student updated successfully",
+      });
+      form.reset();
+      onOpenChange(false);
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update student",
+        variant: "destructive",
+      });
+    },
+  });
+
   const onSubmit = (data: CreateStudentForm) => {
-    createStudent.mutate(data);
+    if (student) {
+      updateStudent.mutate(data);
+    } else {
+      createStudent.mutate(data);
+    }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add New Student</DialogTitle>
+          <DialogTitle>{student ? "Edit Student" : "Add New Student"}</DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
@@ -230,7 +278,7 @@ export function CreateStudentDialog({ open, onOpenChange }: CreateStudentDialogP
                 Cancel
               </Button>
               <Button type="submit" disabled={isLoading}>
-                {isLoading ? "Creating..." : "Create Student"}
+                {isLoading ? (student ? "Updating..." : "Creating...") : (student ? "Update Student" : "Create Student")}
               </Button>
             </div>
           </form>

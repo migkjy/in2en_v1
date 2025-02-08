@@ -18,6 +18,7 @@ import { CreateStudentDialog } from "./create-dialog";
 
 export default function StudentList() {
   const [isCreateStudentDialogOpen, setIsCreateStudentDialogOpen] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState<User | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
@@ -28,6 +29,17 @@ export default function StudentList() {
       const response = await fetch("/api/students");
       if (!response.ok) {
         throw new Error("Failed to fetch students");
+      }
+      return response.json();
+    },
+  });
+
+  const { data: branches } = useQuery({
+    queryKey: ["/api/branches"],
+    queryFn: async () => {
+      const response = await fetch("/api/branches");
+      if (!response.ok) {
+        throw new Error("Failed to fetch branches");
       }
       return response.json();
     },
@@ -61,6 +73,12 @@ export default function StudentList() {
     return <div>Loading...</div>;
   }
 
+  const getBranchName = (branchId?: number) => {
+    if (!branchId) return "-";
+    const branch = branches?.find(b => b.id === branchId);
+    return branch?.name || "-";
+  };
+
   return (
     <div className="flex h-screen">
       <Sidebar className="w-64" />
@@ -84,6 +102,7 @@ export default function StudentList() {
             <h2 className="text-2xl font-bold">Students</h2>
             <Button
               onClick={() => {
+                setSelectedStudent(null);
                 setIsCreateStudentDialogOpen(true);
               }}
             >
@@ -97,6 +116,7 @@ export default function StudentList() {
                 <TableHead>ID</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Email</TableHead>
+                <TableHead>Branch</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -106,7 +126,19 @@ export default function StudentList() {
                   <TableCell>{student.id}</TableCell>
                   <TableCell>{student.name}</TableCell>
                   <TableCell>{student.email}</TableCell>
+                  <TableCell>{getBranchName(student.branchId)}</TableCell>
                   <TableCell>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mr-2"
+                      onClick={() => {
+                        setSelectedStudent(student);
+                        setIsCreateStudentDialogOpen(true);
+                      }}
+                    >
+                      Edit
+                    </Button>
                     <Button
                       variant="outline"
                       size="sm"
@@ -131,6 +163,7 @@ export default function StudentList() {
           <CreateStudentDialog
             open={isCreateStudentDialogOpen}
             onOpenChange={setIsCreateStudentDialogOpen}
+            student={selectedStudent}
           />
         </div>
       </main>
