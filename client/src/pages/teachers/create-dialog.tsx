@@ -76,7 +76,7 @@ export function CreateTeacherDialog({
       const response = await fetch(url, {
         method: teacherToEdit ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ ...data, role: "TEACHER" }),
       });
 
       if (!response.ok) {
