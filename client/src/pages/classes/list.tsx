@@ -26,23 +26,11 @@ export default function ClassList() {
   const { data: classes, isLoading: isClassesLoading } = useQuery<(Class & { branch?: Branch })[]>({
     queryKey: ["/api/classes"],
     queryFn: async () => {
-      const [classesResponse, branchesResponse] = await Promise.all([
-        fetch("/api/classes"),
-        fetch("/api/branches")
-      ]);
-
-      if (!classesResponse.ok || !branchesResponse.ok) {
-        throw new Error("Failed to fetch data");
+      const response = await fetch("/api/classes");
+      if (!response.ok) {
+        throw new Error("Failed to fetch classes");
       }
-
-      const classes = await classesResponse.json();
-      const branches = await branchesResponse.json();
-
-      // Combine class data with branch data
-      return classes.map((cls: Class) => ({
-        ...cls,
-        branch: branches.find((b: Branch) => b.id === cls.branchId)
-      }));
+      return response.json();
     },
   });
 

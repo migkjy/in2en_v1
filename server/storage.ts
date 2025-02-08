@@ -121,10 +121,25 @@ export class DatabaseStorage implements IStorage {
   }
 
   async listClasses(branchId?: number): Promise<Class[]> {
-    let query = db.select().from(classes);
+    let query = db.select({
+      id: classes.id,
+      name: classes.name,
+      branchId: classes.branchId,
+      englishLevel: classes.englishLevel,
+      ageGroup: classes.ageGroup,
+      branch: {
+        id: branches.id,
+        name: branches.name,
+        address: branches.address,
+      },
+    })
+    .from(classes)
+    .leftJoin(branches, eq(classes.branchId, branches.id));
+
     if (branchId) {
       query = query.where(eq(classes.branchId, branchId));
     }
+
     return await query;
   }
 
