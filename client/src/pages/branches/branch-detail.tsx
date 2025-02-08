@@ -42,6 +42,7 @@ export default function BranchDetail() {
   const { data: classes, isLoading: isClassesLoading } = useQuery<Class[]>({
     queryKey: ["/api/classes", { branchId }],
     queryFn: async () => {
+      if (!branchId) throw new Error("Branch ID is required");
       const response = await fetch(`/api/classes?branchId=${branchId}`);
       if (!response.ok) {
         throw new Error("Failed to fetch classes");
@@ -100,7 +101,7 @@ export default function BranchDetail() {
                 </div>
                 <div>
                   <p className="text-sm font-medium">Address</p>
-                  <p className="text-2xl">{branch.address || "-"}</p>
+                  <p className="text-lg">{branch.address || "-"}</p>
                 </div>
               </div>
             </CardContent>

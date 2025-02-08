@@ -31,7 +31,7 @@ type CreateClassDialogProps = {
 export function CreateClassDialog({ open, onOpenChange, branchId }: CreateClassDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
+
   const form = useForm<z.infer<typeof insertClassSchema>>({
     resolver: zodResolver(insertClassSchema),
     defaultValues: {
@@ -49,15 +49,17 @@ export function CreateClassDialog({ open, onOpenChange, branchId }: CreateClassD
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      
+
       if (!response.ok) {
         throw new Error("Failed to create class");
       }
-      
+
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/classes", { branchId }] });
+      // Update both the class list and the branch detail queries
+      queryClient.invalidateQueries({ queryKey: ["/api/classes"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/branches", branchId] });
       toast({
         title: "Success",
         description: "Class created successfully",
@@ -80,7 +82,7 @@ export function CreateClassDialog({ open, onOpenChange, branchId }: CreateClassD
         <DialogHeader>
           <DialogTitle>Create New Class</DialogTitle>
         </DialogHeader>
-        
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit((data) => createClass.mutate(data))} className="space-y-4">
             <FormField
@@ -96,14 +98,17 @@ export function CreateClassDialog({ open, onOpenChange, branchId }: CreateClassD
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="englishLevel"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>English Level</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select 
+                    onValueChange={field.onChange} 
+                    value={field.value || undefined}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select level" />
@@ -126,7 +131,10 @@ export function CreateClassDialog({ open, onOpenChange, branchId }: CreateClassD
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Age Group</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select 
+                    onValueChange={field.onChange} 
+                    value={field.value || undefined}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select age group" />
