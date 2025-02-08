@@ -84,7 +84,21 @@ export class DatabaseStorage implements IStorage {
   }
 
   async listUsers(): Promise<User[]> {
-    return await db.select().from(users);
+    const users = await db
+      .select({
+        id: users.id,
+        email: users.email,
+        name: users.name,
+        password: users.password,
+        role: users.role,
+        branchId: users.branchId,
+        phoneNumber: users.phoneNumber,
+        birthDate: users.birthDate,
+      })
+      .from(users)
+      .leftJoin(branches, eq(users.branchId, branches.id));
+
+    return users;
   }
 
   async updateUser(id: number, data: Partial<User>): Promise<User | undefined> {

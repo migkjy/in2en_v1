@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertUserSchema } from "@shared/schema";
@@ -36,12 +36,21 @@ const createStudentSchema = insertUserSchema.extend({
   branchId: z.number().optional(),
 }).omit({ role: true });
 
+type User = {
+  id: number;
+  name: string;
+  email: string;
+  phoneNumber?: string;
+  birthDate?: string;
+  branchId?: number;
+};
+
 type CreateStudentForm = z.infer<typeof createStudentSchema>;
 
 type CreateStudentDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  student?: any; // TODO: Use proper type when available
+  student?: User | null;
 };
 
 export function CreateStudentDialog({ open, onOpenChange, student }: CreateStudentDialogProps) {
@@ -71,6 +80,29 @@ export function CreateStudentDialog({ open, onOpenChange, student }: CreateStude
       branchId: student?.branchId,
     },
   });
+
+  useEffect(() => {
+    if (open && student) {
+      console.log("Setting initial form values:", student);
+      form.reset({
+        name: student.name,
+        email: student.email,
+        phoneNumber: student.phoneNumber || "",
+        birthDate: student.birthDate || "",
+        password: "",
+        branchId: student.branchId,
+      });
+    } else if (!open) {
+      form.reset({
+        name: "",
+        email: "",
+        phoneNumber: "",
+        birthDate: "",
+        password: "",
+        branchId: undefined,
+      });
+    }
+  }, [open, student, form]);
 
   const createStudent = useMutation({
     mutationFn: async (data: CreateStudentForm) => {
@@ -233,7 +265,7 @@ export function CreateStudentDialog({ open, onOpenChange, student }: CreateStude
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {branches?.map((branch) => (
+                      {branches?.map((branch: {id:number, name:string}) => (
                         <SelectItem key={branch.id} value={branch.id.toString()}>
                           {branch.name}
                         </SelectItem>
