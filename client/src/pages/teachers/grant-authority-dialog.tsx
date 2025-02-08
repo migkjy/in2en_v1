@@ -13,7 +13,6 @@ import { Label } from "@/components/ui/label";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { apiRequest } from "@/lib/queryClient";
 
 type GrantAuthorityDialogProps = {
   open: boolean;
@@ -66,12 +65,15 @@ export function GrantAuthorityDialog({
 
   const updateAuthority = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest(`/api/teachers/${teacherId}/authority`, {
+      const response = await fetch(`/api/teachers/${teacherId}/authority`, {
         method: "PUT",
-        data: {
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
           branchIds: selectedBranches,
           classIds: selectedClasses,
-        },
+        }),
       });
 
       if (!response.ok) {
@@ -81,9 +83,11 @@ export function GrantAuthorityDialog({
       return response.json();
     },
     onSuccess: () => {
+      // Invalidate all related queries
       queryClient.invalidateQueries({ queryKey: ["/api/teachers", teacherId] });
       queryClient.invalidateQueries({ queryKey: ["/api/teachers", teacherId, "branches"] });
       queryClient.invalidateQueries({ queryKey: ["/api/teachers", teacherId, "classes"] });
+
       toast({
         title: "Success",
         description: "Authority updated successfully",
