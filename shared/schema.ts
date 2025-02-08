@@ -1,12 +1,13 @@
-import { pgTable, text, serial, integer, timestamp, varchar, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, varchar, json, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { relations } from 'drizzle-orm';
 
 // Session table for connect-pg-simple
 export const sessions = pgTable("session", {
   sid: varchar("sid").primaryKey(),
-  sess: text("sess").notNull(),
-  expire: timestamp("expire").notNull(),
+  sess: json("sess").notNull(),
+  expire: timestamp("expire", { precision: 6 }).notNull(),
 });
 
 export enum UserRole {
@@ -35,6 +36,18 @@ export const classes = pgTable("classes", {
   branchId: integer("branch_id").references(() => branches.id),
   englishLevel: varchar("english_level", { length: 50 }),
   ageGroup: varchar("age_group", { length: 50 }),
+});
+
+export const teacherBranchAccess = pgTable("teacher_branch_access", {
+  id: serial("id").primaryKey(),
+  teacherId: integer("teacher_id").notNull().references(() => users.id),
+  branchId: integer("branch_id").notNull().references(() => branches.id),
+});
+
+export const teacherClassAccess = pgTable("teacher_class_access", {
+  id: serial("id").primaryKey(),
+  teacherId: integer("teacher_id").notNull().references(() => users.id),
+  classId: integer("class_id").notNull().references(() => classes.id),
 });
 
 export const assignments = pgTable("assignments", {
@@ -72,6 +85,8 @@ export const insertClassSchema = createInsertSchema(classes);
 export const insertAssignmentSchema = createInsertSchema(assignments);
 export const insertSubmissionSchema = createInsertSchema(submissions);
 export const insertCommentSchema = createInsertSchema(comments);
+export const insertTeacherBranchAccessSchema = createInsertSchema(teacherBranchAccess);
+export const insertTeacherClassAccessSchema = createInsertSchema(teacherClassAccess);
 
 export type User = typeof users.$inferSelect;
 export type Branch = typeof branches.$inferSelect;
@@ -79,5 +94,7 @@ export type Class = typeof classes.$inferSelect;
 export type Assignment = typeof assignments.$inferSelect;
 export type Submission = typeof submissions.$inferSelect;
 export type Comment = typeof comments.$inferSelect;
+export type TeacherBranchAccess = typeof teacherBranchAccess.$inferSelect;
+export type TeacherClassAccess = typeof teacherClassAccess.$inferSelect;
 
 export type InsertUser = z.infer<typeof insertUserSchema>;

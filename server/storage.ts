@@ -1,9 +1,9 @@
-import { users, branches, classes, assignments, submissions, comments, UserRole } from "@shared/schema";
-import type { User, Branch, Class, Assignment, Submission, Comment } from "@shared/schema";
+import { users, branches, classes, assignments, submissions, comments, UserRole, teacherBranchAccess, teacherClassAccess } from "@shared/schema";
+import type { User, Branch, Class, Assignment, Submission, Comment, TeacherBranchAccess, TeacherClassAccess } from "@shared/schema";
 import type { InsertUser } from "@shared/schema";
 import session from "express-session";
 import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import connectPg from "connect-pg-simple";
 
 const PostgresSessionStore = connectPg(session);
@@ -249,8 +249,20 @@ export class DatabaseStorage implements IStorage {
       throw new Error("Teacher not found");
     }
 
-    // For now, return all branches as we haven't implemented the authority tables yet
-    return await db.select().from(branches);
+    const result = await db
+      .select({
+        id: branches.id,
+        name: branches.name,
+        address: branches.address,
+      })
+      .from(branches)
+      .innerJoin(
+        teacherBranchAccess,
+        eq(teacherBranchAccess.branchId, branches.id)
+      )
+      .where(eq(teacherBranchAccess.teacherId, teacherId));
+
+    return result;
   }
 
   async getTeacherClasses(teacherId: number): Promise<Class[]> {
@@ -263,8 +275,22 @@ export class DatabaseStorage implements IStorage {
       throw new Error("Teacher not found");
     }
 
-    // For now, return all classes as we haven't implemented the authority tables yet
-    return await db.select().from(classes);
+    const result = await db
+      .select({
+        id: classes.id,
+        name: classes.name,
+        branchId: classes.branchId,
+        englishLevel: classes.englishLevel,
+        ageGroup: classes.ageGroup,
+      })
+      .from(classes)
+      .innerJoin(
+        teacherClassAccess,
+        eq(teacherClassAccess.classId, classes.id)
+      )
+      .where(eq(teacherClassAccess.teacherId, teacherId));
+
+    return result;
   }
 
   async updateTeacherAuthority(
@@ -281,8 +307,32 @@ export class DatabaseStorage implements IStorage {
       throw new Error("Teacher not found");
     }
 
-    // For now, this is a no-op as we haven't implemented the authority tables yet
-    console.log("Updating teacher authority:", { teacherId, branchIds, classIds });
+    // Start a transaction
+    await db.transaction(async (tx) => {
+      // Delete existing access records
+      await tx.delete(teacherBranchAccess).where(eq(teacherBranchAccess.teacherId, teacherId));
+      await tx.delete(teacherClassAccess).where(eq(teacherClassAccess.teacherId, teacherId));
+
+      // Insert new branch access records
+      if (branchIds.length > 0) {
+        await tx.insert(teacherBranchAccess).values(
+          branchIds.map(branchId => ({
+            teacherId,
+            branchId,
+          }))
+        );
+      }
+
+      // Insert new class access records
+      if (classIds.length > 0) {
+        await tx.insert(teacherClassAccess).values(
+          classIds.map(classId => ({
+            teacherId,
+            classId,
+          }))
+        );
+      }
+    });
   }
 }
 
