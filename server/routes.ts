@@ -42,11 +42,21 @@ export function registerRoutes(app: Express): Server {
   });
 
   app.get("/api/branches/:id", requireRole([UserRole.ADMIN]), async (req, res) => {
-    const branch = await storage.getBranch(Number(req.params.id));
-    if (!branch) {
-      return res.status(404).json({ message: "Branch not found" });
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ message: "Invalid branch ID" });
     }
-    res.json(branch);
+
+    try {
+      const branch = await storage.getBranch(id);
+      if (!branch) {
+        return res.status(404).json({ message: "Branch not found" });
+      }
+      res.json(branch);
+    } catch (error) {
+      console.error("Error fetching branch:", error);
+      res.status(500).json({ message: "Failed to fetch branch" });
+    }
   });
 
   app.put("/api/branches/:id", requireRole([UserRole.ADMIN]), async (req, res) => {

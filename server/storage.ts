@@ -81,8 +81,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getBranch(id: number): Promise<Branch | undefined> {
-    const [branch] = await db.select().from(branches).where(eq(branches.id, id));
-    return branch;
+    if (!id || isNaN(id)) {
+      throw new Error("Invalid branch ID");
+    }
+
+    try {
+      const [branch] = await db.select().from(branches).where(eq(branches.id, id));
+      return branch;
+    } catch (error) {
+      console.error("Database error in getBranch:", error);
+      throw error;
+    }
   }
 
   async listBranches(): Promise<Branch[]> {
