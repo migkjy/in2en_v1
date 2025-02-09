@@ -408,15 +408,10 @@ export function registerRoutes(app: Express): Server {
       const studentData = {
         ...updateData,
         role: UserRole.STUDENT,
-        branch_id: updateData.branchId,
-        phone_number: updateData.phoneNumber,
-        birth_date: updateData.birthDate,
+        branchId: updateData.branchId,
+        phoneNumber: updateData.phoneNumber,
+        birthDate: updateData.birthDate,
       };
-
-      // Remove client-side field names
-      delete studentData.branchId;
-      delete studentData.phoneNumber;
-      delete studentData.birthDate;
 
       const student = await storage.updateUser(Number(req.params.id), studentData);
 
