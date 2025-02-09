@@ -134,6 +134,45 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Add this route after the existing class routes
+  app.get("/api/classes/:id", requireRole([UserRole.ADMIN, UserRole.TEACHER]), async (req, res) => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ message: "Invalid class ID" });
+    }
+
+    try {
+      const classData = await storage.getClass(id);
+      if (!classData) {
+        return res.status(404).json({ message: "Class not found" });
+      }
+      res.json(classData);
+    } catch (error) {
+      console.error("Error fetching class:", error);
+      res.status(500).json({ message: "Failed to fetch class" });
+    }
+  });
+
+  // Add these routes for class-specific teacher and student data
+  app.get("/api/classes/:id/teachers", requireRole([UserRole.ADMIN, UserRole.TEACHER]), async (req, res) => {
+    try {
+      const teachers = await storage.getClassTeachers(Number(req.params.id));
+      res.json(teachers);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch class teachers" });
+    }
+  });
+
+  app.get("/api/classes/:id/students", requireRole([UserRole.ADMIN, UserRole.TEACHER]), async (req, res) => {
+    try {
+      const students = await storage.getClassStudents(Number(req.params.id));
+      res.json(students);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch class students" });
+    }
+  });
+
+
   // Assignment routes
   app.post("/api/assignments", requireRole([UserRole.TEACHER]), async (req, res) => {
     const assignment = await storage.createAssignment({
@@ -369,7 +408,7 @@ export function registerRoutes(app: Express): Server {
   app.post("/api/students", requireRole([UserRole.ADMIN]), async (req, res) => {
     try {
       const createData = { ...req.body };
-      
+
       // Convert branch_id to branchId if it exists
       if (createData.branch_id) {
         createData.branchId = Number(createData.branch_id);
