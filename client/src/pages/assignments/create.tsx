@@ -16,6 +16,8 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 const createAssignmentSchema = insertAssignmentSchema.omit({ 
   id: true,
   teacherId: true 
+}).extend({
+  dueDate: z.string().optional()
 });
 
 type CreateAssignmentData = z.infer<typeof createAssignmentSchema>;
@@ -30,7 +32,12 @@ export default function CreateAssignment() {
 
   const createMutation = useMutation({
     mutationFn: async (data: CreateAssignmentData) => {
-      const res = await apiRequest("POST", "/api/assignments", data);
+      // Convert empty string to null for dueDate
+      const payload = {
+        ...data,
+        dueDate: data.dueDate || null
+      };
+      const res = await apiRequest("POST", "/api/assignments", payload);
       return res.json();
     },
     onSuccess: () => {
@@ -56,8 +63,12 @@ export default function CreateAssignment() {
       title: "",
       description: "",
       classId: undefined,
-      dueDate: undefined,
+      dueDate: ""
     }
+  });
+
+  const onSubmit = form.handleSubmit((data) => {
+    createMutation.mutate(data);
   });
 
   return (
@@ -71,7 +82,7 @@ export default function CreateAssignment() {
             </CardHeader>
             <CardContent>
               <form 
-                onSubmit={form.handleSubmit((data) => createMutation.mutate(data))}
+                onSubmit={onSubmit}
                 className="space-y-6"
               >
                 <div className="space-y-2">
