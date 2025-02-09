@@ -34,48 +34,25 @@ export default function ClassList() {
 
   const { data: classes, isLoading: isClassesLoading } = useQuery<ClassWithStats[]>({
     queryKey: ["/api/classes"],
-    queryFn: async () => {
-      const [classesResponse, branchesResponse] = await Promise.all([
-        fetch("/api/classes"),
-        fetch("/api/branches"),
-      ]);
-
-      if (!classesResponse.ok || !branchesResponse.ok) {
-        throw new Error("Failed to fetch data");
-      }
-
-      const [classes, branches] = await Promise.all([
-        classesResponse.json(),
-        branchesResponse.json(),
-      ]);
-
-      // Return classes with branch info and stats
-      return classes.map((cls: Class) => ({
-        ...cls,
-        branch: branches.find((b: Branch) => b.id === cls.branchId),
-        studentCount: 0, // Will be updated by the server
-        teacherCount: 0, // Will be updated by the server
-      }));
-    },
+    staleTime: 0,
+    refetchInterval: 2000, // Refetch every 2 seconds
+    retry: 3,
   });
 
   const handleDeleteClass = async (classId: number) => {
     if (!confirm("Are you sure you want to delete this class?")) return;
 
     try {
-      // First delete related records
-      await fetch(`/api/classes/${classId}/teachers`, { method: "DELETE" });
-      await fetch(`/api/classes/${classId}/students`, { method: "DELETE" });
-      await fetch(`/api/classes/${classId}/assignments`, { method: "DELETE" });
-
-      // Then delete the class itself
       const response = await fetch(`/api/classes/${classId}`, {
         method: "DELETE",
       });
 
       if (!response.ok) throw new Error("Failed to delete class");
 
+      // Invalidate queries
       queryClient.invalidateQueries({ queryKey: ["/api/classes"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/classes/${classId}`] });
+
       toast({
         title: "Success",
         description: "Class deleted successfully",
