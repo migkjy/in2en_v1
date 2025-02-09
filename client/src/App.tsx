@@ -15,6 +15,7 @@ import ReviewAssignment from "@/pages/assignments/review";
 import BranchList from "@/pages/branches/list";
 import BranchDetail from "@/pages/branches/branch-detail";
 import ClassList from "@/pages/classes/list";
+import ClassDetail from "@/pages/classes/[id]"; // Added import
 import TeacherList from "@/pages/teachers/list";
 import TeacherDetail from "@/pages/teachers/teacher-detail";
 import StudentList from "@/pages/students/list";
@@ -43,6 +44,11 @@ function Router() {
       <ProtectedRoute 
         path="/admin/classes"
         component={ClassList}
+        allowedRole="ADMIN"
+      />
+      <ProtectedRoute 
+        path="/admin/classes/:id" // New route added
+        component={ClassDetail}
         allowedRole="ADMIN"
       />
       <ProtectedRoute 

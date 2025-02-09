@@ -40,7 +40,6 @@ export default function ClassList() {
       const classes = await classesResponse.json();
       const branches = await branchesResponse.json();
 
-      // Combine class data with branch data
       return classes.map((cls: Class) => ({
         ...cls,
         branch: branches.find((b: Branch) => b.id === cls.branchId),
@@ -127,6 +126,14 @@ export default function ClassList() {
                   <TableCell>{cls.englishLevel || "-"}</TableCell>
                   <TableCell>{cls.ageGroup || "-"}</TableCell>
                   <TableCell>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mr-2"
+                      onClick={() => setLocation(`/admin/classes/${cls.id}`)}
+                    >
+                      View
+                    </Button>
                     <Button
                       variant="outline"
                       size="sm"
