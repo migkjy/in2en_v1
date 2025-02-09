@@ -404,10 +404,21 @@ export function registerRoutes(app: Express): Server {
         delete updateData.password;
       }
 
-      const student = await storage.updateUser(Number(req.params.id), {
+      // Convert fields to match database column names
+      const studentData = {
         ...updateData,
         role: UserRole.STUDENT,
-      });
+        branch_id: updateData.branchId,
+        phone_number: updateData.phoneNumber,
+        birth_date: updateData.birthDate,
+      };
+
+      // Remove client-side field names
+      delete studentData.branchId;
+      delete studentData.phoneNumber;
+      delete studentData.birthDate;
+
+      const student = await storage.updateUser(Number(req.params.id), studentData);
 
       if (!student) {
         return res.status(404).json({ message: "Student not found" });
