@@ -32,7 +32,7 @@ import { useToast } from "@/hooks/use-toast";
 const createStudentSchema = insertUserSchema.extend({
   phoneNumber: z.string().optional(),
   birthDate: z.string().optional(),
-  branch: z.number().optional(),
+  branch_id: z.number().optional(),
 }).omit({ role: true });
 
 type CreateStudentForm = z.infer<typeof createStudentSchema>;
@@ -67,7 +67,7 @@ export function CreateStudentDialog({ open, onOpenChange, student }: CreateStude
       phoneNumber: "",
       birthDate: "",
       password: "",
-      branch: undefined,
+      branch_id: undefined,
     },
   });
 
@@ -79,7 +79,7 @@ export function CreateStudentDialog({ open, onOpenChange, student }: CreateStude
         email: student.email,
         phoneNumber: student.phone_number || "",
         birthDate: student.birth_date || "",
-        branch: student.branch,
+        branch_id: student.branch_id,
       });
 
       form.reset({
@@ -88,7 +88,7 @@ export function CreateStudentDialog({ open, onOpenChange, student }: CreateStude
         phoneNumber: student.phone_number || "",
         birthDate: student.birth_date || "",
         password: "", // Always empty for security
-        branch: student.branch ? Number(student.branch) : undefined,
+        branch_id: student.branch_id ? Number(student.branch_id) : undefined,
       });
     } else {
       form.reset({
@@ -97,7 +97,7 @@ export function CreateStudentDialog({ open, onOpenChange, student }: CreateStude
         phoneNumber: "",
         birthDate: "",
         password: "",
-        branch: undefined,
+        branch_id: undefined,
       });
     }
   }, [student, form]);
@@ -272,7 +272,7 @@ export function CreateStudentDialog({ open, onOpenChange, student }: CreateStude
 
             <FormField
               control={form.control}
-              name="branch"
+              name="branch_id"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Branch (Optional)</FormLabel>
@@ -286,7 +286,7 @@ export function CreateStudentDialog({ open, onOpenChange, student }: CreateStude
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {branches?.map((branch) => (
+                      {branches?.map((branch: any) => (
                         <SelectItem key={branch.id} value={branch.id.toString()}>
                           {branch.name}
                         </SelectItem>

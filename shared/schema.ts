@@ -22,6 +22,9 @@ export const users = pgTable("users", {
   name: varchar("name", { length: 256 }).notNull(),
   password: varchar("password", { length: 256 }).notNull(),
   role: text("role", { enum: ["ADMIN", "TEACHER", "STUDENT"] }).notNull(),
+  branch_id: integer("branch_id").references(() => branches.id),
+  phone_number: varchar("phone_number", { length: 20 }),
+  birth_date: varchar("birth_date", { length: 20 }),
 });
 
 export const branches = pgTable("branches", {
