@@ -32,7 +32,7 @@ import { useToast } from "@/hooks/use-toast";
 const createStudentSchema = insertUserSchema.extend({
   phoneNumber: z.string().optional(),
   birthDate: z.string().optional(),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  password: z.string().min(6, "Password must be at least 6 characters").optional(),
   branchId: z.number().optional(),
 }).omit({ role: true });
 
@@ -60,8 +60,15 @@ export function CreateStudentDialog({ open, onOpenChange, student }: CreateStude
     },
   });
 
+  // Create a schema that requires password for new students
+  const formSchema = student 
+    ? createStudentSchema 
+    : createStudentSchema.extend({
+        password: z.string().min(6, "Password must be at least 6 characters"),
+      });
+
   const form = useForm<CreateStudentForm>({
-    resolver: zodResolver(createStudentSchema),
+    resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
       email: "",
@@ -142,7 +149,7 @@ export function CreateStudentDialog({ open, onOpenChange, student }: CreateStude
     mutationFn: async (data: CreateStudentForm) => {
       setIsLoading(true);
       try {
-        // If password is empty, remove it from the request
+        // Only include password in the request if it's not empty
         const requestData = { ...data };
         if (!requestData.password) {
           delete requestData.password;
