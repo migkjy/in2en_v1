@@ -66,7 +66,7 @@ export const assignments = pgTable("assignments", {
   title: varchar("title", { length: 256 }).notNull(),
   description: text("description"),
   classId: integer("class_id").references(() => classes.id),
-  teacherId: integer("teacher_id").references(() => users.id),
+  userId: integer("user_id").references(() => users.id),
   dueDate: timestamp("due_date", { mode: 'string' }),
   status: varchar("status", { length: 50 }).default("draft"),
 });

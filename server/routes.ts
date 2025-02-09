@@ -236,7 +236,7 @@ export function registerRoutes(app: Express): Server {
   app.post("/api/assignments", requireRole([UserRole.ADMIN, UserRole.TEACHER]), async (req, res) => {
     const assignment = await storage.createAssignment({
       ...req.body,
-      teacherId: req.user?.id
+      userId: req.user?.id
     });
     res.status(201).json(assignment);
   });
