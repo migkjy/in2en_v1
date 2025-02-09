@@ -67,7 +67,7 @@ export const assignments = pgTable("assignments", {
   description: text("description"),
   classId: integer("class_id").references(() => classes.id),
   teacherId: integer("teacher_id").references(() => users.id),
-  dueDate: timestamp("due_date"),
+  dueDate: timestamp("due_date", { mode: 'string' }),
   status: varchar("status", { length: 50 }).default("draft"),
 });
 
@@ -145,7 +145,6 @@ export const insertTeacherBranchAccessSchema = createInsertSchema(teacherBranchA
 export const insertTeacherClassAccessSchema = createInsertSchema(teacherClassAccess);
 export const insertClassLeadTeacherSchema = createInsertSchema(classLeadTeachers);
 export const insertStudentClassAccessSchema = createInsertSchema(studentClassAccess);
-
 
 // Type definitions
 export type User = typeof users.$inferSelect;

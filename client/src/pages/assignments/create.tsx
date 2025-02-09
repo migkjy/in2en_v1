@@ -13,6 +13,8 @@ import { useAuth } from "@/hooks/use-auth";
 import type { Class } from "@shared/schema";
 import { z } from "zod";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { format } from 'date-fns'; // Assuming date-fns is used
+
 
 const createAssignmentSchema = insertAssignmentSchema.omit({ 
   id: true
@@ -36,7 +38,7 @@ export default function CreateAssignment() {
       // Convert empty string to null for dueDate and add teacherId
       const payload = {
         ...data,
-        dueDate: data.dueDate ? new Date(data.dueDate).toISOString() : null,
+        dueDate: data.dueDate ? format(new Date(data.dueDate), "yyyy-MM-dd'T'HH:mm:ss.SSSxxx") : null,
         teacherId: user?.id
       };
       const res = await apiRequest("POST", "/api/assignments", payload);
