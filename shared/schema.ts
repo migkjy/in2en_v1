@@ -114,6 +114,26 @@ export const classLeadTeachersRelations = relations(classLeadTeachers, ({ one })
   }),
 }));
 
+// Add student class access table
+export const studentClassAccess = pgTable("student_class_access", {
+  id: serial("id").primaryKey(),
+  studentId: integer("student_id").notNull().references(() => users.id),
+  classId: integer("class_id").notNull().references(() => classes.id),
+});
+
+// Add relations for student class access
+export const studentClassAccessRelations = relations(studentClassAccess, ({ one }) => ({
+  student: one(users, {
+    fields: [studentClassAccess.studentId],
+    references: [users.id],
+  }),
+  class: one(classes, {
+    fields: [studentClassAccess.classId],
+    references: [classes.id],
+  }),
+}));
+
+
 // Schema definitions
 export const insertUserSchema = createInsertSchema(users);
 export const insertBranchSchema = createInsertSchema(branches);
@@ -124,6 +144,8 @@ export const insertCommentSchema = createInsertSchema(comments);
 export const insertTeacherBranchAccessSchema = createInsertSchema(teacherBranchAccess);
 export const insertTeacherClassAccessSchema = createInsertSchema(teacherClassAccess);
 export const insertClassLeadTeacherSchema = createInsertSchema(classLeadTeachers);
+export const insertStudentClassAccessSchema = createInsertSchema(studentClassAccess);
+
 
 // Type definitions
 export type User = typeof users.$inferSelect;
@@ -135,6 +157,7 @@ export type Comment = typeof comments.$inferSelect;
 export type TeacherBranchAccess = typeof teacherBranchAccess.$inferSelect;
 export type TeacherClassAccess = typeof teacherClassAccess.$inferSelect;
 export type ClassLeadTeacher = typeof classLeadTeachers.$inferSelect;
+export type StudentClassAccess = typeof studentClassAccess.$inferSelect;
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertBranch = z.infer<typeof insertBranchSchema>;
@@ -145,3 +168,4 @@ export type InsertComment = z.infer<typeof insertCommentSchema>;
 export type InsertTeacherBranchAccess = z.infer<typeof insertTeacherBranchAccessSchema>;
 export type InsertTeacherClassAccess = z.infer<typeof insertTeacherClassAccessSchema>;
 export type InsertClassLeadTeacher = z.infer<typeof insertClassLeadTeacherSchema>;
+export type InsertStudentClassAccess = z.infer<typeof insertStudentClassAccessSchema>;

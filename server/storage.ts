@@ -1,4 +1,4 @@
-import { users, branches, classes, assignments, submissions, comments, UserRole, teacherBranchAccess, teacherClassAccess, classLeadTeachers } from "@shared/schema";
+import { users, branches, classes, assignments, submissions, comments, UserRole, teacherBranchAccess, teacherClassAccess, classLeadTeachers, studentClassAccess } from "@shared/schema";
 import type { User, Branch, Class, Assignment, Submission, Comment, TeacherBranchAccess, TeacherClassAccess, ClassLeadTeacher } from "@shared/schema";
 import type { InsertUser, InsertClassLeadTeacher } from "@shared/schema";
 import session from "express-session";
@@ -59,6 +59,11 @@ export interface IStorage {
   removeLeadTeacher(classId: number, teacherId: number): Promise<void>;
   getClassLeadTeachers(classId: number): Promise<User[]>;
   isLeadTeacher(classId: number, teacherId: number): Promise<boolean>;
+
+  // Add new methods for student class management
+  assignStudentToClass(classId: number, studentId: number): Promise<void>;
+  removeStudentFromClass(classId: number, studentId: number): Promise<void>;
+  getClassStudents(classId: number): Promise<User[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -483,6 +488,84 @@ export class DatabaseStorage implements IStorage {
       );
 
     return !!result;
+  }
+
+  async assignStudentToClass(classId: number, studentId: number): Promise<void> {
+    try {
+      // First verify the class exists
+      const [cls] = await db
+        .select()
+        .from(classes)
+        .where(eq(classes.id, classId));
+
+      if (!cls) throw new Error("Class not found");
+
+      // Then verify the student exists and is actually a student
+      const [student] = await db
+        .select()
+        .from(users)
+        .where(and(
+          eq(users.id, studentId),
+          eq(users.role, UserRole.STUDENT)
+        ));
+
+      if (!student) throw new Error("Student not found");
+
+      // Then create the relationship
+      await db
+        .insert(studentClassAccess)
+        .values({
+          studentId,
+          classId,
+        })
+        .onConflictDoNothing();
+    } catch (error) {
+      console.error("Error in assignStudentToClass:", error);
+      throw error;
+    }
+  }
+
+  async removeStudentFromClass(classId: number, studentId: number): Promise<void> {
+    try {
+      await db
+        .delete(studentClassAccess)
+        .where(
+          and(
+            eq(studentClassAccess.classId, classId),
+            eq(studentClassAccess.studentId, studentId)
+          )
+        );
+    } catch (error) {
+      console.error("Error in removeStudentFromClass:", error);
+      throw error;
+    }
+  }
+
+  async getClassStudents(classId: number): Promise<User[]> {
+    try {
+      const students = await db
+        .select({
+          id: users.id,
+          name: users.name,
+          email: users.email,
+          role: users.role,
+          branchId: users.branchId,
+        })
+        .from(users)
+        .innerJoin(
+          studentClassAccess,
+          and(
+            eq(studentClassAccess.studentId, users.id),
+            eq(studentClassAccess.classId, classId)
+          )
+        )
+        .where(eq(users.role, UserRole.STUDENT));
+
+      return students;
+    } catch (error) {
+      console.error("Error in getClassStudents:", error);
+      throw error;
+    }
   }
 }
 

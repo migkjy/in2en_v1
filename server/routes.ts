@@ -168,9 +168,37 @@ export function registerRoutes(app: Express): Server {
       const students = await storage.getClassStudents(Number(req.params.id));
       res.json(students);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch class students" });
+      console.error("Error fetching class students:", error);
+      res.status(500).json({ message: `Failed to fetch class students: ${error.message}` });
     }
   });
+
+  app.put("/api/classes/:id/students/:studentId", requireRole([UserRole.ADMIN]), async (req, res) => {
+    try {
+      await storage.assignStudentToClass(
+        Number(req.params.id),
+        Number(req.params.studentId)
+      );
+      res.json({ message: "Student added to class successfully" });
+    } catch (error) {
+      console.error("Error adding student to class:", error);
+      res.status(500).json({ message: `Failed to add student: ${error.message}` });
+    }
+  });
+
+  app.delete("/api/classes/:id/students/:studentId", requireRole([UserRole.ADMIN]), async (req, res) => {
+    try {
+      await storage.removeStudentFromClass(
+        Number(req.params.id),
+        Number(req.params.studentId)
+      );
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error removing student from class:", error);
+      res.status(500).json({ message: `Failed to remove student: ${error.message}` });
+    }
+  });
+
 
   // Add these routes after the existing class routes
   app.put("/api/classes/:id/teachers/:teacherId", requireRole([UserRole.ADMIN]), async (req, res) => {
@@ -196,30 +224,6 @@ export function registerRoutes(app: Express): Server {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ message: "Failed to remove teacher from class" });
-    }
-  });
-
-  app.put("/api/classes/:id/students/:studentId", requireRole([UserRole.ADMIN]), async (req, res) => {
-    try {
-      await storage.addStudentToClass(
-        Number(req.params.id),
-        Number(req.params.studentId)
-      );
-      res.json({ message: "Student added to class successfully" });
-    } catch (error) {
-      res.status(500).json({ message: "Failed to add student to class" });
-    }
-  });
-
-  app.delete("/api/classes/:id/students/:studentId", requireRole([UserRole.ADMIN]), async (req, res) => {
-    try {
-      await storage.removeStudentFromClass(
-        Number(req.params.id),
-        Number(req.params.studentId)
-      );
-      res.status(204).send();
-    } catch (error) {
-      res.status(500).json({ message: "Failed to remove student from class" });
     }
   });
 
