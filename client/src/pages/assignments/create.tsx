@@ -36,7 +36,7 @@ export default function CreateAssignment() {
       // Convert empty string to null for dueDate and add teacherId
       const payload = {
         ...data,
-        dueDate: data.dueDate ? new Date(data.dueDate).toISOString() : null,
+        dueDate: data.dueDate || null,
         teacherId: user?.id
       };
       const res = await apiRequest("POST", "/api/assignments", payload);
