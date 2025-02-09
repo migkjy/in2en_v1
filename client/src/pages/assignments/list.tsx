@@ -33,7 +33,7 @@ export default function AssignmentList() {
       const params = new URLSearchParams();
       if (selectedBranch) params.append("branchId", selectedBranch);
       if (selectedClass) params.append("classId", selectedClass);
-      
+
       const response = await fetch(`/api/assignments?${params.toString()}`);
       if (!response.ok) throw new Error("Failed to fetch assignments");
       return response.json();
@@ -49,7 +49,7 @@ export default function AssignmentList() {
     queryFn: async () => {
       const params = new URLSearchParams();
       if (selectedBranch) params.append("branchId", selectedBranch);
-      
+
       const response = await fetch(`/api/classes?${params.toString()}`);
       if (!response.ok) throw new Error("Failed to fetch classes");
       return response.json();
@@ -81,7 +81,7 @@ export default function AssignmentList() {
                       <SelectValue placeholder="All Branches" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All Branches</SelectItem>
+                      <SelectItem value="all">All Branches</SelectItem>
                       {branches?.map((branch) => (
                         <SelectItem key={branch.id} value={branch.id.toString()}>
                           {branch.name}
@@ -100,7 +100,7 @@ export default function AssignmentList() {
                       <SelectValue placeholder="All Classes" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All Classes</SelectItem>
+                      <SelectItem value="all">All Classes</SelectItem>
                       {classes?.map((cls) => (
                         <SelectItem key={cls.id} value={cls.id.toString()}>
                           {cls.name} - {cls.englishLevel}
