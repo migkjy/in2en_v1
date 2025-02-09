@@ -62,6 +62,12 @@ export default function ClassDetail() {
   const { data: assignedStudents = [] } = useQuery<User[]>({
     queryKey: ["/api/classes", classId, "students"],
     enabled: !!classId,
+    queryFn: async () => {
+      if (!classId) throw new Error("Class ID is required");
+      const response = await fetch(`/api/classes/${classId}/students`);
+      if (!response.ok) throw new Error("Failed to fetch assigned students");
+      return response.json();
+    },
   });
 
   if (isClassLoading) {
