@@ -352,11 +352,13 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Add these routes after the existing teacher routes
-  app.get("/api/students", requireRole([UserRole.ADMIN]), async (req, res) => {
+  app.post("/api/students", requireRole([UserRole.ADMIN]), async (req, res) => {
     try {
-      const users = await storage.listUsers();
-      const students = users.filter(user => user.role === UserRole.STUDENT);
-      res.json(students);
+      const student = await storage.createUser({
+        ...req.body,
+        role: UserRole.STUDENT,
+      });
+      res.status(201).json(student);
     } catch (error) {
       if (error instanceof Error) {
         res.status(400).json({ message: error.message });
@@ -366,14 +368,27 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.post("/api/students", requireRole([UserRole.ADMIN]), async (req, res) => {
+  app.put("/api/students/:id", requireRole([UserRole.ADMIN]), async (req, res) => {
     try {
-      const student = await storage.createUser({
-        ...req.body,
+      console.log("Received update request body:", req.body);
+
+      // If password is empty string or undefined, remove it from the request body
+      const updateData = { ...req.body };
+      if (!updateData.password) {
+        delete updateData.password;
+      }
+
+      const student = await storage.updateUser(Number(req.params.id), {
+        ...updateData,
         role: UserRole.STUDENT,
       });
-      res.status(201).json(student);
+
+      if (!student) {
+        return res.status(404).json({ message: "Student not found" });
+      }
+      res.json(student);
     } catch (error) {
+      console.error("Error updating student:", error);
       if (error instanceof Error) {
         res.status(400).json({ message: error.message });
       } else {
@@ -395,40 +410,6 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Add this route after the existing student routes
-  app.put("/api/students/:id", requireRole([UserRole.ADMIN]), async (req, res) => {
-    try {
-      console.log("Received update request body:", req.body);
-
-      // If password is empty string or undefined, remove it from the request body
-      const updateData = { ...req.body };
-      if (!updateData.password) {
-        delete updateData.password;
-      }
-
-      // Use the database column names directly from the request
-      const { branchId, phoneNumber, birthDate, ...rest } = updateData;
-      const student = await storage.updateUser(Number(req.params.id), {
-        ...rest,
-        branchId: branchId ? Number(branchId) : null,
-        phoneNumber: phoneNumber || null,
-        birthDate: birthDate || null,
-        role: UserRole.STUDENT,
-      });
-
-      if (!student) {
-        return res.status(404).json({ message: "Student not found" });
-      }
-      res.json(student);
-    } catch (error) {
-      console.error("Error updating student:", error);
-      if (error instanceof Error) {
-        res.status(400).json({ message: error.message });
-      } else {
-        res.status(500).json({ message: "An unknown error occurred" });
-      }
-    }
-  });
 
   const httpServer = createServer(app);
   return httpServer;

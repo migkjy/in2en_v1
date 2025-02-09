@@ -32,7 +32,7 @@ import { useToast } from "@/hooks/use-toast";
 const createStudentSchema = insertUserSchema.extend({
   phoneNumber: z.string().optional(),
   birthDate: z.string().optional(),
-  branchId: z.number().optional(), // Changed to branchId
+  branch: z.number().optional(),
 }).omit({ role: true });
 
 type CreateStudentForm = z.infer<typeof createStudentSchema>;
@@ -59,24 +59,15 @@ export function CreateStudentDialog({ open, onOpenChange, student }: CreateStude
     },
   });
 
-  // Create a schema that requires password for new students
-  const formSchema = student
-    ? createStudentSchema.extend({
-        password: z.string().min(6, "Password must be at least 6 characters").optional().or(z.literal('')),
-      })
-    : createStudentSchema.extend({
-        password: z.string().min(6, "Password must be at least 6 characters"),
-      });
-
   const form = useForm<CreateStudentForm>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(createStudentSchema),
     defaultValues: {
       name: "",
       email: "",
       phoneNumber: "",
       birthDate: "",
       password: "",
-      branchId: undefined, // Changed to branchId
+      branch: undefined,
     },
   });
 
@@ -88,7 +79,7 @@ export function CreateStudentDialog({ open, onOpenChange, student }: CreateStude
         email: student.email,
         phoneNumber: student.phone_number || "",
         birthDate: student.birth_date || "",
-        branchId: student.branch_id, // Changed to branch_id
+        branch: student.branch,
       });
 
       form.reset({
@@ -97,7 +88,7 @@ export function CreateStudentDialog({ open, onOpenChange, student }: CreateStude
         phoneNumber: student.phone_number || "",
         birthDate: student.birth_date || "",
         password: "", // Always empty for security
-        branchId: student.branch_id, // Changed to branch_id
+        branch: student.branch ? Number(student.branch) : undefined,
       });
     } else {
       form.reset({
@@ -106,7 +97,7 @@ export function CreateStudentDialog({ open, onOpenChange, student }: CreateStude
         phoneNumber: "",
         birthDate: "",
         password: "",
-        branchId: undefined, // Changed to branchId
+        branch: undefined,
       });
     }
   }, [student, form]);
@@ -120,7 +111,7 @@ export function CreateStudentDialog({ open, onOpenChange, student }: CreateStude
           ...data,
           phone_number: data.phoneNumber,
           birth_date: data.birthDate,
-          branch_id: data.branchId, // Changed to branch_id
+          role: "STUDENT",
         };
 
         // Remove empty fields
@@ -175,7 +166,6 @@ export function CreateStudentDialog({ open, onOpenChange, student }: CreateStude
           ...data,
           phone_number: data.phoneNumber,
           birth_date: data.birthDate,
-          branch_id: data.branchId, // Changed to branch_id
           role: "STUDENT",
         };
 
@@ -266,13 +256,13 @@ export function CreateStudentDialog({ open, onOpenChange, student }: CreateStude
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{student ? "New Password (Optional)" : "Temporary Password"}</FormLabel>
+                  <FormLabel>{student ? "New Password (Optional)" : "Password"}</FormLabel>
                   <FormControl>
                     <Input
                       type="password"
                       {...field}
                       disabled={isLoading}
-                      placeholder={student ? "Leave blank to keep current password" : "Enter temporary password"}
+                      placeholder={student ? "Leave blank to keep current password" : "Enter password"}
                     />
                   </FormControl>
                   <FormMessage />
@@ -282,7 +272,7 @@ export function CreateStudentDialog({ open, onOpenChange, student }: CreateStude
 
             <FormField
               control={form.control}
-              name="branchId" // Changed to branchId
+              name="branch"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Branch (Optional)</FormLabel>
