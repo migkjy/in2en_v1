@@ -33,8 +33,12 @@ export default function AssignmentList() {
     queryKey: ["/api/assignments", selectedBranch, selectedClass],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (selectedBranch) params.append("branchId", selectedBranch);
-      if (selectedClass) params.append("classId", selectedClass);
+      if (selectedBranch && selectedBranch !== "all") {
+        params.append("branchId", selectedBranch);
+      }
+      if (selectedClass && selectedClass !== "all") {
+        params.append("classId", selectedClass);
+      }
 
       const response = await fetch(`/api/assignments?${params.toString()}`);
       if (!response.ok) throw new Error("Failed to fetch assignments");
@@ -50,7 +54,9 @@ export default function AssignmentList() {
     queryKey: ["/api/classes", selectedBranch],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (selectedBranch) params.append("branchId", selectedBranch);
+      if (selectedBranch && selectedBranch !== "all") {
+        params.append("branchId", selectedBranch);
+      }
 
       const response = await fetch(`/api/classes?${params.toString()}`);
       if (!response.ok) throw new Error("Failed to fetch classes");

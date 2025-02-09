@@ -4,7 +4,9 @@ import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { extractTextFromImage, generateFeedback } from "./openai";
 import multer from "multer";
-import { UserRole } from "@shared/schema";
+import { UserRole, classes } from "@shared/schema";
+import { eq } from 'drizzle-orm';
+import { db } from './db';
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -240,8 +242,27 @@ export function registerRoutes(app: Express): Server {
   });
 
   app.get("/api/assignments", async (req, res) => {
-    const { classId } = req.query;
-    const assignments = await storage.listAssignments(classId ? Number(classId) : undefined);
+    const { classId, branchId } = req.query;
+    let assignments = await storage.listAssignments(classId ? Number(classId) : undefined);
+
+    // If branchId is provided, filter assignments by branch
+    if (branchId && branchId !== 'all') {
+      const filteredAssignments = [];
+      for (const assignment of assignments) {
+        if (!assignment.classId) continue;
+
+        const [assignmentClass] = await db
+          .select()
+          .from(classes)
+          .where(eq(classes.id, assignment.classId));
+
+        if (assignmentClass && assignmentClass.branchId === Number(branchId)) {
+          filteredAssignments.push(assignment);
+        }
+      }
+      assignments = filteredAssignments;
+    }
+
     res.json(assignments);
   });
 
