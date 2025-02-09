@@ -12,6 +12,7 @@ import StudentDashboard from "@/pages/dashboard/student";
 import CreateAssignment from "@/pages/assignments/create";
 import UploadAssignment from "@/pages/assignments/upload";
 import ReviewAssignment from "@/pages/assignments/review";
+import AssignmentList from "@/pages/assignments/list";
 import BranchList from "@/pages/branches/list";
 import BranchDetail from "@/pages/branches/branch-detail";
 import ClassList from "@/pages/classes/list";
@@ -66,11 +67,21 @@ function Router() {
         component={StudentList}
         allowedRole="ADMIN"
       />
+      <ProtectedRoute 
+        path="/admin/assignments"
+        component={AssignmentList}
+        allowedRole="ADMIN"
+      />
 
       {/* Teacher Routes */} 
       <ProtectedRoute 
         path="/teacher" 
         component={TeacherDashboard} 
+        allowedRole="TEACHER"
+      />
+      <ProtectedRoute 
+        path="/assignments"
+        component={AssignmentList}
         allowedRole="TEACHER"
       />
       <ProtectedRoute 
