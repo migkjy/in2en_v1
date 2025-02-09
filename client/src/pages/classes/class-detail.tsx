@@ -29,6 +29,12 @@ export default function ClassDetail() {
 
   const { data: classData, isLoading: isClassLoading } = useQuery<Class>({
     queryKey: ["/api/classes", classId],
+    queryFn: async () => {
+      if (!classId) throw new Error("Class ID is required");
+      const response = await fetch(`/api/classes/${classId}`);
+      if (!response.ok) throw new Error("Failed to fetch class");
+      return response.json();
+    },
     enabled: !!classId,
   });
 
