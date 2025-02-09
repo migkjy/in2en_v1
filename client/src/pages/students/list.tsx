@@ -116,6 +116,7 @@ export default function StudentList() {
                 <TableHead>ID</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Email</TableHead>
+                <TableHead>Phone Number</TableHead>
                 <TableHead>Branch</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
@@ -126,6 +127,7 @@ export default function StudentList() {
                   <TableCell>{student.id}</TableCell>
                   <TableCell>{student.name}</TableCell>
                   <TableCell>{student.email}</TableCell>
+                  <TableCell>{student.phone_number || "-"}</TableCell>
                   <TableCell>{getBranchName(student.branchId)}</TableCell>
                   <TableCell>
                     <Button
