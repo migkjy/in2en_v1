@@ -1,5 +1,5 @@
-import { users, branches, classes, assignments, submissions, comments, UserRole, teacherBranchAccess, teacherClassAccess, classLeadTeachers, studentClassAccess } from "@shared/schema";
-import type { User, Branch, Class, Assignment, Submission, Comment, TeacherBranchAccess, TeacherClassAccess, ClassLeadTeacher } from "@shared/schema";
+import { users, branches, classes, assignments, submissions, comments, UserRole, teacherBranchAccess, teacherClassAccess, classLeadTeachers, studentClassAccess, englishLevels, ageGroups } from "@shared/schema";
+import type { User, Branch, Class, Assignment, Submission, Comment, TeacherBranchAccess, TeacherClassAccess, ClassLeadTeacher, EnglishLevel, AgeGroup } from "@shared/schema";
 import type { InsertUser, InsertClassLeadTeacher } from "@shared/schema";
 import session from "express-session";
 import { db } from "./db";
@@ -71,6 +71,16 @@ export interface IStorage {
   updateTeacherClassRole(classId: number, teacherId: number, data: { isLead: boolean; hasAccess: boolean }): Promise<void>;
   removeTeacherFromClass(classId: number, teacherId: number): Promise<void>;
   getClassTeachers(classId: number): Promise<(User & { isLead: boolean; hasAccess: boolean; })[]>;
+
+  // English Level operations
+  createEnglishLevel(data: { name: string; description?: string }): Promise<EnglishLevel>;
+  listEnglishLevels(): Promise<EnglishLevel[]>;
+  deleteEnglishLevel(id: number): Promise<void>;
+
+  // Age Group operations
+  createAgeGroup(data: { name: string; description?: string }): Promise<AgeGroup>;
+  listAgeGroups(): Promise<AgeGroup[]>;
+  deleteAgeGroup(id: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -702,6 +712,46 @@ export class DatabaseStorage implements IStorage {
       isLead: leadTeachers.some(lt => lt.teacherId === teacher.id),
       hasAccess: teachersWithAccess.some(ta => ta.teacherId === teacher.id),
     }));
+  }
+
+  // English Level operations
+  async createEnglishLevel(data: { name: string; description?: string }): Promise<EnglishLevel> {
+    const [level] = await db
+      .insert(englishLevels)
+      .values({
+        name: data.name,
+        description: data.description || null,
+      })
+      .returning();
+    return level;
+  }
+
+  async listEnglishLevels(): Promise<EnglishLevel[]> {
+    return await db.select().from(englishLevels);
+  }
+
+  async deleteEnglishLevel(id: number): Promise<void> {
+    await db.delete(englishLevels).where(eq(englishLevels.id, id));
+  }
+
+  // Age Group operations
+  async createAgeGroup(data: { name: string; description?: string }): Promise<AgeGroup> {
+    const [group] = await db
+      .insert(ageGroups)
+      .values({
+        name: data.name,
+        description: data.description || null,
+      })
+      .returning();
+    return group;
+  }
+
+  async listAgeGroups(): Promise<AgeGroup[]> {
+    return await db.select().from(ageGroups);
+  }
+
+  async deleteAgeGroup(id: number): Promise<void> {
+    await db.delete(ageGroups).where(eq(ageGroups.id, id));
   }
 }
 

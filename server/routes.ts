@@ -607,6 +607,86 @@ export function registerRoutes(app: Express): Server {
   });
 
 
+  // English Level routes
+  app.get("/api/english-levels", requireRole([UserRole.ADMIN]), async (req, res) => {
+    try {
+      const levels = await storage.listEnglishLevels();
+      res.json(levels);
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "An unknown error occurred" });
+      }
+    }
+  });
+
+  app.post("/api/english-levels", requireRole([UserRole.ADMIN]), async (req, res) => {
+    try {
+      const level = await storage.createEnglishLevel(req.body);
+      res.json(level);
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "An unknown error occurred" });
+      }
+    }
+  });
+
+  app.delete("/api/english-levels/:id", requireRole([UserRole.ADMIN]), async (req, res) => {
+    try {
+      await storage.deleteEnglishLevel(Number(req.params.id));
+      res.status(204).send();
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "An unknown error occurred" });
+      }
+    }
+  });
+
+  // Age Group routes
+  app.get("/api/age-groups", requireRole([UserRole.ADMIN]), async (req, res) => {
+    try {
+      const groups = await storage.listAgeGroups();
+      res.json(groups);
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "An unknown error occurred" });
+      }
+    }
+  });
+
+  app.post("/api/age-groups", requireRole([UserRole.ADMIN]), async (req, res) => {
+    try {
+      const group = await storage.createAgeGroup(req.body);
+      res.json(group);
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "An unknown error occurred" });
+      }
+    }
+  });
+
+  app.delete("/api/age-groups/:id", requireRole([UserRole.ADMIN]), async (req, res) => {
+    try {
+      await storage.deleteAgeGroup(Number(req.params.id));
+      res.status(204).send();
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "An unknown error occurred" });
+      }
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
