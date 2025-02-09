@@ -231,7 +231,7 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Assignment routes
-  app.post("/api/assignments", requireRole([UserRole.TEACHER]), async (req, res) => {
+  app.post("/api/assignments", requireRole([UserRole.ADMIN, UserRole.TEACHER]), async (req, res) => {
     const assignment = await storage.createAssignment({
       ...req.body,
       teacherId: req.user?.id
