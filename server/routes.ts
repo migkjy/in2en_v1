@@ -159,7 +159,8 @@ export function registerRoutes(app: Express): Server {
       const teachers = await storage.getClassTeachers(Number(req.params.id));
       res.json(teachers);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch class teachers" });
+      console.error("Error fetching class teachers:", error);
+      res.status(500).json({ message: `Failed to fetch class teachers: ${error.message}` });
     }
   });
 
@@ -211,7 +212,8 @@ export function registerRoutes(app: Express): Server {
       );
       res.json({ message: "Teacher role updated successfully" });
     } catch (error) {
-      res.status(500).json({ message: "Failed to update teacher role" });
+      console.error("Error updating teacher role:", error);
+      res.status(500).json({ message: `Failed to update teacher role: ${error.message}` });
     }
   });
 
@@ -223,7 +225,8 @@ export function registerRoutes(app: Express): Server {
       );
       res.status(204).send();
     } catch (error) {
-      res.status(500).json({ message: "Failed to remove teacher from class" });
+      console.error("Error removing teacher from class:", error);
+      res.status(500).json({ message: `Failed to remove teacher: ${error.message}` });
     }
   });
 

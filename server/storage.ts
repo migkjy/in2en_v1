@@ -64,6 +64,11 @@ export interface IStorage {
   assignStudentToClass(classId: number, studentId: number): Promise<void>;
   removeStudentFromClass(classId: number, studentId: number): Promise<void>;
   getClassStudents(classId: number): Promise<User[]>;
+
+  //New methods for teacher class management
+  updateTeacherClassRole(classId: number, teacherId: number, data: { isLead: boolean; hasAccess: boolean }): Promise<void>;
+  removeTeacherFromClass(classId: number, teacherId: number): Promise<void>;
+  getClassTeachers(classId: number): Promise<(User & { isLead: boolean; hasAccess: boolean; })[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -185,8 +190,8 @@ export class DatabaseStorage implements IStorage {
         address: branches.address,
       },
     })
-    .from(classes)
-    .leftJoin(branches, eq(classes.branchId, branches.id));
+      .from(classes)
+      .leftJoin(branches, eq(classes.branchId, branches.id));
 
     if (branchId) {
       return await baseQuery.where(eq(classes.branchId, branchId));
@@ -566,6 +571,101 @@ export class DatabaseStorage implements IStorage {
       console.error("Error in getClassStudents:", error);
       throw error;
     }
+  }
+
+  async updateTeacherClassRole(
+    classId: number,
+    teacherId: number,
+    { isLead, hasAccess }: { isLead: boolean; hasAccess: boolean }
+  ): Promise<void> {
+    await db.transaction(async (tx) => {
+      // Handle lead teacher status
+      if (isLead) {
+        await tx
+          .insert(classLeadTeachers)
+          .values({ classId, teacherId })
+          .onConflictDoNothing();
+      } else {
+        await tx
+          .delete(classLeadTeachers)
+          .where(
+            and(
+              eq(classLeadTeachers.classId, classId),
+              eq(classLeadTeachers.teacherId, teacherId)
+            )
+          );
+      }
+
+      // Handle access status
+      if (hasAccess) {
+        await tx
+          .insert(teacherClassAccess)
+          .values({ classId, teacherId })
+          .onConflictDoNothing();
+      } else {
+        await tx
+          .delete(teacherClassAccess)
+          .where(
+            and(
+              eq(teacherClassAccess.classId, classId),
+              eq(teacherClassAccess.teacherId, teacherId)
+            )
+          );
+      }
+    });
+  }
+
+  async removeTeacherFromClass(classId: number, teacherId: number): Promise<void> {
+    await db.transaction(async (tx) => {
+      // Remove from lead teachers
+      await tx
+        .delete(classLeadTeachers)
+        .where(
+          and(
+            eq(classLeadTeachers.classId, classId),
+            eq(classLeadTeachers.teacherId, teacherId)
+          )
+        );
+
+      // Remove from class access
+      await tx
+        .delete(teacherClassAccess)
+        .where(
+          and(
+            eq(teacherClassAccess.classId, classId),
+            eq(teacherClassAccess.teacherId, teacherId)
+          )
+        );
+    });
+  }
+
+  async getClassTeachers(classId: number): Promise<(User & { isLead: boolean; hasAccess: boolean; })[]> {
+    const teachers = await db
+      .select({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        role: users.role,
+        branchId: users.branchId,
+      })
+      .from(users)
+      .where(eq(users.role, UserRole.TEACHER));
+
+    const leadTeachers = await db
+      .select()
+      .from(classLeadTeachers)
+      .where(eq(classLeadTeachers.classId, classId));
+
+    const teachersWithAccess = await db
+      .select()
+      .from(teacherClassAccess)
+      .where(eq(teacherClassAccess.classId, classId));
+
+    return teachers.map(teacher => ({
+      ...teacher,
+      isLead: leadTeachers.some(lt => lt.teacherId === teacher.id),
+      hasAccess: teachersWithAccess.some(ta => ta.teacherId === teacher.id),
+    }));
   }
 }
 
