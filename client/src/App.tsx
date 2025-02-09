@@ -72,6 +72,11 @@ function Router() {
         component={AssignmentList}
         allowedRole="ADMIN"
       />
+      <ProtectedRoute 
+        path="/admin/assignments/create"
+        component={CreateAssignment}
+        allowedRole="ADMIN"
+      />
 
       {/* Teacher Routes */} 
       <ProtectedRoute 

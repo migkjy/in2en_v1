@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/use-auth";
 import {
   Table,
   TableBody,
@@ -24,6 +25,7 @@ import { useState } from "react";
 
 export default function AssignmentList() {
   const [, navigate] = useLocation();
+  const { user } = useAuth();
   const [selectedBranch, setSelectedBranch] = useState<string>("");
   const [selectedClass, setSelectedClass] = useState<string>("");
 
@@ -56,6 +58,11 @@ export default function AssignmentList() {
     },
   });
 
+  const handleCreateAssignment = () => {
+    const basePath = user?.role === "ADMIN" ? "/admin" : "/teacher";
+    navigate(`${basePath}/assignments/create`);
+  };
+
   return (
     <div className="flex h-screen">
       <Sidebar className="w-64" />
@@ -64,7 +71,7 @@ export default function AssignmentList() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Assignments Management</CardTitle>
-              <Button onClick={() => navigate("/teacher/assignments/create")}>
+              <Button onClick={handleCreateAssignment}>
                 Create New Assignment
               </Button>
             </CardHeader>
@@ -136,7 +143,7 @@ export default function AssignmentList() {
                         key={assignment.id}
                         className="cursor-pointer"
                         onClick={() =>
-                          navigate(`/admin/assignments/${assignment.id}`)
+                          navigate(`${user?.role.toLowerCase()}/assignments/${assignment.id}`)
                         }
                       >
                         <TableCell>{assignment.title}</TableCell>
