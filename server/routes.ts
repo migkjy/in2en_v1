@@ -93,8 +93,30 @@ export function registerRoutes(app: Express): Server {
   // Class routes
   app.get("/api/classes", requireRole([UserRole.ADMIN, UserRole.TEACHER]), async (req, res) => {
     const { branchId } = req.query;
-    const classes = await storage.listClasses(branchId ? Number(branchId) : undefined);
-    res.json(classes);
+    try {
+      const classes = await storage.listClasses(branchId ? Number(branchId) : undefined);
+
+      // Get counts for each class
+      const classesWithCounts = await Promise.all(
+        classes.map(async (cls) => {
+          const [students, teachers] = await Promise.all([
+            storage.getClassStudents(cls.id),
+            storage.getClassTeachers(cls.id)
+          ]);
+
+          return {
+            ...cls,
+            studentCount: students.length,
+            teacherCount: teachers.length
+          };
+        })
+      );
+
+      res.json(classesWithCounts);
+    } catch (error) {
+      console.error("Error fetching classes:", error);
+      res.status(500).json({ message: "Failed to fetch classes" });
+    }
   });
 
   app.post("/api/classes", requireRole([UserRole.ADMIN]), async (req, res) => {
