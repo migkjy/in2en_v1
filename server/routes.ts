@@ -392,6 +392,12 @@ export function registerRoutes(app: Express): Server {
         delete updateData.password;
       }
 
+      // Convert branch_id to number if it exists
+      if (updateData.branch_id) {
+        updateData.branchId = Number(updateData.branch_id);
+        delete updateData.branch_id;
+      }
+
       const student = await storage.updateUser(Number(req.params.id), {
         ...updateData,
         role: UserRole.STUDENT,
