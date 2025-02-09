@@ -234,36 +234,46 @@ export function registerRoutes(app: Express): Server {
 
   // Assignment routes
   app.post("/api/assignments", requireRole([UserRole.ADMIN, UserRole.TEACHER]), async (req, res) => {
-    const assignment = await storage.createAssignment({
-      ...req.body,
-      userId: req.user?.id
-    });
-    res.status(201).json(assignment);
+    try {
+      const assignment = await storage.createAssignment({
+        ...req.body,
+        userId: req.user?.id
+      });
+      res.status(201).json(assignment);
+    } catch (error) {
+      console.error("Error creating assignment:", error);
+      res.status(500).json({ message: "Failed to create assignment" });
+    }
   });
 
   app.get("/api/assignments", async (req, res) => {
-    const { classId, branchId } = req.query;
-    let assignments = await storage.listAssignments(classId ? Number(classId) : undefined);
+    try {
+      const { classId, branchId } = req.query;
+      let assignments = await storage.listAssignments(classId ? Number(classId) : undefined);
 
-    // If branchId is provided, filter assignments by branch
-    if (branchId && branchId !== 'all') {
-      const filteredAssignments = [];
-      for (const assignment of assignments) {
-        if (!assignment.classId) continue;
+      // If branchId is provided, filter assignments by branch
+      if (branchId && branchId !== 'all') {
+        const filteredAssignments = [];
+        for (const assignment of assignments) {
+          if (!assignment.classId) continue;
 
-        const [assignmentClass] = await db
-          .select()
-          .from(classes)
-          .where(eq(classes.id, assignment.classId));
+          const [assignmentClass] = await db
+            .select()
+            .from(classes)
+            .where(eq(classes.id, assignment.classId));
 
-        if (assignmentClass && assignmentClass.branchId === Number(branchId)) {
-          filteredAssignments.push(assignment);
+          if (assignmentClass && assignmentClass.branchId === Number(branchId)) {
+            filteredAssignments.push(assignment);
+          }
         }
+        assignments = filteredAssignments;
       }
-      assignments = filteredAssignments;
-    }
 
-    res.json(assignments);
+      res.json(assignments);
+    } catch (error) {
+      console.error("Error fetching assignments:", error);
+      res.status(500).json({ message: "Failed to fetch assignments" });
+    }
   });
 
   // Submission routes

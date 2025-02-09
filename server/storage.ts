@@ -223,7 +223,7 @@ export class DatabaseStorage implements IStorage {
       title: data.title,
       description: data.description || null,
       classId: data.classId || null,
-      teacherId: data.teacherId || null,
+      userId: data.userId || null,
       dueDate: data.dueDate || null,
       status: data.status || 'draft'
     }).returning();
