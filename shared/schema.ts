@@ -39,6 +39,7 @@ export const classes = pgTable("classes", {
   branchId: integer("branch_id").references(() => branches.id),
   englishLevel: varchar("english_level", { length: 50 }),
   ageGroup: varchar("age_group", { length: 50 }),
+  isHidden: boolean("is_hidden").notNull().default(false),
 });
 
 export const teacherBranchAccess = pgTable("teacher_branch_access", {

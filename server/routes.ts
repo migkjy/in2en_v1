@@ -96,9 +96,12 @@ export function registerRoutes(app: Express): Server {
     try {
       const classes = await storage.listClasses(branchId ? Number(branchId) : undefined);
 
+      // Filter out hidden classes
+      const visibleClasses = classes.filter(cls => !cls.isHidden);
+
       // Get counts for each class
       const classesWithCounts = await Promise.all(
-        classes.map(async (cls) => {
+        visibleClasses.map(async (cls) => {
           const [students, teachers] = await Promise.all([
             storage.getClassStudents(cls.id),
             storage.getClassTeachers(cls.id)
@@ -107,7 +110,7 @@ export function registerRoutes(app: Express): Server {
           return {
             ...cls,
             studentCount: students.length,
-            teacherCount: teachers.filter(t => t.hasAccess).length // Only count teachers with access
+            teacherCount: teachers.filter(t => t.hasAccess).length
           };
         })
       );
@@ -149,29 +152,23 @@ export function registerRoutes(app: Express): Server {
     try {
       const classId = Number(req.params.id);
 
-      // First delete all assignments related to this class
-      const assignments = await storage.listAssignments(classId);
-      for (const assignment of assignments) {
-        await storage.deleteAssignment(assignment.id);
-      }
-
-      // Then remove all students from the class
+      // Remove all students from the class
       const students = await storage.getClassStudents(classId);
       for (const student of students) {
         await storage.removeStudentFromClass(classId, student.id);
       }
 
-      // Then remove all teachers from the class
+      // Remove all teachers from the class
       const teachers = await storage.getClassTeachers(classId);
       for (const teacher of teachers) {
         await storage.removeTeacherFromClass(classId, teacher.id);
       }
 
-      // Finally delete the class itself
-      await storage.deleteClass(classId);
+      // Hide the class instead of deleting it
+      await storage.updateClass(classId, { isHidden: true });
       res.status(204).send();
     } catch (error) {
-      console.error("Error deleting class:", error);
+      console.error("Error hiding class:", error);
       if (error instanceof Error) {
         res.status(400).json({ message: error.message });
       } else {
