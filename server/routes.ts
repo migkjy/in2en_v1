@@ -368,8 +368,16 @@ export function registerRoutes(app: Express): Server {
 
   app.post("/api/students", requireRole([UserRole.ADMIN]), async (req, res) => {
     try {
+      const createData = { ...req.body };
+      
+      // Convert branch_id to branchId if it exists
+      if (createData.branch_id) {
+        createData.branchId = Number(createData.branch_id);
+        delete createData.branch_id;
+      }
+
       const student = await storage.createUser({
-        ...req.body,
+        ...createData,
         role: UserRole.STUDENT,
       });
       res.status(201).json(student);
