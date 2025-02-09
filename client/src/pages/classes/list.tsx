@@ -130,7 +130,7 @@ export default function ClassList() {
                       variant="outline"
                       size="sm"
                       className="mr-2"
-                      onClick={() => setLocation(`/admin/classes/${cls.id}/detail`)}
+                      onClick={() => setLocation(`/admin/classes/${cls.id}`)}
                     >
                       View
                     </Button>
