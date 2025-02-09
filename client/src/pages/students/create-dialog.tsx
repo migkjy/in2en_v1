@@ -60,7 +60,7 @@ export function CreateStudentDialog({ open, onOpenChange, student }: CreateStude
   });
 
   // Create a schema that requires password for new students
-  const formSchema = student 
+  const formSchema = student
     ? createStudentSchema.extend({
         password: z.string().min(6, "Password must be at least 6 characters").optional(),
       })
@@ -150,9 +150,9 @@ export function CreateStudentDialog({ open, onOpenChange, student }: CreateStude
     mutationFn: async (data: CreateStudentForm) => {
       setIsLoading(true);
       try {
-        // Only include password in the request if it's not empty
+        // Remove password from request data if it's empty
         const requestData = { ...data };
-        if (!requestData.password) {
+        if (!requestData.password?.trim()) {
           delete requestData.password;
         }
 
@@ -247,9 +247,9 @@ export function CreateStudentDialog({ open, onOpenChange, student }: CreateStude
                 <FormItem>
                   <FormLabel>{student ? "New Password (Optional)" : "Temporary Password"}</FormLabel>
                   <FormControl>
-                    <Input 
-                      type="password" 
-                      {...field} 
+                    <Input
+                      type="password"
+                      {...field}
                       disabled={isLoading}
                       placeholder={student ? "Leave blank to keep current password" : "Enter temporary password"}
                     />
