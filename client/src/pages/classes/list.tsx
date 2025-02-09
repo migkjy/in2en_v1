@@ -14,10 +14,13 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { CreateClassDialog } from "./create-dialog";
+import { ManageOptionsDialog } from "./manage-options-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Settings } from "lucide-react";
 
 export default function ClassList() {
   const [isCreateClassDialogOpen, setIsCreateClassDialogOpen] = useState(false);
+  const [isManageOptionsDialogOpen, setIsManageOptionsDialogOpen] = useState(false);
   const [selectedClass, setSelectedClass] = useState<Class | null>(null);
   const [, setLocation] = useLocation();
   const { toast } = useToast();
@@ -95,7 +98,17 @@ export default function ClassList() {
           </Card>
 
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold">Classes</h2>
+            <div className="flex items-center gap-4">
+              <h2 className="text-2xl font-bold">Classes</h2>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsManageOptionsDialogOpen(true)}
+              >
+                <Settings className="h-4 w-4 mr-2" />
+                Manage Options
+              </Button>
+            </div>
             <Button
               onClick={() => {
                 setSelectedClass(null);
@@ -165,6 +178,11 @@ export default function ClassList() {
               if (!open) setSelectedClass(null);
             }}
             classToEdit={selectedClass}
+          />
+
+          <ManageOptionsDialog
+            open={isManageOptionsDialogOpen}
+            onOpenChange={setIsManageOptionsDialogOpen}
           />
         </div>
       </main>

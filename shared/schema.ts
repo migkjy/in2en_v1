@@ -90,6 +90,18 @@ export const comments = pgTable("comments", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const englishLevels = pgTable("english_levels", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 50 }).notNull().unique(),
+  description: text("description"),
+});
+
+export const ageGroups = pgTable("age_groups", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 50 }).notNull().unique(),
+  description: text("description"),
+});
+
 // Relations
 export const teacherClassAccessRelations = relations(teacherClassAccess, ({ one }) => ({
   teacher: one(users, {
@@ -133,6 +145,22 @@ export const studentClassAccessRelations = relations(studentClassAccess, ({ one 
   }),
 }));
 
+// Update classes table relations
+export const classesRelations = relations(classes, ({ one }) => ({
+  branch: one(branches, {
+    fields: [classes.branchId],
+    references: [branches.id],
+  }),
+  englishLevel: one(englishLevels, {
+    fields: [classes.englishLevel],
+    references: [englishLevels.name],
+  }),
+  ageGroup: one(ageGroups, {
+    fields: [classes.ageGroup],
+    references: [ageGroups.name],
+  }),
+}));
+
 
 // Schema definitions
 export const insertUserSchema = createInsertSchema(users);
@@ -145,6 +173,8 @@ export const insertTeacherBranchAccessSchema = createInsertSchema(teacherBranchA
 export const insertTeacherClassAccessSchema = createInsertSchema(teacherClassAccess);
 export const insertClassLeadTeacherSchema = createInsertSchema(classLeadTeachers);
 export const insertStudentClassAccessSchema = createInsertSchema(studentClassAccess);
+export const insertEnglishLevelSchema = createInsertSchema(englishLevels);
+export const insertAgeGroupSchema = createInsertSchema(ageGroups);
 
 // Type definitions
 export type User = typeof users.$inferSelect;
@@ -157,6 +187,8 @@ export type TeacherBranchAccess = typeof teacherBranchAccess.$inferSelect;
 export type TeacherClassAccess = typeof teacherClassAccess.$inferSelect;
 export type ClassLeadTeacher = typeof classLeadTeachers.$inferSelect;
 export type StudentClassAccess = typeof studentClassAccess.$inferSelect;
+export type EnglishLevel = typeof englishLevels.$inferSelect;
+export type AgeGroup = typeof ageGroups.$inferSelect;
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertBranch = z.infer<typeof insertBranchSchema>;
@@ -168,3 +200,5 @@ export type InsertTeacherBranchAccess = z.infer<typeof insertTeacherBranchAccess
 export type InsertTeacherClassAccess = z.infer<typeof insertTeacherClassAccessSchema>;
 export type InsertClassLeadTeacher = z.infer<typeof insertClassLeadTeacherSchema>;
 export type InsertStudentClassAccess = z.infer<typeof insertStudentClassAccessSchema>;
+export type InsertEnglishLevel = z.infer<typeof insertEnglishLevelSchema>;
+export type InsertAgeGroup = z.infer<typeof insertAgeGroupSchema>;
