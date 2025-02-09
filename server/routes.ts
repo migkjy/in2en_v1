@@ -149,7 +149,13 @@ export function registerRoutes(app: Express): Server {
     try {
       const classId = Number(req.params.id);
 
-      // First remove all students from the class
+      // First delete all assignments related to this class
+      const assignments = await storage.listAssignments(classId);
+      for (const assignment of assignments) {
+        await storage.deleteAssignment(assignment.id);
+      }
+
+      // Then remove all students from the class
       const students = await storage.getClassStudents(classId);
       for (const student of students) {
         await storage.removeStudentFromClass(classId, student.id);
