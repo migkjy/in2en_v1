@@ -12,7 +12,8 @@ import {
   LogOut,
   User,
   Users,
-  GraduationCap as StudentIcon
+  GraduationCap as StudentIcon,
+  BookCheck
 } from "lucide-react";
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {}
@@ -29,13 +30,15 @@ export function Sidebar({ className }: SidebarProps) {
     { href: "/admin/classes", icon: GraduationCap, label: "Classes" },
     { href: "/admin/teachers", icon: Users, label: "Teachers" },
     { href: "/admin/students", icon: StudentIcon, label: "Students" },
+    { href: "/admin/assignments", icon: BookCheck, label: "Assignments" },
   ];
 
   const teacherLinks = [
     { href: "/teacher", icon: LayoutDashboard, label: "Dashboard" },
-    { href: "/assignments/create", icon: BookOpen, label: "Create Assignment" },
-    { href: "/assignments/upload", icon: Upload, label: "Upload Homework" },
-    { href: "/assignments/review", icon: ClipboardList, label: "Review" },
+    { href: "/teacher/assignments", icon: BookCheck, label: "Assignments" },
+    { href: "/teacher/assignments/create", icon: BookOpen, label: "Create Assignment" },
+    { href: "/teacher/assignments/upload", icon: Upload, label: "Upload Homework" },
+    { href: "/teacher/assignments/review", icon: ClipboardList, label: "Review" },
   ];
 
   const studentLinks = [
