@@ -102,7 +102,14 @@ export class DatabaseStorage implements IStorage {
 
   // Branch operations
   async createBranch(data: Partial<Branch>): Promise<Branch> {
-    const [branch] = await db.insert(branches).values([data]).returning();
+    if (!data.name) {
+      throw new Error("Branch name is required");
+    }
+
+    const [branch] = await db.insert(branches).values({
+      name: data.name,
+      address: data.address || null
+    }).returning();
     return branch;
   }
 
@@ -136,7 +143,16 @@ export class DatabaseStorage implements IStorage {
 
   // Class operations
   async createClass(data: Partial<Class>): Promise<Class> {
-    const [cls] = await db.insert(classes).values([data]).returning();
+    if (!data.name) {
+      throw new Error("Class name is required");
+    }
+
+    const [cls] = await db.insert(classes).values({
+      name: data.name,
+      branchId: data.branchId || null,
+      englishLevel: data.englishLevel || null,
+      ageGroup: data.ageGroup || null
+    }).returning();
     return cls;
   }
 
@@ -146,7 +162,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async listClasses(branchId?: number): Promise<Class[]> {
-    let query = db.select({
+    const baseQuery = db.select({
       id: classes.id,
       name: classes.name,
       branchId: classes.branchId,
@@ -158,14 +174,14 @@ export class DatabaseStorage implements IStorage {
         address: branches.address,
       },
     })
-      .from(classes)
-      .leftJoin(branches, eq(classes.branchId, branches.id));
+    .from(classes)
+    .leftJoin(branches, eq(classes.branchId, branches.id));
 
     if (branchId) {
-      query = query.where(eq(classes.branchId, branchId));
+      return await baseQuery.where(eq(classes.branchId, branchId));
     }
 
-    return await query;
+    return await baseQuery;
   }
 
   async deleteClass(id: number): Promise<void> {
@@ -183,7 +199,18 @@ export class DatabaseStorage implements IStorage {
 
   // Assignment operations
   async createAssignment(data: Partial<Assignment>): Promise<Assignment> {
-    const [assignment] = await db.insert(assignments).values([data]).returning();
+    if (!data.title) {
+      throw new Error("Assignment title is required");
+    }
+
+    const [assignment] = await db.insert(assignments).values({
+      title: data.title,
+      description: data.description || null,
+      classId: data.classId || null,
+      teacherId: data.teacherId || null,
+      dueDate: data.dueDate || null,
+      status: data.status || 'draft'
+    }).returning();
     return assignment;
   }
 
@@ -193,16 +220,30 @@ export class DatabaseStorage implements IStorage {
   }
 
   async listAssignments(classId?: number): Promise<Assignment[]> {
-    let query = db.select().from(assignments);
+    const baseQuery = db.select().from(assignments);
+
     if (classId) {
-      query = query.where(eq(assignments.classId, classId));
+      return await baseQuery.where(eq(assignments.classId, classId));
     }
-    return await query;
+
+    return await baseQuery;
   }
 
   // Submission operations
   async createSubmission(data: Partial<Submission>): Promise<Submission> {
-    const [submission] = await db.insert(submissions).values([data]).returning();
+    if (!data.imageUrl) {
+      throw new Error("Submission image URL is required");
+    }
+
+    const [submission] = await db.insert(submissions).values({
+      imageUrl: data.imageUrl,
+      assignmentId: data.assignmentId || null,
+      studentId: data.studentId || null,
+      status: data.status || 'pending',
+      ocrText: data.ocrText || null,
+      aiFeedback: data.aiFeedback || null,
+      teacherFeedback: data.teacherFeedback || null
+    }).returning();
     return submission;
   }
 
@@ -227,7 +268,16 @@ export class DatabaseStorage implements IStorage {
 
   // Comment operations
   async createComment(data: Partial<Comment>): Promise<Comment> {
-    const [comment] = await db.insert(comments).values([data]).returning();
+    if (!data.content) {
+      throw new Error("Comment content is required");
+    }
+
+    const [comment] = await db.insert(comments).values({
+      content: data.content,
+      submissionId: data.submissionId || null,
+      userId: data.userId || null,
+      createdAt: data.createdAt || new Date()
+    }).returning();
     return comment;
   }
 
