@@ -234,27 +234,29 @@ export default function ClassDetail() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {assignedTeachers.map((teacher) => (
-                    <TableRow key={teacher.id}>
-                      <TableCell>{teacher.name}</TableCell>
-                      <TableCell>{teacher.email}</TableCell>
-                      <TableCell className="text-center">
-                        {teacher.isLead ? <Check className="mx-auto" /> : <X className="mx-auto text-muted-foreground" />}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        {teacher.hasAccess ? <Check className="mx-auto" /> : <X className="mx-auto text-muted-foreground" />}
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleRemoveTeacher(teacher.id)}
-                        >
-                          Remove
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {assignedTeachers
+                    .filter(teacher => teacher.hasAccess)
+                    .map((teacher) => (
+                      <TableRow key={teacher.id}>
+                        <TableCell>{teacher.name}</TableCell>
+                        <TableCell>{teacher.email}</TableCell>
+                        <TableCell className="text-center">
+                          {teacher.isLead ? <Check className="mx-auto" /> : <X className="mx-auto text-muted-foreground" />}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {teacher.hasAccess ? <Check className="mx-auto" /> : <X className="mx-auto text-muted-foreground" />}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleRemoveTeacher(teacher.id)}
+                          >
+                            Remove
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
                 </TableBody>
               </Table>
             </CardContent>
