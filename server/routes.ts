@@ -107,7 +107,7 @@ export function registerRoutes(app: Express): Server {
           return {
             ...cls,
             studentCount: students.length,
-            teacherCount: teachers.length
+            teacherCount: teachers.filter(t => t.hasAccess).length // Only count teachers with access
           };
         })
       );
