@@ -147,9 +147,25 @@ export function registerRoutes(app: Express): Server {
 
   app.delete("/api/classes/:id", requireRole([UserRole.ADMIN]), async (req, res) => {
     try {
-      await storage.deleteClass(Number(req.params.id));
+      const classId = Number(req.params.id);
+
+      // First remove all students from the class
+      const students = await storage.getClassStudents(classId);
+      for (const student of students) {
+        await storage.removeStudentFromClass(classId, student.id);
+      }
+
+      // Then remove all teachers from the class
+      const teachers = await storage.getClassTeachers(classId);
+      for (const teacher of teachers) {
+        await storage.removeTeacherFromClass(classId, teacher.id);
+      }
+
+      // Finally delete the class itself
+      await storage.deleteClass(classId);
       res.status(204).send();
     } catch (error) {
+      console.error("Error deleting class:", error);
       if (error instanceof Error) {
         res.status(400).json({ message: error.message });
       } else {
