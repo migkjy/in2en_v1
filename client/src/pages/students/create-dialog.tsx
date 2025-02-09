@@ -32,7 +32,7 @@ import { useToast } from "@/hooks/use-toast";
 const createStudentSchema = insertUserSchema.extend({
   phoneNumber: z.string().optional(),
   birthDate: z.string().optional(),
-  branch: z.number().optional(),
+  branchId: z.number().optional(), // Changed to branchId
 }).omit({ role: true });
 
 type CreateStudentForm = z.infer<typeof createStudentSchema>;
@@ -76,7 +76,7 @@ export function CreateStudentDialog({ open, onOpenChange, student }: CreateStude
       phoneNumber: "",
       birthDate: "",
       password: "",
-      branch: undefined,
+      branchId: undefined, // Changed to branchId
     },
   });
 
@@ -88,7 +88,7 @@ export function CreateStudentDialog({ open, onOpenChange, student }: CreateStude
         email: student.email,
         phoneNumber: student.phone_number || "",
         birthDate: student.birth_date || "",
-        branch: student.branch,
+        branchId: student.branch_id, // Changed to branch_id
       });
 
       form.reset({
@@ -97,7 +97,7 @@ export function CreateStudentDialog({ open, onOpenChange, student }: CreateStude
         phoneNumber: student.phone_number || "",
         birthDate: student.birth_date || "",
         password: "", // Always empty for security
-        branch: student.branch ? Number(student.branch) : undefined,
+        branchId: student.branch_id, // Changed to branch_id
       });
     } else {
       form.reset({
@@ -106,7 +106,7 @@ export function CreateStudentDialog({ open, onOpenChange, student }: CreateStude
         phoneNumber: "",
         birthDate: "",
         password: "",
-        branch: undefined,
+        branchId: undefined, // Changed to branchId
       });
     }
   }, [student, form]);
@@ -120,7 +120,7 @@ export function CreateStudentDialog({ open, onOpenChange, student }: CreateStude
           ...data,
           phone_number: data.phoneNumber,
           birth_date: data.birthDate,
-          branch: data.branch,
+          branch_id: data.branchId, // Changed to branch_id
         };
 
         // Remove empty fields
@@ -175,7 +175,7 @@ export function CreateStudentDialog({ open, onOpenChange, student }: CreateStude
           ...data,
           phone_number: data.phoneNumber,
           birth_date: data.birthDate,
-          branch: data.branch,
+          branch_id: data.branchId, // Changed to branch_id
           role: "STUDENT",
         };
 
@@ -282,7 +282,7 @@ export function CreateStudentDialog({ open, onOpenChange, student }: CreateStude
 
             <FormField
               control={form.control}
-              name="branch"
+              name="branchId" // Changed to branchId
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Branch (Optional)</FormLabel>

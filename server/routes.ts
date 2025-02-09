@@ -407,8 +407,12 @@ export function registerRoutes(app: Express): Server {
       }
 
       // Use the database column names directly from the request
+      const { branchId, phoneNumber, birthDate, ...rest } = updateData;
       const student = await storage.updateUser(Number(req.params.id), {
-        ...updateData,
+        ...rest,
+        branchId: branchId ? Number(branchId) : null,
+        phoneNumber: phoneNumber || null,
+        birthDate: birthDate || null,
         role: UserRole.STUDENT,
       });
 
