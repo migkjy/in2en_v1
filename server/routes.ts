@@ -407,10 +407,7 @@ export function registerRoutes(app: Express): Server {
       // Convert fields to match database column names
       const studentData = {
         ...updateData,
-        role: UserRole.STUDENT,
-        branchId: updateData.branchId,
-        phoneNumber: updateData.phoneNumber,
-        birthDate: updateData.birthDate,
+        role: UserRole.STUDENT
       };
 
       const student = await storage.updateUser(Number(req.params.id), studentData);
