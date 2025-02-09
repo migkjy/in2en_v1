@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertUserSchema } from "@shared/schema";
@@ -63,14 +63,37 @@ export function CreateStudentDialog({ open, onOpenChange, student }: CreateStude
   const form = useForm<CreateStudentForm>({
     resolver: zodResolver(createStudentSchema),
     defaultValues: {
-      name: student?.name || "",
-      email: student?.email || "",
-      phoneNumber: student?.phoneNumber || "",
-      birthDate: student?.birthDate || "",
+      name: "",
+      email: "",
+      phoneNumber: "",
+      birthDate: "",
       password: "",
-      branchId: student?.branchId,
+      branchId: undefined,
     },
   });
+
+  // Reset form when student prop changes
+  useEffect(() => {
+    if (student) {
+      form.reset({
+        name: student.name || "",
+        email: student.email || "",
+        phoneNumber: student.phoneNumber || "",
+        birthDate: student.birthDate || "",
+        password: "", // Always empty for security
+        branchId: student.branchId,
+      });
+    } else {
+      form.reset({
+        name: "",
+        email: "",
+        phoneNumber: "",
+        birthDate: "",
+        password: "",
+        branchId: undefined,
+      });
+    }
+  }, [student, form]);
 
   const createStudent = useMutation({
     mutationFn: async (data: CreateStudentForm) => {
@@ -101,7 +124,7 @@ export function CreateStudentDialog({ open, onOpenChange, student }: CreateStude
       queryClient.invalidateQueries({ queryKey: ["/api/students"] });
       toast({
         title: "Success",
-        description: "Student created successfully. An email with login credentials has been sent.",
+        description: "Student created successfully",
       });
       form.reset();
       onOpenChange(false);
@@ -119,13 +142,19 @@ export function CreateStudentDialog({ open, onOpenChange, student }: CreateStude
     mutationFn: async (data: CreateStudentForm) => {
       setIsLoading(true);
       try {
+        // If password is empty, remove it from the request
+        const requestData = { ...data };
+        if (!requestData.password) {
+          delete requestData.password;
+        }
+
         const response = await fetch(`/api/students/${student?.id}`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            ...data,
+            ...requestData,
             role: "STUDENT",
           }),
         });
@@ -208,9 +237,14 @@ export function CreateStudentDialog({ open, onOpenChange, student }: CreateStude
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Temporary Password</FormLabel>
+                  <FormLabel>{student ? "New Password (Optional)" : "Temporary Password"}</FormLabel>
                   <FormControl>
-                    <Input type="password" {...field} disabled={isLoading} />
+                    <Input 
+                      type="password" 
+                      {...field} 
+                      disabled={isLoading}
+                      placeholder={student ? "Leave blank to keep current password" : "Enter temporary password"}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -224,7 +258,7 @@ export function CreateStudentDialog({ open, onOpenChange, student }: CreateStude
                 <FormItem>
                   <FormLabel>Branch (Optional)</FormLabel>
                   <Select
-                    onValueChange={(value) => field.onChange(Number(value))}
+                    onValueChange={(value) => field.onChange(value ? Number(value) : undefined)}
                     value={field.value?.toString()}
                   >
                     <FormControl>
