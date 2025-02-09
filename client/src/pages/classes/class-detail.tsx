@@ -301,11 +301,11 @@ export default function ClassDetail() {
             open={isAssignTeacherDialogOpen}
             onOpenChange={setIsAssignTeacherDialogOpen}
           >
-            <DialogContent className="sm:max-w-[625px]">
+            <DialogContent className="sm:max-w-[625px] max-h-[80vh] flex flex-col">
               <DialogHeader>
                 <DialogTitle>Assign Teachers to {classData.name}</DialogTitle>
               </DialogHeader>
-              <div className="mt-4">
+              <div className="mt-4 flex-1 overflow-y-auto min-h-0">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -362,11 +362,11 @@ export default function ClassDetail() {
             open={isAssignStudentDialogOpen}
             onOpenChange={setIsAssignStudentDialogOpen}
           >
-            <DialogContent className="sm:max-w-[625px]">
+            <DialogContent className="sm:max-w-[625px] max-h-[80vh] flex flex-col">
               <DialogHeader>
                 <DialogTitle>Assign Students to {classData.name}</DialogTitle>
               </DialogHeader>
-              <div className="mt-4">
+              <div className="mt-4 flex-1 overflow-y-auto min-h-0">
                 <Table>
                   <TableHeader>
                     <TableRow>
