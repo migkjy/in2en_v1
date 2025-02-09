@@ -267,7 +267,7 @@ export function CreateStudentDialog({ open, onOpenChange, student }: CreateStude
                   <FormLabel>Branch (Optional)</FormLabel>
                   <Select
                     onValueChange={(value) => field.onChange(value ? Number(value) : undefined)}
-                    value={field.value?.toString()}
+                    value={field.value?.toString() || ""}
                   >
                     <FormControl>
                       <SelectTrigger>
