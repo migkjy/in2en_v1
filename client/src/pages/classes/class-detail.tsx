@@ -251,32 +251,28 @@ export default function ClassDetail() {
               </Button>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead className="w-[100px]">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {assignedStudents.map((student) => (
-                    <TableRow key={student.id}>
-                      <TableCell>{student.name}</TableCell>
-                      <TableCell>{student.email}</TableCell>
-                      <TableCell>
-                        <Button
-                          variant="outline"
-                          size="sm"
+              <div className="space-y-4">
+                {assignedStudents.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {assignedStudents.map((student) => (
+                      <div
+                        key={student.id}
+                        className="inline-flex items-center gap-2 px-3 py-1 bg-secondary rounded-full"
+                      >
+                        <span>{student.name}</span>
+                        <button
                           onClick={() => handleRemoveStudent(student.id)}
+                          className="text-muted-foreground hover:text-destructive"
                         >
-                          Remove
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground">No students assigned</p>
+                )}
+              </div>
             </CardContent>
           </Card>
 
