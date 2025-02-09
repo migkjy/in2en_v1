@@ -116,22 +116,23 @@ export class DatabaseStorage implements IStorage {
 
   async deleteUser(id: number): Promise<void> {
     await db.transaction(async (tx) => {
-      // First delete from studentClassAccess if the user is a student
-      const [user] = await tx
-        .select()
-        .from(users)
-        .where(eq(users.id, id));
+      // First delete from all related tables
+      await tx.delete(studentClassAccess).where(eq(studentClassAccess.studentId, id));
+      await tx.delete(teacherClassAccess).where(eq(teacherClassAccess.teacherId, id));
+      await tx.delete(teacherBranchAccess).where(eq(teacherBranchAccess.teacherId, id));
+      await tx.delete(classLeadTeachers).where(eq(classLeadTeachers.teacherId, id));
 
-      if (user && user.role === UserRole.STUDENT) {
-        await tx
-          .delete(studentClassAccess)
-          .where(eq(studentClassAccess.studentId, id));
-      }
+      // Delete assignments created by this user
+      await tx.delete(assignments).where(eq(assignments.userId, id));
 
-      // Then delete the user
-      await tx
-        .delete(users)
-        .where(eq(users.id, id));
+      // Delete comments made by this user
+      await tx.delete(comments).where(eq(comments.userId, id));
+
+      // Delete submissions made by this user
+      await tx.delete(submissions).where(eq(submissions.studentId, id));
+
+      // Finally delete the user
+      await tx.delete(users).where(eq(users.id, id));
     });
   }
 
