@@ -56,7 +56,13 @@ export default function ClassDetail() {
   });
 
   const { data: students = [] } = useQuery<User[]>({
-    queryKey: ["/api/students"],
+    queryKey: ["/api/students", classData?.branchId],
+    enabled: !!classData?.branchId,
+    queryFn: async () => {
+      const response = await fetch(`/api/students?branchId=${classData?.branchId}`);
+      if (!response.ok) throw new Error("Failed to fetch students");
+      return response.json();
+    },
   });
 
   const { data: assignedStudents = [] } = useQuery<User[]>({

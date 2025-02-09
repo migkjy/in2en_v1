@@ -227,7 +227,6 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-
   // Assignment routes
   app.post("/api/assignments", requireRole([UserRole.TEACHER]), async (req, res) => {
     const assignment = await storage.createAssignment({
@@ -446,10 +445,15 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Add these routes after the existing teacher routes
+  // Update the students route to handle branch filtering
   app.get("/api/students", requireRole([UserRole.ADMIN]), async (req, res) => {
     try {
+      const { branchId } = req.query;
       const users = await storage.listUsers();
-      const students = users.filter(user => user.role === UserRole.STUDENT);
+      const students = users.filter(user =>
+        user.role === UserRole.STUDENT &&
+        (!branchId || user.branchId === Number(branchId))
+      );
       res.json(students);
     } catch (error) {
       if (error instanceof Error) {
