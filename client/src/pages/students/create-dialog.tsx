@@ -32,7 +32,6 @@ import { useToast } from "@/hooks/use-toast";
 const createStudentSchema = insertUserSchema.extend({
   phoneNumber: z.string().optional(),
   birthDate: z.string().optional(),
-  password: z.string().min(6, "Password must be at least 6 characters").optional(),
   branchId: z.number().optional(),
 }).omit({ role: true });
 
@@ -62,7 +61,9 @@ export function CreateStudentDialog({ open, onOpenChange, student }: CreateStude
 
   // Create a schema that requires password for new students
   const formSchema = student 
-    ? createStudentSchema 
+    ? createStudentSchema.extend({
+        password: z.string().min(6, "Password must be at least 6 characters").optional(),
+      })
     : createStudentSchema.extend({
         password: z.string().min(6, "Password must be at least 6 characters"),
       });
