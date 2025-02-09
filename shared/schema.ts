@@ -51,6 +51,7 @@ export const teacherClassAccess = pgTable("teacher_class_access", {
   id: serial("id").primaryKey(),
   teacherId: integer("teacher_id").notNull().references(() => users.id),
   classId: integer("class_id").notNull().references(() => classes.id),
+  isLeadTeacher: boolean("is_lead_teacher").notNull().default(false),
 });
 
 export const assignments = pgTable("assignments", {
@@ -91,6 +92,17 @@ export const insertCommentSchema = createInsertSchema(comments);
 export const insertTeacherBranchAccessSchema = createInsertSchema(teacherBranchAccess);
 export const insertTeacherClassAccessSchema = createInsertSchema(teacherClassAccess);
 
+export const teacherClassAccessRelations = relations(teacherClassAccess, ({ one }) => ({
+  teacher: one(users, {
+    fields: [teacherClassAccess.teacherId],
+    references: [users.id],
+  }),
+  class: one(classes, {
+    fields: [teacherClassAccess.classId],
+    references: [classes.id],
+  }),
+}));
+
 export type User = typeof users.$inferSelect;
 export type Branch = typeof branches.$inferSelect;
 export type Class = typeof classes.$inferSelect;
@@ -101,3 +113,10 @@ export type TeacherBranchAccess = typeof teacherBranchAccess.$inferSelect;
 export type TeacherClassAccess = typeof teacherClassAccess.$inferSelect;
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
+export type InsertBranch = z.infer<typeof insertBranchSchema>;
+export type InsertClass = z.infer<typeof insertClassSchema>;
+export type InsertAssignment = z.infer<typeof insertAssignmentSchema>;
+export type InsertSubmission = z.infer<typeof insertSubmissionSchema>;
+export type InsertComment = z.infer<typeof insertCommentSchema>;
+export type InsertTeacherBranchAccess = z.infer<typeof insertTeacherBranchAccessSchema>;
+export type InsertTeacherClassAccess = z.infer<typeof insertTeacherClassAccessSchema>;

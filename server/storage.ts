@@ -52,7 +52,11 @@ export interface IStorage {
   // Teacher authority operations
   getTeacherBranches(teacherId: number): Promise<Branch[]>;
   getTeacherClasses(teacherId: number): Promise<Class[]>;
-  updateTeacherAuthority(teacherId: number, branchIds: number[], classIds: number[]): Promise<void>;
+  updateTeacherAuthority(teacherId: number, branchIds: number[], classIds: number[], leadClassIds?: number[]): Promise<void>;
+
+  // Add new methods for Lead Teacher management
+  getClassLeadTeachers(classId: number): Promise<User[]>;
+  setLeadTeacherStatus(classId: number, teacherId: number, isLead: boolean): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -346,7 +350,8 @@ export class DatabaseStorage implements IStorage {
   async updateTeacherAuthority(
     teacherId: number,
     branchIds: number[],
-    classIds: number[]
+    classIds: number[],
+    leadClassIds: number[] = []
   ): Promise<void> {
     const [user] = await db
       .select()
@@ -357,56 +362,96 @@ export class DatabaseStorage implements IStorage {
       throw new Error("Teacher not found");
     }
 
-    console.log("Updating teacher authority:", { teacherId, branchIds, classIds });
-
-    // Start a transaction
     await db.transaction(async (tx) => {
       try {
         // Delete existing access records
-        const deletedBranches = await tx
+        await tx
           .delete(teacherBranchAccess)
-          .where(eq(teacherBranchAccess.teacherId, teacherId))
-          .returning();
-        console.log("Deleted branch access records:", deletedBranches);
+          .where(eq(teacherBranchAccess.teacherId, teacherId));
 
-        const deletedClasses = await tx
+        await tx
           .delete(teacherClassAccess)
-          .where(eq(teacherClassAccess.teacherId, teacherId))
-          .returning();
-        console.log("Deleted class access records:", deletedClasses);
+          .where(eq(teacherClassAccess.teacherId, teacherId));
 
         // Insert new branch access records
         if (branchIds.length > 0) {
-          const newBranchAccess = await tx
+          await tx
             .insert(teacherBranchAccess)
             .values(
               branchIds.map(branchId => ({
                 teacherId,
                 branchId,
               }))
-            )
-            .returning();
-          console.log("Inserted branch access records:", newBranchAccess);
+            );
         }
 
         // Insert new class access records
         if (classIds.length > 0) {
-          const newClassAccess = await tx
+          await tx
             .insert(teacherClassAccess)
             .values(
               classIds.map(classId => ({
                 teacherId,
                 classId,
+                isLeadTeacher: leadClassIds.includes(classId),
               }))
-            )
-            .returning();
-          console.log("Inserted class access records:", newClassAccess);
+            );
         }
       } catch (error) {
         console.error("Error in updateTeacherAuthority transaction:", error);
         throw error;
       }
     });
+  }
+
+  async getClassLeadTeachers(classId: number): Promise<User[]> {
+    const result = await db
+      .select({
+        id: users.id,
+        email: users.email,
+        name: users.name,
+        role: users.role,
+        phone_number: users.phone_number,
+      })
+      .from(users)
+      .innerJoin(
+        teacherClassAccess,
+        and(
+          eq(teacherClassAccess.teacherId, users.id),
+          eq(teacherClassAccess.classId, classId),
+          eq(teacherClassAccess.isLeadTeacher, true)
+        )
+      );
+
+    return result;
+  }
+
+  async setLeadTeacherStatus(classId: number, teacherId: number, isLead: boolean): Promise<void> {
+    // Verify the teacher has access to the class
+    const [access] = await db
+      .select()
+      .from(teacherClassAccess)
+      .where(
+        and(
+          eq(teacherClassAccess.classId, classId),
+          eq(teacherClassAccess.teacherId, teacherId)
+        )
+      );
+
+    if (!access) {
+      throw new Error("Teacher does not have access to this class");
+    }
+
+    // Update the lead teacher status
+    await db
+      .update(teacherClassAccess)
+      .set({ isLeadTeacher: isLead })
+      .where(
+        and(
+          eq(teacherClassAccess.classId, classId),
+          eq(teacherClassAccess.teacherId, teacherId)
+        )
+      );
   }
 }
 
