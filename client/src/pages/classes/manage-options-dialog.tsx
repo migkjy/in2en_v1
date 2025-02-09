@@ -19,7 +19,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
+import { EnglishLevel, AgeGroup } from "@shared/schema";
 
 interface ManageOptionsDialogProps {
   open: boolean;
@@ -32,11 +33,11 @@ export function ManageOptionsDialog({ open, onOpenChange }: ManageOptionsDialogP
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: englishLevels = [] } = useQuery({
+  const { data: englishLevels = [] } = useQuery<EnglishLevel[]>({
     queryKey: ["/api/english-levels"],
   });
 
-  const { data: ageGroups = [] } = useQuery({
+  const { data: ageGroups = [] } = useQuery<AgeGroup[]>({
     queryKey: ["/api/age-groups"],
   });
 
@@ -55,6 +56,13 @@ export function ManageOptionsDialog({ open, onOpenChange }: ManageOptionsDialogP
       setNewEnglishLevel("");
       toast({ title: "Success", description: "English level added successfully" });
     },
+    onError: () => {
+      toast({ 
+        title: "Error", 
+        description: "Failed to add English level", 
+        variant: "destructive" 
+      });
+    },
   });
 
   const addAgeGroup = useMutation({
@@ -72,7 +80,38 @@ export function ManageOptionsDialog({ open, onOpenChange }: ManageOptionsDialogP
       setNewAgeGroup("");
       toast({ title: "Success", description: "Age group added successfully" });
     },
+    onError: () => {
+      toast({ 
+        title: "Error", 
+        description: "Failed to add age group", 
+        variant: "destructive" 
+      });
+    },
   });
+
+  const handleAddEnglishLevel = () => {
+    if (!newEnglishLevel.trim()) {
+      toast({
+        title: "Error",
+        description: "English level name cannot be empty",
+        variant: "destructive",
+      });
+      return;
+    }
+    addEnglishLevel.mutate(newEnglishLevel);
+  };
+
+  const handleAddAgeGroup = () => {
+    if (!newAgeGroup.trim()) {
+      toast({
+        title: "Error",
+        description: "Age group name cannot be empty",
+        variant: "destructive",
+      });
+      return;
+    }
+    addAgeGroup.mutate(newAgeGroup);
+  };
 
   const deleteEnglishLevel = useMutation({
     mutationFn: async (id: number) => {
@@ -84,6 +123,13 @@ export function ManageOptionsDialog({ open, onOpenChange }: ManageOptionsDialogP
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/english-levels"] });
       toast({ title: "Success", description: "English level deleted successfully" });
+    },
+    onError: () => {
+      toast({ 
+        title: "Error", 
+        description: "Failed to delete English level", 
+        variant: "destructive" 
+      });
     },
   });
 
@@ -97,6 +143,13 @@ export function ManageOptionsDialog({ open, onOpenChange }: ManageOptionsDialogP
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/age-groups"] });
       toast({ title: "Success", description: "Age group deleted successfully" });
+    },
+    onError: () => {
+      toast({ 
+        title: "Error", 
+        description: "Failed to delete age group", 
+        variant: "destructive" 
+      });
     },
   });
 
@@ -122,8 +175,16 @@ export function ManageOptionsDialog({ open, onOpenChange }: ManageOptionsDialogP
                 placeholder="New English Level"
                 value={newEnglishLevel}
                 onChange={(e) => setNewEnglishLevel(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleAddEnglishLevel();
+                  }
+                }}
               />
-              <Button onClick={() => addEnglishLevel.mutate(newEnglishLevel)}>
+              <Button 
+                onClick={handleAddEnglishLevel}
+                disabled={addEnglishLevel.isPending}
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 Add
               </Button>
@@ -145,6 +206,7 @@ export function ManageOptionsDialog({ open, onOpenChange }: ManageOptionsDialogP
                         variant="ghost"
                         size="icon"
                         onClick={() => deleteEnglishLevel.mutate(level.id)}
+                        disabled={deleteEnglishLevel.isPending}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -161,8 +223,16 @@ export function ManageOptionsDialog({ open, onOpenChange }: ManageOptionsDialogP
                 placeholder="New Age Group"
                 value={newAgeGroup}
                 onChange={(e) => setNewAgeGroup(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleAddAgeGroup();
+                  }
+                }}
               />
-              <Button onClick={() => addAgeGroup.mutate(newAgeGroup)}>
+              <Button 
+                onClick={handleAddAgeGroup}
+                disabled={addAgeGroup.isPending}
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 Add
               </Button>
@@ -184,6 +254,7 @@ export function ManageOptionsDialog({ open, onOpenChange }: ManageOptionsDialogP
                         variant="ghost"
                         size="icon"
                         onClick={() => deleteAgeGroup.mutate(group.id)}
+                        disabled={deleteAgeGroup.isPending}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
