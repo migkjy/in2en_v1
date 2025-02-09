@@ -53,6 +53,12 @@ export default function ClassDetail() {
   const { data: assignedTeachers = [] } = useQuery<TeacherWithRoles[]>({
     queryKey: ["/api/classes", classId, "teachers"],
     enabled: !!classId,
+    queryFn: async () => {
+      if (!classId) throw new Error("Class ID is required");
+      const response = await fetch(`/api/classes/${classId}/teachers`);
+      if (!response.ok) throw new Error("Failed to fetch assigned teachers");
+      return response.json();
+    },
   });
 
   const { data: students = [] } = useQuery<User[]>({
