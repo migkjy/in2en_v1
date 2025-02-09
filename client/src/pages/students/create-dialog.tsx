@@ -33,6 +33,8 @@ const createStudentSchema = insertUserSchema.extend({
   phoneNumber: z.string().optional(),
   birthDate: z.string().optional(),
   branch_id: z.number().optional(),
+  email: z.string().email("올바른 이메일 주소를 입력해주세요").min(1, "이메일은 필수 입력항목입니다"),
+  name: z.string().min(1, "이름은 필수 입력항목입니다"),
 }).omit({ role: true });
 
 type CreateStudentForm = z.infer<typeof createStudentSchema>;
@@ -106,7 +108,6 @@ export function CreateStudentDialog({ open, onOpenChange, student }: CreateStude
     mutationFn: async (data: CreateStudentForm) => {
       setIsLoading(true);
       try {
-        // Format the data before sending
         const requestData = {
           ...data,
           phone_number: data.phoneNumber,
@@ -114,7 +115,6 @@ export function CreateStudentDialog({ open, onOpenChange, student }: CreateStude
           role: "STUDENT",
         };
 
-        // Remove empty fields
         if (!requestData.password?.trim()) {
           delete requestData.password;
         }
@@ -161,7 +161,6 @@ export function CreateStudentDialog({ open, onOpenChange, student }: CreateStude
     mutationFn: async (data: CreateStudentForm) => {
       setIsLoading(true);
       try {
-        // Format the data before sending
         const requestData = {
           ...data,
           phone_number: data.phoneNumber,
@@ -327,7 +326,7 @@ export function CreateStudentDialog({ open, onOpenChange, student }: CreateStude
             />
 
             <div className="flex justify-end space-x-2">
-              <Button variant="outline" onClick={() => onOpenChange(false)}>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
               <Button type="submit" disabled={isLoading}>
