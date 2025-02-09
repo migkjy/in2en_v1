@@ -64,7 +64,7 @@ export default function AssignmentList() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Assignments Management</CardTitle>
-              <Button onClick={() => navigate("/admin/assignments/create")}>
+              <Button onClick={() => navigate("/teacher/assignments/create")}>
                 Create New Assignment
               </Button>
             </CardHeader>
