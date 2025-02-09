@@ -62,7 +62,7 @@ export function CreateStudentDialog({ open, onOpenChange, student }: CreateStude
   // Create a schema that requires password for new students
   const formSchema = student
     ? createStudentSchema.extend({
-        password: z.string().min(6, "Password must be at least 6 characters").optional(),
+        password: z.string().min(6, "Password must be at least 6 characters").optional().or(z.literal('')),
       })
     : createStudentSchema.extend({
         password: z.string().min(6, "Password must be at least 6 characters"),
