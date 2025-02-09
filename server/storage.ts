@@ -55,7 +55,7 @@ export interface IStorage {
   updateTeacherAuthority(teacherId: number, branchIds: number[], classIds: number[]): Promise<void>;
 
   // Lead Teacher operations
-  assignLeadTeacher(classId: number, teacherId: number, assignedById: number, notes?: string): Promise<ClassLeadTeacher>;
+  assignLeadTeacher(classId: number, teacherId: number): Promise<ClassLeadTeacher>;
   removeLeadTeacher(classId: number, teacherId: number): Promise<void>;
   getClassLeadTeachers(classId: number): Promise<User[]>;
   isLeadTeacher(classId: number, teacherId: number): Promise<boolean>;
@@ -407,9 +407,7 @@ export class DatabaseStorage implements IStorage {
   // Lead Teacher operations
   async assignLeadTeacher(
     classId: number,
-    teacherId: number,
-    assignedById: number,
-    notes?: string
+    teacherId: number
   ): Promise<ClassLeadTeacher> {
     // Verify the teacher has access to the class
     const [access] = await db
@@ -432,8 +430,6 @@ export class DatabaseStorage implements IStorage {
       .values({
         classId,
         teacherId,
-        assignedById,
-        notes: notes || null,
       })
       .returning();
 
@@ -461,6 +457,7 @@ export class DatabaseStorage implements IStorage {
         branchId: users.branchId,
         phone_number: users.phone_number,
         birth_date: users.birth_date,
+        password: users.password
       })
       .from(users)
       .innerJoin(

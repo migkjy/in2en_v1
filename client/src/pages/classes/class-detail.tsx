@@ -14,10 +14,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Check, X } from "lucide-react";
+
+interface TeacherWithRoles extends User {
+  isLead: boolean;
+  hasAccess: boolean;
+}
 
 export default function ClassDetail() {
   const [, params] = useRoute("/admin/classes/:id");
@@ -46,7 +50,7 @@ export default function ClassDetail() {
     queryKey: ["/api/teachers"],
   });
 
-  const { data: assignedTeachers = [] } = useQuery({
+  const { data: assignedTeachers = [] } = useQuery<TeacherWithRoles[]>({
     queryKey: ["/api/classes", classId, "teachers"],
     enabled: !!classId,
   });
@@ -55,7 +59,7 @@ export default function ClassDetail() {
     queryKey: ["/api/students"],
   });
 
-  const { data: assignedStudents = [] } = useQuery({
+  const { data: assignedStudents = [] } = useQuery<User[]>({
     queryKey: ["/api/classes", classId, "students"],
     enabled: !!classId,
   });
@@ -169,6 +173,7 @@ export default function ClassDetail() {
       <Sidebar className="w-64" />
       <main className="flex-1 p-8 overflow-auto">
         <div className="max-w-6xl mx-auto">
+          {/* Class Info Card */}
           <Card className="mb-8">
             <CardHeader>
               <CardTitle>{classData.name}</CardTitle>
@@ -211,7 +216,7 @@ export default function ClassDetail() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {assignedTeachers.map((teacher: any) => (
+                  {assignedTeachers.map((teacher) => (
                     <TableRow key={teacher.id}>
                       <TableCell>{teacher.name}</TableCell>
                       <TableCell>{teacher.email}</TableCell>
@@ -246,32 +251,28 @@ export default function ClassDetail() {
               </Button>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead className="w-[100px]">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {assignedStudents.map((student: any) => (
-                    <TableRow key={student.id}>
-                      <TableCell>{student.name}</TableCell>
-                      <TableCell>{student.email}</TableCell>
-                      <TableCell>
-                        <Button
-                          variant="outline"
-                          size="sm"
+              <div className="space-y-4">
+                {assignedStudents.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {assignedStudents.map((student) => (
+                      <div
+                        key={student.id}
+                        className="inline-flex items-center gap-2 px-3 py-1 bg-secondary rounded-full"
+                      >
+                        <span>{student.name}</span>
+                        <button
                           onClick={() => handleRemoveStudent(student.id)}
+                          className="text-muted-foreground hover:text-destructive"
                         >
-                          Remove
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground">No students assigned</p>
+                )}
+              </div>
             </CardContent>
           </Card>
 
@@ -297,7 +298,7 @@ export default function ClassDetail() {
                   <TableBody>
                     {teachers.map((teacher) => {
                       const assignedTeacher = assignedTeachers.find(
-                        (at: any) => at.id === teacher.id
+                        (at) => at.id === teacher.id
                       );
                       return (
                         <TableRow key={teacher.id}>
@@ -357,7 +358,7 @@ export default function ClassDetail() {
                   <TableBody>
                     {students.map((student) => {
                       const isAssigned = assignedStudents.find(
-                        (as: any) => as.id === student.id
+                        (as) => as.id === student.id
                       );
                       return (
                         <TableRow key={student.id}>

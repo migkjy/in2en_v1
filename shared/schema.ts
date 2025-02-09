@@ -53,14 +53,12 @@ export const teacherClassAccess = pgTable("teacher_class_access", {
   classId: integer("class_id").notNull().references(() => classes.id),
 });
 
-// New table for managing Lead Teachers
+// Lead Teachers table 수정
 export const classLeadTeachers = pgTable("class_lead_teachers", {
   id: serial("id").primaryKey(),
   classId: integer("class_id").notNull().references(() => classes.id),
   teacherId: integer("teacher_id").notNull().references(() => users.id),
-  assignedById: integer("assigned_by_id").notNull().references(() => users.id),
   assignedAt: timestamp("assigned_at").notNull().defaultNow(),
-  notes: text("notes"),
 });
 
 export const assignments = pgTable("assignments", {
@@ -104,6 +102,7 @@ export const teacherClassAccessRelations = relations(teacherClassAccess, ({ one 
   }),
 }));
 
+// Relations 수정
 export const classLeadTeachersRelations = relations(classLeadTeachers, ({ one }) => ({
   teacher: one(users, {
     fields: [classLeadTeachers.teacherId],
@@ -112,10 +111,6 @@ export const classLeadTeachersRelations = relations(classLeadTeachers, ({ one })
   class: one(classes, {
     fields: [classLeadTeachers.classId],
     references: [classes.id],
-  }),
-  assignedBy: one(users, {
-    fields: [classLeadTeachers.assignedById],
-    references: [users.id],
   }),
 }));
 
