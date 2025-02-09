@@ -9,13 +9,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { insertAssignmentSchema } from "@shared/schema";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 import type { Class } from "@shared/schema";
 import { z } from "zod";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 
 const createAssignmentSchema = insertAssignmentSchema.omit({ 
-  id: true,
-  teacherId: true 
+  id: true
 }).extend({
   dueDate: z.string().optional()
 });
@@ -25,6 +25,7 @@ type CreateAssignmentData = z.infer<typeof createAssignmentSchema>;
 export default function CreateAssignment() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const { data: classes, isLoading: loadingClasses } = useQuery<Class[]>({
     queryKey: ["/api/classes"],
@@ -32,10 +33,11 @@ export default function CreateAssignment() {
 
   const createMutation = useMutation({
     mutationFn: async (data: CreateAssignmentData) => {
-      // Convert empty string to null for dueDate
+      // Convert empty string to null for dueDate and add teacherId
       const payload = {
         ...data,
-        dueDate: data.dueDate || null
+        dueDate: data.dueDate || null,
+        teacherId: user?.id
       };
       const res = await apiRequest("POST", "/api/assignments", payload);
       return res.json();
@@ -46,7 +48,7 @@ export default function CreateAssignment() {
         title: "Success",
         description: "Assignment created successfully",
       });
-      navigate("/teacher");
+      navigate(user?.role === "ADMIN" ? "/admin/assignments" : "/teacher/assignments");
     },
     onError: (error) => {
       toast({
@@ -63,7 +65,8 @@ export default function CreateAssignment() {
       title: "",
       description: "",
       classId: undefined,
-      dueDate: ""
+      dueDate: "",
+      teacherId: user?.id
     }
   });
 
@@ -130,7 +133,7 @@ export default function CreateAssignment() {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => navigate("/teacher")}
+                    onClick={() => navigate(user?.role === "ADMIN" ? "/admin/assignments" : "/teacher/assignments")}
                   >
                     Cancel
                   </Button>
