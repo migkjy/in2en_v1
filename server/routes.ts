@@ -172,6 +172,57 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Add these routes after the existing class routes
+  app.put("/api/classes/:id/teachers/:teacherId", requireRole([UserRole.ADMIN]), async (req, res) => {
+    try {
+      const { isLead, hasAccess } = req.body;
+      await storage.updateTeacherClassRole(
+        Number(req.params.id),
+        Number(req.params.teacherId),
+        { isLead, hasAccess }
+      );
+      res.json({ message: "Teacher role updated successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update teacher role" });
+    }
+  });
+
+  app.delete("/api/classes/:id/teachers/:teacherId", requireRole([UserRole.ADMIN]), async (req, res) => {
+    try {
+      await storage.removeTeacherFromClass(
+        Number(req.params.id),
+        Number(req.params.teacherId)
+      );
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to remove teacher from class" });
+    }
+  });
+
+  app.put("/api/classes/:id/students/:studentId", requireRole([UserRole.ADMIN]), async (req, res) => {
+    try {
+      await storage.addStudentToClass(
+        Number(req.params.id),
+        Number(req.params.studentId)
+      );
+      res.json({ message: "Student added to class successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to add student to class" });
+    }
+  });
+
+  app.delete("/api/classes/:id/students/:studentId", requireRole([UserRole.ADMIN]), async (req, res) => {
+    try {
+      await storage.removeStudentFromClass(
+        Number(req.params.id),
+        Number(req.params.studentId)
+      );
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to remove student from class" });
+    }
+  });
+
 
   // Assignment routes
   app.post("/api/assignments", requireRole([UserRole.TEACHER]), async (req, res) => {

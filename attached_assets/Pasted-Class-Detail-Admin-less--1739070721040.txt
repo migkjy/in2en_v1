@@ -1,0 +1,86 @@
+Class Detail (Admin)
+less
+복사
+편집
+┌───────────────────────────────────────────────────────────────────┐
+│ [Header: Admin]                                                 │
+├───────────────────────────────────────────────────────────────────┤
+│ [Class Name: Branch A - Class 1]                                │
+│ ┌───────────────────────────────────────────────────────────┐     │
+│ │ [Teachers]                                               │     │
+│ │   - Shows current assigned teachers                      │     │
+│ │   Teacher Kim: (Lead: ✓ / Access: ✓)                     │     │
+│ │   Teacher Lee: (Lead: ✗ / Access: ✓)                     │     │
+│ │                                                          │     │
+│ │   [Assign Teacher] Button  ← Opens a POP-UP              │     │
+│ └───────────────────────────────────────────────────────────┘     │
+│ ───────────────────────────────────────────────────────────────── │
+│ [Students]                                                      │
+│ ┌───────────────────────────────────────────────────────────┐     │
+│ │ StudentID | Student Name | [Remove from Class]           │     │
+│ └───────────────────────────────────────────────────────────┘     │
+│ [Assign Students] Button  ← Opens a POP-UP                     │
+└───────────────────────────────────────────────────────────────────┘
+Teachers Section
+Current Teachers:
+
+For each teacher, show whether Lead or Access is active (checked or not).
+If you need to edit an existing teacher’s roles, you can do so in the same table or via a pop-up; the exact UX may vary.
+[Assign Teacher] Button:
+
+Opens a pop-up with a list of all teachers who are not yet assigned to this class or to manage roles for existing teachers as well (your choice).
+Assign Teacher (Pop-up)
+less
+복사
+편집
+┌─────────────────────────────────────────────────────────────────┐
+│ [Assign Teachers to Class: Branch A - Class 1]                 │
+├─────────────────────────────────────────────────────────────────┤
+│ [Teacher List]                                                 │
+│ ┌─────────────────────────────────────────────────────────────┐ │
+│ │ Teacher Name  | Lead (✓/✗) | Access (✓/✗) | [Checkbox?]    │ │
+│ │ ---------------------------------------------------------- │ │
+│ │ Teacher Kim   |    [ ]     |    [ ]       |  [ ]           │ │
+│ │ Teacher Lee   |    [ ]     |    [ ]       |  [ ]           │ │
+│ │ Teacher Park  |    [ ]     |    [ ]       |  [ ]           │ │
+│ └─────────────────────────────────────────────────────────────┘ │
+│                                                                 │
+│ [Confirm] Button                                                │
+└─────────────────────────────────────────────────────────────────┘
+Implementation Options:
+
+Each row could have two checkboxes for roles plus one “select” checkbox.
+Checking “Lead” or “Access” alone might be enough, so you might not need a separate “select” checkbox.
+Alternatively, if a teacher is already assigned, you can show the checkboxes as selected or not.
+Lead and Access can both be ticked if a teacher can have both roles, or you can limit it to one if needed.
+Lead – The teacher is the “main instructor” for this class.
+Access – The teacher can view or manage the class but is not the main instructor.
+Once the Admin is done, they click [Confirm], and the updated roles/assignments are saved.
+
+Students Section
+Current Students: A table listing each student in this class, with a button to [Remove from Class] if needed.
+
+[Assign Students] Button:
+
+Opens a pop-up that lists all students in the branch (or entire system if your logic allows).
+The Admin checks the students to add, then clicks Confirm.
+Assign Students (Pop-up)
+less
+복사
+편집
+┌─────────────────────────────────────────────────────────────────┐
+│ [Assign Students to Class: Branch A - Class 1]                 │
+├─────────────────────────────────────────────────────────────────┤
+│ ┌─────────────────────────────────────────────────────────────┐ │
+│ │ Student Name   | Email               | [Checkbox]          │ │
+│ │ ---------------------------------------------------------- │ │
+│ │ Jane           | jane@example.com    | [ ]                 │ │
+│ │ Michael        | michael@example.com | [ ]                 │ │
+│ │ Lucy           | lucy@example.com    | [ ]                 │ │
+│ └─────────────────────────────────────────────────────────────┘ │
+│ [Confirm] Button                                                │
+└─────────────────────────────────────────────────────────────────┘
+Process:
+
+Admin checks each student to add.
+When they click [Confirm], those students are immediately assigned to the class

@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Class, Branch } from "@shared/schema";
+import { Class, Branch, User } from "@shared/schema";
 import { Sidebar } from "@/components/layout/sidebar";
 import { useToast } from "@/hooks/use-toast";
 import { useRoute } from "wouter";
@@ -15,12 +15,17 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Check, X } from "lucide-react";
 
 export default function ClassDetail() {
   const [, params] = useRoute("/admin/classes/:id");
   const classId = params?.id;
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [isAssignTeacherDialogOpen, setIsAssignTeacherDialogOpen] = useState(false);
+  const [isAssignStudentDialogOpen, setIsAssignStudentDialogOpen] = useState(false);
 
   const { data: classData, isLoading: isClassLoading } = useQuery<Class>({
     queryKey: ["/api/classes", classId],
@@ -31,12 +36,20 @@ export default function ClassDetail() {
     queryKey: ["/api/branches"],
   });
 
-  const { data: teachers = [] } = useQuery({
+  const { data: teachers = [] } = useQuery<User[]>({
+    queryKey: ["/api/teachers"],
+  });
+
+  const { data: assignedTeachers = [] } = useQuery({
     queryKey: ["/api/classes", classId, "teachers"],
     enabled: !!classId,
   });
 
-  const { data: students = [] } = useQuery({
+  const { data: students = [] } = useQuery<User[]>({
+    queryKey: ["/api/students"],
+  });
+
+  const { data: assignedStudents = [] } = useQuery({
     queryKey: ["/api/classes", classId, "students"],
     enabled: !!classId,
   });
@@ -50,6 +63,100 @@ export default function ClassDetail() {
   }
 
   const branch = branchData?.find(b => b.id === classData.branchId);
+
+  const handleAssignTeacher = async (teacherId: number, isLead: boolean, hasAccess: boolean) => {
+    try {
+      const response = await fetch(`/api/classes/${classId}/teachers/${teacherId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isLead, hasAccess }),
+      });
+
+      if (!response.ok) throw new Error("Failed to update teacher roles");
+
+      queryClient.invalidateQueries({ queryKey: ["/api/classes", classId, "teachers"] });
+      toast({
+        title: "Success",
+        description: "Teacher roles updated successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update teacher roles",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleRemoveTeacher = async (teacherId: number) => {
+    if (!confirm("Are you sure you want to remove this teacher from the class?")) return;
+
+    try {
+      const response = await fetch(`/api/classes/${classId}/teachers/${teacherId}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) throw new Error("Failed to remove teacher");
+
+      queryClient.invalidateQueries({ queryKey: ["/api/classes", classId, "teachers"] });
+      toast({
+        title: "Success",
+        description: "Teacher removed successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to remove teacher",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleAssignStudent = async (studentId: number) => {
+    try {
+      const response = await fetch(`/api/classes/${classId}/students/${studentId}`, {
+        method: "PUT",
+      });
+
+      if (!response.ok) throw new Error("Failed to assign student");
+
+      queryClient.invalidateQueries({ queryKey: ["/api/classes", classId, "students"] });
+      toast({
+        title: "Success",
+        description: "Student assigned successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to assign student",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleRemoveStudent = async (studentId: number) => {
+    if (!confirm("Are you sure you want to remove this student from the class?")) return;
+
+    try {
+      const response = await fetch(`/api/classes/${classId}/students/${studentId}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) throw new Error("Failed to remove student");
+
+      queryClient.invalidateQueries({ queryKey: ["/api/classes", classId, "students"] });
+      toast({
+        title: "Success",
+        description: "Student removed successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to remove student",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <div className="flex h-screen">
@@ -80,8 +187,11 @@ export default function ClassDetail() {
 
           {/* Teachers Section */}
           <Card className="mb-8">
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Teachers</CardTitle>
+              <Button onClick={() => setIsAssignTeacherDialogOpen(true)}>
+                Assign Teacher
+              </Button>
             </CardHeader>
             <CardContent>
               <Table>
@@ -89,16 +199,28 @@ export default function ClassDetail() {
                   <TableRow>
                     <TableHead>Name</TableHead>
                     <TableHead>Email</TableHead>
-                    <TableHead>Actions</TableHead>
+                    <TableHead className="w-[100px] text-center">Lead</TableHead>
+                    <TableHead className="w-[100px] text-center">Access</TableHead>
+                    <TableHead className="w-[100px]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {teachers.map((teacher) => (
+                  {assignedTeachers.map((teacher: any) => (
                     <TableRow key={teacher.id}>
                       <TableCell>{teacher.name}</TableCell>
                       <TableCell>{teacher.email}</TableCell>
+                      <TableCell className="text-center">
+                        {teacher.isLead ? <Check className="mx-auto" /> : <X className="mx-auto text-muted-foreground" />}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {teacher.hasAccess ? <Check className="mx-auto" /> : <X className="mx-auto text-muted-foreground" />}
+                      </TableCell>
                       <TableCell>
-                        <Button variant="outline" size="sm">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleRemoveTeacher(teacher.id)}
+                        >
                           Remove
                         </Button>
                       </TableCell>
@@ -111,8 +233,11 @@ export default function ClassDetail() {
 
           {/* Students Section */}
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Students</CardTitle>
+              <Button onClick={() => setIsAssignStudentDialogOpen(true)}>
+                Assign Students
+              </Button>
             </CardHeader>
             <CardContent>
               <Table>
@@ -120,16 +245,20 @@ export default function ClassDetail() {
                   <TableRow>
                     <TableHead>Name</TableHead>
                     <TableHead>Email</TableHead>
-                    <TableHead>Actions</TableHead>
+                    <TableHead className="w-[100px]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {students.map((student) => (
+                  {assignedStudents.map((student: any) => (
                     <TableRow key={student.id}>
                       <TableCell>{student.name}</TableCell>
                       <TableCell>{student.email}</TableCell>
                       <TableCell>
-                        <Button variant="outline" size="sm">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleRemoveStudent(student.id)}
+                        >
                           Remove
                         </Button>
                       </TableCell>
@@ -139,6 +268,115 @@ export default function ClassDetail() {
               </Table>
             </CardContent>
           </Card>
+
+          {/* Assign Teacher Dialog */}
+          <Dialog
+            open={isAssignTeacherDialogOpen}
+            onOpenChange={setIsAssignTeacherDialogOpen}
+          >
+            <DialogContent className="sm:max-w-[625px]">
+              <DialogHeader>
+                <DialogTitle>Assign Teachers to {classData.name}</DialogTitle>
+              </DialogHeader>
+              <div className="mt-4">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead className="w-[80px] text-center">Lead</TableHead>
+                      <TableHead className="w-[80px] text-center">Access</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {teachers.map((teacher) => {
+                      const assignedTeacher = assignedTeachers.find(
+                        (at: any) => at.id === teacher.id
+                      );
+                      return (
+                        <TableRow key={teacher.id}>
+                          <TableCell>{teacher.name}</TableCell>
+                          <TableCell>{teacher.email}</TableCell>
+                          <TableCell className="text-center">
+                            <Checkbox
+                              checked={assignedTeacher?.isLead}
+                              onCheckedChange={(checked) => {
+                                handleAssignTeacher(
+                                  teacher.id,
+                                  checked as boolean,
+                                  assignedTeacher?.hasAccess || false
+                                );
+                              }}
+                            />
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Checkbox
+                              checked={assignedTeacher?.hasAccess}
+                              onCheckedChange={(checked) => {
+                                handleAssignTeacher(
+                                  teacher.id,
+                                  assignedTeacher?.isLead || false,
+                                  checked as boolean
+                                );
+                              }}
+                            />
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Assign Student Dialog */}
+          <Dialog
+            open={isAssignStudentDialogOpen}
+            onOpenChange={setIsAssignStudentDialogOpen}
+          >
+            <DialogContent className="sm:max-w-[625px]">
+              <DialogHeader>
+                <DialogTitle>Assign Students to {classData.name}</DialogTitle>
+              </DialogHeader>
+              <div className="mt-4">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead className="w-[80px] text-center">Assign</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {students.map((student) => {
+                      const isAssigned = assignedStudents.find(
+                        (as: any) => as.id === student.id
+                      );
+                      return (
+                        <TableRow key={student.id}>
+                          <TableCell>{student.name}</TableCell>
+                          <TableCell>{student.email}</TableCell>
+                          <TableCell className="text-center">
+                            <Checkbox
+                              checked={!!isAssigned}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  handleAssignStudent(student.id);
+                                } else {
+                                  handleRemoveStudent(student.id);
+                                }
+                              }}
+                            />
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </main>
     </div>
