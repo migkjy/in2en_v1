@@ -301,11 +301,14 @@ export default function ClassDetail() {
             open={isAssignTeacherDialogOpen}
             onOpenChange={setIsAssignTeacherDialogOpen}
           >
-            <DialogContent className="sm:max-w-[625px] max-h-[80vh] flex flex-col">
+            <DialogContent className="sm:max-w-[625px] max-h-[80vh]">
               <DialogHeader>
                 <DialogTitle>Assign Teachers to {classData.name}</DialogTitle>
+                <p className="text-sm text-muted-foreground">
+                  Select teachers to assign to this class. Teachers can be given lead and access permissions.
+                </p>
               </DialogHeader>
-              <div className="mt-4 flex-1 overflow-y-auto min-h-0">
+              <div className="mt-4 overflow-y-auto" style={{ maxHeight: "calc(80vh - 200px)" }}>
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -362,11 +365,14 @@ export default function ClassDetail() {
             open={isAssignStudentDialogOpen}
             onOpenChange={setIsAssignStudentDialogOpen}
           >
-            <DialogContent className="sm:max-w-[625px] max-h-[80vh] flex flex-col">
+            <DialogContent className="sm:max-w-[625px] max-h-[80vh]">
               <DialogHeader>
                 <DialogTitle>Assign Students to {classData.name}</DialogTitle>
+                <p className="text-sm text-muted-foreground">
+                  Select students to assign to this class.
+                </p>
               </DialogHeader>
-              <div className="mt-4 flex-1 overflow-y-auto min-h-0">
+              <div className="mt-4 overflow-y-auto" style={{ maxHeight: "calc(80vh - 200px)" }}>
                 <Table>
                   <TableHeader>
                     <TableRow>
