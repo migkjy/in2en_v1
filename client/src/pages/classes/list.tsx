@@ -18,6 +18,12 @@ import { ManageOptionsDialog } from "./manage-options-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Settings } from "lucide-react";
 
+type ClassWithStats = Class & {
+  branch?: Branch;
+  studentCount: number;
+  teacherCount: number;
+};
+
 export default function ClassList() {
   const [isCreateClassDialogOpen, setIsCreateClassDialogOpen] = useState(false);
   const [isManageOptionsDialogOpen, setIsManageOptionsDialogOpen] = useState(false);
@@ -26,9 +32,7 @@ export default function ClassList() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: classes, isLoading: isClassesLoading } = useQuery<
-    (Class & { branch?: Branch })[]
-  >({
+  const { data: classes, isLoading: isClassesLoading } = useQuery<ClassWithStats[]>({
     queryKey: ["/api/classes"],
     queryFn: async () => {
       const [classesResponse, branchesResponse] = await Promise.all([
@@ -43,10 +47,27 @@ export default function ClassList() {
       const classes = await classesResponse.json();
       const branches = await branchesResponse.json();
 
-      return classes.map((cls: Class) => ({
-        ...cls,
-        branch: branches.find((b: Branch) => b.id === cls.branchId),
-      }));
+      // Fetch student and teacher counts for each class
+      const classesWithStats = await Promise.all(
+        classes.map(async (cls: Class) => {
+          const [studentsResponse, teachersResponse] = await Promise.all([
+            fetch(`/api/classes/${cls.id}/students`),
+            fetch(`/api/classes/${cls.id}/teachers`),
+          ]);
+
+          const students = await studentsResponse.json();
+          const teachers = await teachersResponse.json();
+
+          return {
+            ...cls,
+            branch: branches.find((b: Branch) => b.id === cls.branchId),
+            studentCount: students.length,
+            teacherCount: teachers.length,
+          };
+        })
+      );
+
+      return classesWithStats;
     },
   });
 
@@ -54,6 +75,12 @@ export default function ClassList() {
     if (!confirm("Are you sure you want to delete this class?")) return;
 
     try {
+      // First delete related records
+      await fetch(`/api/classes/${classId}/teachers`, { method: "DELETE" });
+      await fetch(`/api/classes/${classId}/students`, { method: "DELETE" });
+      await fetch(`/api/classes/${classId}/assignments`, { method: "DELETE" });
+
+      // Then delete the class itself
       const response = await fetch(`/api/classes/${classId}`, {
         method: "DELETE",
       });
@@ -127,6 +154,8 @@ export default function ClassList() {
                 <TableHead>Branch</TableHead>
                 <TableHead>English Level</TableHead>
                 <TableHead>Age Group</TableHead>
+                <TableHead>Students</TableHead>
+                <TableHead>Teachers</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -138,6 +167,8 @@ export default function ClassList() {
                   <TableCell>{cls.branch?.name || "-"}</TableCell>
                   <TableCell>{cls.englishLevel || "-"}</TableCell>
                   <TableCell>{cls.ageGroup || "-"}</TableCell>
+                  <TableCell>{cls.studentCount}</TableCell>
+                  <TableCell>{cls.teacherCount}</TableCell>
                   <TableCell>
                     <Button
                       variant="outline"
