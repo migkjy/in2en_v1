@@ -100,7 +100,7 @@ export function CreateStudentDialog({ open, onOpenChange, student }: CreateStude
         phoneNumber: student.phone_number || "",
         birthDate: student.birth_date || "",
         password: "", // Always empty for security
-        branch_id: student.branch_id ? Number(student.branch_id) : undefined,
+        branch_id: student.branchId ? Number(student.branchId) : undefined,
       });
     } else {
       form.reset({
