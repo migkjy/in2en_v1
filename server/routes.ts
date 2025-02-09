@@ -352,6 +352,20 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Add these routes after the existing teacher routes
+  app.get("/api/students", requireRole([UserRole.ADMIN]), async (req, res) => {
+    try {
+      const users = await storage.listUsers();
+      const students = users.filter(user => user.role === UserRole.STUDENT);
+      res.json(students);
+    } catch (error) {
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "An unknown error occurred" });
+      }
+    }
+  });
+
   app.post("/api/students", requireRole([UserRole.ADMIN]), async (req, res) => {
     try {
       const student = await storage.createUser({
