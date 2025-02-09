@@ -230,8 +230,8 @@ export default function ClassDetail() {
                 <TableBody>
                   {assignedTeachers.map((teacher) => (
                     <TableRow key={teacher.id}>
-                      <TableCell>{teacher.name || 'Unknown'}</TableCell>
-                      <TableCell>{teacher.email || '-'}</TableCell>
+                      <TableCell>{teacher.name}</TableCell>
+                      <TableCell>{teacher.email}</TableCell>
                       <TableCell className="text-center">
                         {teacher.isLead ? <Check className="mx-auto" /> : <X className="mx-auto text-muted-foreground" />}
                       </TableCell>
