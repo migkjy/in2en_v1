@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,16 +18,33 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useLocation } from "wouter";
 import type { Assignment, Branch, Class } from "@shared/schema";
 import { format } from "date-fns";
 import { useState } from "react";
+import { EditAssignmentDialog } from "./edit-dialog";
+import { useToast } from "@/hooks/use-toast";
+import { Eye, Pencil, Trash } from "lucide-react";
 
 export default function AssignmentList() {
   const [, navigate] = useLocation();
   const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [selectedBranch, setSelectedBranch] = useState<string>("");
   const [selectedClass, setSelectedClass] = useState<string>("");
+  const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null);
+  const [deleteAssignment, setDeleteAssignment] = useState<Assignment | null>(null);
 
   const { data: assignments } = useQuery<Assignment[]>({
     queryKey: ["/api/assignments", selectedBranch, selectedClass],
@@ -67,6 +84,34 @@ export default function AssignmentList() {
   const handleCreateAssignment = () => {
     const basePath = user?.role === "ADMIN" ? "/admin" : "/teacher";
     navigate(`${basePath}/assignments/create`);
+  };
+
+  const handleViewAssignment = (assignment: Assignment) => {
+    const basePath = user?.role.toLowerCase();
+    navigate(`/${basePath}/assignments/${assignment.id}`);
+  };
+
+  const handleDeleteAssignment = async () => {
+    if (!deleteAssignment) return;
+
+    try {
+      const response = await fetch(`/api/assignments/${deleteAssignment.id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) throw new Error("Failed to delete assignment");
+
+      await queryClient.invalidateQueries({ queryKey: ["/api/assignments"] });
+      toast({ title: "Success", description: "Assignment deleted successfully" });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete assignment",
+        variant: "destructive",
+      });
+    } finally {
+      setDeleteAssignment(null);
+    }
   };
 
   return (
@@ -133,6 +178,7 @@ export default function AssignmentList() {
                     <TableHead>Class</TableHead>
                     <TableHead>Due Date</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -145,13 +191,7 @@ export default function AssignmentList() {
                     );
 
                     return (
-                      <TableRow
-                        key={assignment.id}
-                        className="cursor-pointer"
-                        onClick={() =>
-                          navigate(`${user?.role.toLowerCase()}/assignments/${assignment.id}`)
-                        }
-                      >
+                      <TableRow key={assignment.id}>
                         <TableCell>{assignment.title}</TableCell>
                         <TableCell>{branch?.name || "-"}</TableCell>
                         <TableCell>
@@ -164,6 +204,31 @@ export default function AssignmentList() {
                             : "-"}
                         </TableCell>
                         <TableCell>{assignment.status}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleViewAssignment(assignment)}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => setEditingAssignment(assignment)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => setDeleteAssignment(assignment)}
+                            >
+                              <Trash className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
                       </TableRow>
                     );
                   })}
@@ -173,6 +238,31 @@ export default function AssignmentList() {
           </Card>
         </div>
       </main>
+
+      {/* Edit Dialog */}
+      {editingAssignment && (
+        <EditAssignmentDialog
+          assignment={editingAssignment}
+          open={!!editingAssignment}
+          onOpenChange={(open) => !open && setEditingAssignment(null)}
+        />
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteAssignment} onOpenChange={(open) => !open && setDeleteAssignment(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Assignment</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this assignment? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteAssignment}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

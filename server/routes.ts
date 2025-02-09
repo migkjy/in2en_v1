@@ -276,6 +276,42 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  app.get("/api/assignments/:id", requireRole([UserRole.ADMIN, UserRole.TEACHER]), async (req, res) => {
+    try {
+      const assignment = await storage.getAssignment(Number(req.params.id));
+      if (!assignment) {
+        return res.status(404).json({ message: "Assignment not found" });
+      }
+      res.json(assignment);
+    } catch (error) {
+      console.error("Error fetching assignment:", error);
+      res.status(500).json({ message: "Failed to fetch assignment" });
+    }
+  });
+
+  app.put("/api/assignments/:id", requireRole([UserRole.ADMIN, UserRole.TEACHER]), async (req, res) => {
+    try {
+      const assignment = await storage.updateAssignment(Number(req.params.id), req.body);
+      if (!assignment) {
+        return res.status(404).json({ message: "Assignment not found" });
+      }
+      res.json(assignment);
+    } catch (error) {
+      console.error("Error updating assignment:", error);
+      res.status(500).json({ message: "Failed to update assignment" });
+    }
+  });
+
+  app.delete("/api/assignments/:id", requireRole([UserRole.ADMIN, UserRole.TEACHER]), async (req, res) => {
+    try {
+      await storage.deleteAssignment(Number(req.params.id));
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting assignment:", error);
+      res.status(500).json({ message: "Failed to delete assignment" });
+    }
+  });
+
   // Submission routes
   app.post("/api/submissions/upload",
     requireRole([UserRole.TEACHER]),
