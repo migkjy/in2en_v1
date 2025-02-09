@@ -61,24 +61,34 @@ export default function BranchDetail() {
   }
 
   const handleDeleteClass = async (classId: number) => {
-    if (!confirm("Are you sure you want to delete this class?")) return;
+    if (!confirm("Are you sure you want to delete this class? This will also remove all related data.")) return;
 
     try {
+      // First delete related records
+      await fetch(`/api/classes/${classId}/teachers`, { method: "DELETE" });
+      await fetch(`/api/classes/${classId}/students`, { method: "DELETE" });
+      await fetch(`/api/classes/${classId}/assignments`, { method: "DELETE" });
+
+      // Then delete the class itself
       const response = await fetch(`/api/classes/${classId}`, {
         method: "DELETE",
       });
 
-      if (!response.ok) throw new Error("Failed to delete class");
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to delete class");
+      }
 
-      queryClient.invalidateQueries({ queryKey: ["/api/classes"] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/classes"] });
       toast({
         title: "Success",
         description: "Class deleted successfully",
       });
     } catch (error) {
+      console.error("Delete class error:", error);
       toast({
         title: "Error",
-        description: "Failed to delete class",
+        description: error instanceof Error ? error.message : "Failed to delete class",
         variant: "destructive",
       });
     }
