@@ -33,18 +33,18 @@ const baseStudentSchema = insertUserSchema.extend({
   phoneNumber: z.string().optional(),
   birthDate: z.string().optional(),
   branch_id: z.number().optional(),
-  email: z.string().email("올바른 이메일 주소를 입력해주세요").min(1, "이메일은 필수 입력항목입니다"),
-  name: z.string().min(1, "이름은 필수 입력항목입니다"),
+  email: z.string().email("Please enter a valid email address").min(1, "Email is required"),
+  name: z.string().min(1, "Name is required"),
 }).omit({ role: true });
 
 // 새 학생용 스키마 (비밀번호 필수)
 const newStudentSchema = baseStudentSchema.extend({
-  password: z.string().min(6, "비밀번호는 최소 6자 이상이어야 합니다"),
+  password: z.string().min(6, "Password must be at least 6 characters long"),
 });
 
 // 기존 학생 수정용 스키마 (비밀번호 선택)
 const editStudentSchema = baseStudentSchema.extend({
-  password: z.string().min(6, "비밀번호는 최소 6자 이상이어야 합니다").optional().or(z.literal('')),
+  password: z.string().min(6, "Password must be at least 6 characters long").optional().or(z.literal('')),
 });
 
 type CreateStudentForm = z.infer<typeof newStudentSchema>;
