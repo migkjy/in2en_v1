@@ -38,7 +38,13 @@ export default function AssignmentList() {
 
       const response = await fetch(`/api/assignments?${params.toString()}`);
       if (!response.ok) throw new Error("Failed to fetch assignments");
-      return response.json();
+      const data = await response.json();
+      
+      return data.filter((assignment: Assignment) => {
+        if (selectedBranch && assignment.branchId !== parseInt(selectedBranch)) return false;
+        if (selectedClass && assignment.classId !== parseInt(selectedClass)) return false;
+        return true;
+      });
     },
   });
 
