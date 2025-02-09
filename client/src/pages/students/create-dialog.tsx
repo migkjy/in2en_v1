@@ -29,7 +29,7 @@ import { Input } from "@/components/ui/input";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 
-const createStudentSchema = insertUserSchema.extend({
+const baseStudentSchema = insertUserSchema.extend({
   phoneNumber: z.string().optional(),
   birthDate: z.string().optional(),
   branch_id: z.number().optional(),
@@ -37,7 +37,17 @@ const createStudentSchema = insertUserSchema.extend({
   name: z.string().min(1, "이름은 필수 입력항목입니다"),
 }).omit({ role: true });
 
-type CreateStudentForm = z.infer<typeof createStudentSchema>;
+// 새 학생용 스키마 (비밀번호 필수)
+const newStudentSchema = baseStudentSchema.extend({
+  password: z.string().min(6, "비밀번호는 최소 6자 이상이어야 합니다"),
+});
+
+// 기존 학생 수정용 스키마 (비밀번호 선택)
+const editStudentSchema = baseStudentSchema.extend({
+  password: z.string().min(6, "비밀번호는 최소 6자 이상이어야 합니다").optional().or(z.literal('')),
+});
+
+type CreateStudentForm = z.infer<typeof newStudentSchema>;
 
 type CreateStudentDialogProps = {
   open: boolean;
@@ -62,7 +72,7 @@ export function CreateStudentDialog({ open, onOpenChange, student }: CreateStude
   });
 
   const form = useForm<CreateStudentForm>({
-    resolver: zodResolver(createStudentSchema),
+    resolver: zodResolver(student ? editStudentSchema : newStudentSchema),
     defaultValues: {
       name: "",
       email: "",
