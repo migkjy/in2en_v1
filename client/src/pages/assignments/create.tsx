@@ -66,7 +66,8 @@ export default function CreateAssignment() {
       description: "",
       classId: undefined,
       dueDate: "",
-      teacherId: user?.id
+      teacherId: user?.id,
+      status: "draft"
     }
   });
 
