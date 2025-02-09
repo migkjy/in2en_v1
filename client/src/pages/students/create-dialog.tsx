@@ -40,7 +40,7 @@ type CreateStudentForm = z.infer<typeof createStudentSchema>;
 type CreateStudentDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  student?: any; // TODO: Use proper type when available
+  student?: any;
 };
 
 export function CreateStudentDialog({ open, onOpenChange, student }: CreateStudentDialogProps) {
@@ -83,13 +83,21 @@ export function CreateStudentDialog({ open, onOpenChange, student }: CreateStude
   // Reset form when student prop changes
   useEffect(() => {
     if (student) {
+      console.log("Setting form values:", {
+        name: student.name,
+        email: student.email,
+        phoneNumber: student.phone_number || "",
+        birthDate: student.birth_date || "",
+        branchId: student.branch_id,
+      });
+
       form.reset({
         name: student.name || "",
         email: student.email || "",
-        phoneNumber: student.phoneNumber || "",
-        birthDate: student.birthDate || "",
+        phoneNumber: student.phone_number || "",
+        birthDate: student.birth_date || "",
         password: "", // Always empty for security
-        branchId: student.branchId,
+        branchId: student.branch_id ? Number(student.branch_id) : undefined,
       });
     } else {
       form.reset({
@@ -103,68 +111,31 @@ export function CreateStudentDialog({ open, onOpenChange, student }: CreateStude
     }
   }, [student, form]);
 
-  const createStudent = useMutation({
-    mutationFn: async (data: CreateStudentForm) => {
-      setIsLoading(true);
-      try {
-        const response = await fetch("/api/students", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            ...data,
-            role: "STUDENT",
-          }),
-        });
-
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.message || "Failed to create student");
-        }
-
-        return response.json();
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/students"] });
-      toast({
-        title: "Success",
-        description: "Student created successfully",
-      });
-      form.reset();
-      onOpenChange(false);
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to create student",
-        variant: "destructive",
-      });
-    },
-  });
-
   const updateStudent = useMutation({
     mutationFn: async (data: CreateStudentForm) => {
       setIsLoading(true);
       try {
-        // Remove password from request data if it's empty
-        const requestData = { ...data };
+        // Format the data before sending
+        const requestData = {
+          ...data,
+          phone_number: data.phoneNumber,
+          birth_date: data.birthDate,
+          branch_id: data.branchId,
+        };
+
+        // Remove empty fields
         if (!requestData.password?.trim()) {
           delete requestData.password;
         }
+
+        console.log("Sending update request:", requestData);
 
         const response = await fetch(`/api/students/${student?.id}`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            ...requestData,
-            role: "STUDENT",
-          }),
+          body: JSON.stringify(requestData),
         });
 
         if (!response.ok) {
@@ -195,7 +166,57 @@ export function CreateStudentDialog({ open, onOpenChange, student }: CreateStude
     },
   });
 
+  const createStudent = useMutation({
+    mutationFn: async (data: CreateStudentForm) => {
+      setIsLoading(true);
+      try {
+        // Format the data before sending
+        const requestData = {
+          ...data,
+          phone_number: data.phoneNumber,
+          birth_date: data.birthDate,
+          branch_id: data.branchId,
+          role: "STUDENT",
+        };
+
+        const response = await fetch("/api/students", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(requestData),
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || "Failed to create student");
+        }
+
+        return response.json();
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/students"] });
+      toast({
+        title: "Success",
+        description: "Student created successfully",
+      });
+      form.reset();
+      onOpenChange(false);
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to create student",
+        variant: "destructive",
+      });
+    },
+  });
+
   const onSubmit = (data: CreateStudentForm) => {
+    console.log("Form submitted with data:", data);
     if (student) {
       updateStudent.mutate(data);
     } else {

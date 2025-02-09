@@ -398,25 +398,26 @@ export function registerRoutes(app: Express): Server {
   // Add this route after the existing student routes
   app.put("/api/students/:id", requireRole([UserRole.ADMIN]), async (req, res) => {
     try {
+      console.log("Received update request body:", req.body);
+
       // If password is empty string or undefined, remove it from the request body
       const updateData = { ...req.body };
       if (!updateData.password) {
         delete updateData.password;
       }
 
-      // Convert fields to match database column names
-      const studentData = {
+      // Use the database column names directly from the request
+      const student = await storage.updateUser(Number(req.params.id), {
         ...updateData,
-        role: UserRole.STUDENT
-      };
-
-      const student = await storage.updateUser(Number(req.params.id), studentData);
+        role: UserRole.STUDENT,
+      });
 
       if (!student) {
         return res.status(404).json({ message: "Student not found" });
       }
       res.json(student);
     } catch (error) {
+      console.error("Error updating student:", error);
       if (error instanceof Error) {
         res.status(400).json({ message: error.message });
       } else {
