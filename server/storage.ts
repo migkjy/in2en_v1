@@ -1,6 +1,6 @@
-import { users, branches, classes, assignments, submissions, comments, UserRole, teacherBranchAccess, teacherClassAccess } from "@shared/schema";
-import type { User, Branch, Class, Assignment, Submission, Comment, TeacherBranchAccess, TeacherClassAccess } from "@shared/schema";
-import type { InsertUser } from "@shared/schema";
+import { users, branches, classes, assignments, submissions, comments, UserRole, teacherBranchAccess, teacherClassAccess, classLeadTeachers } from "@shared/schema";
+import type { User, Branch, Class, Assignment, Submission, Comment, TeacherBranchAccess, TeacherClassAccess, ClassLeadTeacher } from "@shared/schema";
+import type { InsertUser, InsertClassLeadTeacher } from "@shared/schema";
 import session from "express-session";
 import { db } from "./db";
 import { and, eq } from "drizzle-orm";
@@ -52,11 +52,13 @@ export interface IStorage {
   // Teacher authority operations
   getTeacherBranches(teacherId: number): Promise<Branch[]>;
   getTeacherClasses(teacherId: number): Promise<Class[]>;
-  updateTeacherAuthority(teacherId: number, branchIds: number[], classIds: number[], leadClassIds?: number[]): Promise<void>;
+  updateTeacherAuthority(teacherId: number, branchIds: number[], classIds: number[]): Promise<void>;
 
-  // Add new methods for Lead Teacher management
+  // Lead Teacher operations
+  assignLeadTeacher(classId: number, teacherId: number, assignedById: number, notes?: string): Promise<ClassLeadTeacher>;
+  removeLeadTeacher(classId: number, teacherId: number): Promise<void>;
   getClassLeadTeachers(classId: number): Promise<User[]>;
-  setLeadTeacherStatus(classId: number, teacherId: number, isLead: boolean): Promise<void>;
+  isLeadTeacher(classId: number, teacherId: number): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -350,8 +352,7 @@ export class DatabaseStorage implements IStorage {
   async updateTeacherAuthority(
     teacherId: number,
     branchIds: number[],
-    classIds: number[],
-    leadClassIds: number[] = []
+    classIds: number[]
   ): Promise<void> {
     const [user] = await db
       .select()
@@ -393,7 +394,6 @@ export class DatabaseStorage implements IStorage {
               classIds.map(classId => ({
                 teacherId,
                 classId,
-                isLeadTeacher: leadClassIds.includes(classId),
               }))
             );
         }
@@ -404,32 +404,13 @@ export class DatabaseStorage implements IStorage {
     });
   }
 
-  async getClassLeadTeachers(classId: number): Promise<User[]> {
-    const result = await db
-      .select({
-        id: users.id,
-        email: users.email,
-        name: users.name,
-        role: users.role,
-        branchId: users.branchId,
-        phone_number: users.phone_number,
-        birth_date: users.birth_date,
-        password: users.password
-      })
-      .from(users)
-      .innerJoin(
-        teacherClassAccess,
-        and(
-          eq(teacherClassAccess.teacherId, users.id),
-          eq(teacherClassAccess.classId, classId),
-          eq(teacherClassAccess.isLeadTeacher, true)
-        )
-      );
-
-    return result;
-  }
-
-  async setLeadTeacherStatus(classId: number, teacherId: number, isLead: boolean): Promise<void> {
+  // Lead Teacher operations
+  async assignLeadTeacher(
+    classId: number,
+    teacherId: number,
+    assignedById: number,
+    notes?: string
+  ): Promise<ClassLeadTeacher> {
     // Verify the teacher has access to the class
     const [access] = await db
       .select()
@@ -445,16 +426,66 @@ export class DatabaseStorage implements IStorage {
       throw new Error("Teacher does not have access to this class");
     }
 
-    // Update the lead teacher status
+    // Create lead teacher assignment
+    const [leadTeacher] = await db
+      .insert(classLeadTeachers)
+      .values({
+        classId,
+        teacherId,
+        assignedById,
+        notes: notes || null,
+      })
+      .returning();
+
+    return leadTeacher;
+  }
+
+  async removeLeadTeacher(classId: number, teacherId: number): Promise<void> {
     await db
-      .update(teacherClassAccess)
-      .set({ isLeadTeacher: isLead })
+      .delete(classLeadTeachers)
       .where(
         and(
-          eq(teacherClassAccess.classId, classId),
-          eq(teacherClassAccess.teacherId, teacherId)
+          eq(classLeadTeachers.classId, classId),
+          eq(classLeadTeachers.teacherId, teacherId)
         )
       );
+  }
+
+  async getClassLeadTeachers(classId: number): Promise<User[]> {
+    const result = await db
+      .select({
+        id: users.id,
+        email: users.email,
+        name: users.name,
+        role: users.role,
+        branchId: users.branchId,
+        phone_number: users.phone_number,
+        birth_date: users.birth_date,
+      })
+      .from(users)
+      .innerJoin(
+        classLeadTeachers,
+        and(
+          eq(classLeadTeachers.teacherId, users.id),
+          eq(classLeadTeachers.classId, classId)
+        )
+      );
+
+    return result;
+  }
+
+  async isLeadTeacher(classId: number, teacherId: number): Promise<boolean> {
+    const [result] = await db
+      .select()
+      .from(classLeadTeachers)
+      .where(
+        and(
+          eq(classLeadTeachers.classId, classId),
+          eq(classLeadTeachers.teacherId, teacherId)
+        )
+      );
+
+    return !!result;
   }
 }
 

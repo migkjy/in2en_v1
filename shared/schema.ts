@@ -51,7 +51,16 @@ export const teacherClassAccess = pgTable("teacher_class_access", {
   id: serial("id").primaryKey(),
   teacherId: integer("teacher_id").notNull().references(() => users.id),
   classId: integer("class_id").notNull().references(() => classes.id),
-  isLeadTeacher: boolean("is_lead_teacher").notNull().default(false),
+});
+
+// New table for managing Lead Teachers
+export const classLeadTeachers = pgTable("class_lead_teachers", {
+  id: serial("id").primaryKey(),
+  classId: integer("class_id").notNull().references(() => classes.id),
+  teacherId: integer("teacher_id").notNull().references(() => users.id),
+  assignedById: integer("assigned_by_id").notNull().references(() => users.id),
+  assignedAt: timestamp("assigned_at").notNull().defaultNow(),
+  notes: text("notes"),
 });
 
 export const assignments = pgTable("assignments", {
@@ -83,15 +92,7 @@ export const comments = pgTable("comments", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const insertUserSchema = createInsertSchema(users);
-export const insertBranchSchema = createInsertSchema(branches);
-export const insertClassSchema = createInsertSchema(classes);
-export const insertAssignmentSchema = createInsertSchema(assignments);
-export const insertSubmissionSchema = createInsertSchema(submissions);
-export const insertCommentSchema = createInsertSchema(comments);
-export const insertTeacherBranchAccessSchema = createInsertSchema(teacherBranchAccess);
-export const insertTeacherClassAccessSchema = createInsertSchema(teacherClassAccess);
-
+// Relations
 export const teacherClassAccessRelations = relations(teacherClassAccess, ({ one }) => ({
   teacher: one(users, {
     fields: [teacherClassAccess.teacherId],
@@ -103,6 +104,33 @@ export const teacherClassAccessRelations = relations(teacherClassAccess, ({ one 
   }),
 }));
 
+export const classLeadTeachersRelations = relations(classLeadTeachers, ({ one }) => ({
+  teacher: one(users, {
+    fields: [classLeadTeachers.teacherId],
+    references: [users.id],
+  }),
+  class: one(classes, {
+    fields: [classLeadTeachers.classId],
+    references: [classes.id],
+  }),
+  assignedBy: one(users, {
+    fields: [classLeadTeachers.assignedById],
+    references: [users.id],
+  }),
+}));
+
+// Schema definitions
+export const insertUserSchema = createInsertSchema(users);
+export const insertBranchSchema = createInsertSchema(branches);
+export const insertClassSchema = createInsertSchema(classes);
+export const insertAssignmentSchema = createInsertSchema(assignments);
+export const insertSubmissionSchema = createInsertSchema(submissions);
+export const insertCommentSchema = createInsertSchema(comments);
+export const insertTeacherBranchAccessSchema = createInsertSchema(teacherBranchAccess);
+export const insertTeacherClassAccessSchema = createInsertSchema(teacherClassAccess);
+export const insertClassLeadTeacherSchema = createInsertSchema(classLeadTeachers);
+
+// Type definitions
 export type User = typeof users.$inferSelect;
 export type Branch = typeof branches.$inferSelect;
 export type Class = typeof classes.$inferSelect;
@@ -111,6 +139,7 @@ export type Submission = typeof submissions.$inferSelect;
 export type Comment = typeof comments.$inferSelect;
 export type TeacherBranchAccess = typeof teacherBranchAccess.$inferSelect;
 export type TeacherClassAccess = typeof teacherClassAccess.$inferSelect;
+export type ClassLeadTeacher = typeof classLeadTeachers.$inferSelect;
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertBranch = z.infer<typeof insertBranchSchema>;
@@ -120,3 +149,4 @@ export type InsertSubmission = z.infer<typeof insertSubmissionSchema>;
 export type InsertComment = z.infer<typeof insertCommentSchema>;
 export type InsertTeacherBranchAccess = z.infer<typeof insertTeacherBranchAccessSchema>;
 export type InsertTeacherClassAccess = z.infer<typeof insertTeacherClassAccessSchema>;
+export type InsertClassLeadTeacher = z.infer<typeof insertClassLeadTeacherSchema>;
