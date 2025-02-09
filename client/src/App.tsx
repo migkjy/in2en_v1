@@ -80,22 +80,22 @@ function Router() {
         allowedRole="TEACHER"
       />
       <ProtectedRoute 
-        path="/assignments"
+        path="/teacher/assignments"
         component={AssignmentList}
         allowedRole="TEACHER"
       />
       <ProtectedRoute 
-        path="/assignments/create" 
+        path="/teacher/assignments/create" 
         component={CreateAssignment} 
         allowedRole="TEACHER"
       />
       <ProtectedRoute 
-        path="/assignments/upload" 
+        path="/teacher/assignments/upload" 
         component={UploadAssignment} 
         allowedRole="TEACHER"
       />
       <ProtectedRoute 
-        path="/assignments/review/:id" 
+        path="/teacher/assignments/review/:id" 
         component={ReviewAssignment} 
         allowedRole="TEACHER"
       />
