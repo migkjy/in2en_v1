@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertClassSchema, type Class, type Branch } from "@shared/schema";
+import { insertClassSchema, type Class, type Branch, type EnglishLevel, type AgeGroup } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -39,6 +39,24 @@ export function CreateClassDialog({ open, onOpenChange, branchId, classToEdit }:
     queryFn: async () => {
       const response = await fetch("/api/branches");
       if (!response.ok) throw new Error("Failed to fetch branches");
+      return response.json();
+    },
+  });
+
+  const { data: englishLevels } = useQuery<EnglishLevel[]>({
+    queryKey: ["/api/english-levels"],
+    queryFn: async () => {
+      const response = await fetch("/api/english-levels");
+      if (!response.ok) throw new Error("Failed to fetch English levels");
+      return response.json();
+    },
+  });
+
+  const { data: ageGroups } = useQuery<AgeGroup[]>({
+    queryKey: ["/api/age-groups"],
+    queryFn: async () => {
+      const response = await fetch("/api/age-groups");
+      if (!response.ok) throw new Error("Failed to fetch age groups");
       return response.json();
     },
   });
@@ -178,9 +196,11 @@ export function CreateClassDialog({ open, onOpenChange, branchId, classToEdit }:
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="Beginner">Beginner</SelectItem>
-                      <SelectItem value="Intermediate">Intermediate</SelectItem>
-                      <SelectItem value="Advanced">Advanced</SelectItem>
+                      {englishLevels?.map((level) => (
+                        <SelectItem key={level.id} value={level.name}>
+                          {level.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -204,10 +224,11 @@ export function CreateClassDialog({ open, onOpenChange, branchId, classToEdit }:
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="Elementary">Elementary</SelectItem>
-                      <SelectItem value="Middle">Middle School</SelectItem>
-                      <SelectItem value="High">High School</SelectItem>
-                      <SelectItem value="Adult">Adult</SelectItem>
+                      {ageGroups?.map((group) => (
+                        <SelectItem key={group.id} value={group.name}>
+                          {group.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />
