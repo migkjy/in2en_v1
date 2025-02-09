@@ -44,30 +44,18 @@ export default function ClassList() {
         throw new Error("Failed to fetch data");
       }
 
-      const classes = await classesResponse.json();
-      const branches = await branchesResponse.json();
+      const [classes, branches] = await Promise.all([
+        classesResponse.json(),
+        branchesResponse.json(),
+      ]);
 
-      // Fetch student and teacher counts for each class
-      const classesWithStats = await Promise.all(
-        classes.map(async (cls: Class) => {
-          const [studentsResponse, teachersResponse] = await Promise.all([
-            fetch(`/api/classes/${cls.id}/students`),
-            fetch(`/api/classes/${cls.id}/teachers`),
-          ]);
-
-          const students = await studentsResponse.json();
-          const teachers = await teachersResponse.json();
-
-          return {
-            ...cls,
-            branch: branches.find((b: Branch) => b.id === cls.branchId),
-            studentCount: students.length,
-            teacherCount: teachers.length,
-          };
-        })
-      );
-
-      return classesWithStats;
+      // Return classes with branch info and stats
+      return classes.map((cls: Class) => ({
+        ...cls,
+        branch: branches.find((b: Branch) => b.id === cls.branchId),
+        studentCount: 0, // Will be updated by the server
+        teacherCount: 0, // Will be updated by the server
+      }));
     },
   });
 
