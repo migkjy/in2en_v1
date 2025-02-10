@@ -31,15 +31,23 @@ export async function extractTextFromImage(base64Image: string): Promise<{
           ],
         },
       ],
-      response_format: { type: "json_object" }
+      response_format: { type: "json_object" },
+      max_tokens: 1000
     });
 
     const result = JSON.parse(visionResponse.choices[0].message.content || "{}");
-    return {
+
+    // Ensure we have valid data even if the API response is incomplete
+    const response = {
       text: result.text || "",
       feedback: result.feedback || "",
       confidence: Math.max(0, Math.min(1, result.confidence || 0))
     };
+
+    // Log the response for debugging
+    console.log("OpenAI Vision API Response:", response);
+
+    return response;
   } catch (error) {
     console.error("OpenAI API Error:", error);
     throw new Error(`Failed to analyze image: ${error instanceof Error ? error.message : 'Unknown error'}`);

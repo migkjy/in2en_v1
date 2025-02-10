@@ -382,7 +382,7 @@ export function registerRoutes(app: Express): Server {
         }
 
         if (!assignmentId || !studentId) {
-          return res.status(400).json({ 
+          return res.status(400).json({
             message: "Missing required fields",
             details: { assignmentId: !!assignmentId, studentId: !!studentId }
           });
@@ -420,7 +420,7 @@ export function registerRoutes(app: Express): Server {
   );
 
   // Add new route for AI review
-  app.post("/api/submissions/:assignmentId/review", 
+  app.post("/api/submissions/:assignmentId/review",
     requireRole([UserRole.TEACHER, UserRole.ADMIN]),
     async (req, res) => {
       try {
@@ -428,22 +428,30 @@ export function registerRoutes(app: Express): Server {
         const submissions = await storage.listSubmissions(assignmentId);
 
         // Filter submissions that haven't been reviewed
-        const pendingSubmissions = submissions.filter(s => 
+        const pendingSubmissions = submissions.filter(s =>
           s.status === "uploaded" || !s.ocrText || !s.aiFeedback
         );
 
         for (const submission of pendingSubmissions) {
           try {
             // Update status to processing
-            await storage.updateSubmission(submission.id, { 
-              status: "processing" 
+            await storage.updateSubmission(submission.id, {
+              status: "processing"
             });
 
             // Extract base64 image from data URL
             const base64Image = submission.imageUrl.split(',')[1];
 
+            console.log(`Processing submission ${submission.id}...`);
+
             // Process with OpenAI
             const { text, feedback } = await extractTextFromImage(base64Image);
+
+            console.log(`OCR Results for submission ${submission.id}:`, { text, feedback });
+
+            if (!text && !feedback) {
+              throw new Error("Failed to extract text and generate feedback");
+            }
 
             // Update submission with results
             await storage.updateSubmission(submission.id, {
@@ -451,16 +459,18 @@ export function registerRoutes(app: Express): Server {
               aiFeedback: feedback,
               status: "completed"
             });
+
+            console.log(`Successfully processed submission ${submission.id}`);
           } catch (error) {
             console.error(`Error processing submission ${submission.id}:`, error);
-            await storage.updateSubmission(submission.id, { 
+            await storage.updateSubmission(submission.id, {
               status: "failed",
-              aiFeedback: error.message 
+              aiFeedback: error instanceof Error ? error.message : 'Unknown error'
             });
           }
         }
 
-        res.json({ 
+        res.json({
           message: "AI review process completed",
           processed: pendingSubmissions.length
         });
