@@ -427,10 +427,8 @@ export function registerRoutes(app: Express): Server {
         const assignmentId = Number(req.params.assignmentId);
         const submissions = await storage.listSubmissions(assignmentId);
 
-        // Filter submissions that haven't been reviewed
-        const pendingSubmissions = submissions.filter(s =>
-          s.status === "uploaded" || !s.ocrText || !s.aiFeedback
-        );
+        // Only process submissions with 'uploaded' status
+        const pendingSubmissions = submissions.filter(s => s.status === "uploaded");
 
         for (const submission of pendingSubmissions) {
           try {
