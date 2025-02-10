@@ -33,31 +33,16 @@ export default function AssignmentDetail() {
 
   const { data: assignmentClass, isLoading: isClassLoading } = useQuery({
     queryKey: ["/api/classes", assignment?.classId],
-    queryFn: async () => {
-      const response = await fetch(`/api/classes/${assignment?.classId}`);
-      if (!response.ok) throw new Error("Failed to fetch class");
-      return response.json();
-    },
     enabled: !!assignment?.classId,
   });
 
   const { data: branch, isLoading: isBranchLoading } = useQuery({
     queryKey: ["/api/branches", assignmentClass?.branchId],
-    queryFn: async () => {
-      const response = await fetch(`/api/branches/${assignmentClass?.branchId}`);
-      if (!response.ok) throw new Error("Failed to fetch branch");
-      return response.json();
-    },
     enabled: !!assignmentClass?.branchId,
   });
 
   const { data: students } = useQuery({
     queryKey: ["/api/classes", assignment?.classId, "students"],
-    queryFn: async () => {
-      const response = await fetch(`/api/classes/${assignment?.classId}/students`);
-      if (!response.ok) throw new Error("Failed to fetch students");
-      return response.json();
-    },
     enabled: !!assignment?.classId,
   });
 
