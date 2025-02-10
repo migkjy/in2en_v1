@@ -96,11 +96,6 @@ function Router() {
         allowedRole="TEACHER"
       />
       <ProtectedRoute 
-        path="/teacher/assignments/upload" 
-        component={UploadAssignment} 
-        allowedRole="TEACHER"
-      />
-      <ProtectedRoute 
         path="/teacher/assignments/review/:id" 
         component={ReviewAssignment} 
         allowedRole="TEACHER"
@@ -113,10 +108,16 @@ function Router() {
         allowedRole="STUDENT"
       />
 
-      {/* Common Routes */}
+      {/* Common Routes - Accessible by both Teacher and Admin */}
       <ProtectedRoute 
         path="/assignments/:id"
         component={AssignmentDetail}
+        allowedRole={["TEACHER", "ADMIN"]}
+      />
+      <ProtectedRoute 
+        path="/assignments/:id/upload"
+        component={UploadAssignment}
+        allowedRole={["TEACHER", "ADMIN"]}
       />
 
       {/* Redirect to auth by default */}

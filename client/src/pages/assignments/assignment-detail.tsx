@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Assignment, Submission, Class, Branch, User } from "@shared/schema";
-import { useRoute } from "wouter";
+import { useRoute, useLocation } from "wouter";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,24 +19,29 @@ import { useAuth } from "@/hooks/use-auth";
 export default function AssignmentDetail() {
   const [, params] = useRoute("/assignments/:id");
   const assignmentId = params?.id;
+  const [, navigate] = useLocation();
   const { user } = useAuth();
 
   // Get assignment details
-  const { data: assignment, isLoading: isAssignmentLoading } = useQuery<Assignment>({
-    queryKey: ["/api/assignments", assignmentId],
-    queryFn: async () => {
-      const response = await fetch(`/api/assignments/${assignmentId}`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch assignment");
-      }
-      const data = await response.json();
-      return data;
-    },
-    enabled: !!assignmentId,
-  });
+  const { data: assignment, isLoading: isAssignmentLoading } =
+    useQuery<Assignment>({
+      queryKey: ["/api/assignments", assignmentId],
+      queryFn: async () => {
+        const response = await fetch(`/api/assignments/${assignmentId}`);
+        if (!response.ok) {
+          throw new Error("Failed to fetch assignment");
+        }
+        const data = await response.json();
+        return data;
+      },
+      enabled: !!assignmentId,
+    });
 
   // Get class details including branch info
-  const { data: classData, isLoading: isClassLoading } = useQuery<{class: Class; branch: Branch}>({
+  const { data: classData, isLoading: isClassLoading } = useQuery<{
+    class: Class;
+    branch: Branch;
+  }>({
     queryKey: ["/api/classes", assignment?.classId],
     queryFn: async () => {
       if (!assignment?.classId) throw new Error("Class ID is required");
@@ -66,7 +71,9 @@ export default function AssignmentDetail() {
     queryKey: ["/api/classes", assignment?.classId, "students"],
     queryFn: async () => {
       if (!assignment?.classId) throw new Error("Class ID is required");
-      const response = await fetch(`/api/classes/${assignment.classId}/students`);
+      const response = await fetch(
+        `/api/classes/${assignment.classId}/students`,
+      );
       if (!response.ok) {
         throw new Error("Failed to fetch students");
       }
@@ -80,7 +87,9 @@ export default function AssignmentDetail() {
     queryKey: ["/api/submissions", assignmentId],
     queryFn: async () => {
       if (!assignmentId) throw new Error("Assignment ID is required");
-      const response = await fetch(`/api/submissions?assignmentId=${assignmentId}`);
+      const response = await fetch(
+        `/api/submissions?assignmentId=${assignmentId}`,
+      );
       if (!response.ok) {
         throw new Error("Failed to fetch submissions");
       }
@@ -122,8 +131,7 @@ export default function AssignmentDetail() {
                   </div>
                   <div>
                     <span className="font-medium">Class:</span>{" "}
-                    {classData.class.name} -{" "}
-                    {classData.class.englishLevel}
+                    {classData.class.name} - {classData.class.englishLevel}
                   </div>
                   <div>
                     <span className="font-medium">Due:</span>{" "}
@@ -140,7 +148,7 @@ export default function AssignmentDetail() {
 
                 {/* Students List */}
                 <div>
-                  <h3 className="text-sm font-medium mb-4">Students</h3>
+                  <h3 className="text-sm font-medium mb-4">Class Students</h3>
                   <div className="flex flex-wrap gap-2">
                     {students?.map((student) => (
                       <div
@@ -168,7 +176,11 @@ export default function AssignmentDetail() {
                       {submissions?.map((submission) => (
                         <TableRow key={submission.id}>
                           <TableCell>
-                            {students?.find(s => s.id === submission.studentId)?.name}
+                            {
+                              students?.find(
+                                (s) => s.id === submission.studentId,
+                              )?.name
+                            }
                           </TableCell>
                           <TableCell>
                             <span
@@ -189,7 +201,7 @@ export default function AssignmentDetail() {
                               size="sm"
                               className="mr-2"
                               onClick={() =>
-                                window.location.href = `/submissions/${submission.id}`
+                                navigate(`/submissions/${submission.id}`)
                               }
                             >
                               View
@@ -201,7 +213,7 @@ export default function AssignmentDetail() {
                                   size="sm"
                                   className="mr-2"
                                   onClick={() =>
-                                    window.location.href = `/submissions/${submission.id}/edit`
+                                    navigate(`/submissions/${submission.id}/edit`)
                                   }
                                 >
                                   Edit
@@ -227,9 +239,7 @@ export default function AssignmentDetail() {
                   {isTeacherOrAdmin && (
                     <div className="mt-6">
                       <Button
-                        onClick={() =>
-                          window.location.href = `/assignments/${assignmentId}/upload`
-                        }
+                        onClick={() => navigate(`/assignments/${assignmentId}/upload`)}
                       >
                         Bulk Upload
                       </Button>
