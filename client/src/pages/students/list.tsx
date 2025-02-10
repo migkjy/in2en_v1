@@ -30,7 +30,7 @@ export default function StudentList() {
   const [selectedStudent, setSelectedStudent] = useState<User | null>(null);
   const [nameFilter, setNameFilter] = useState("");
   const [emailFilter, setEmailFilter] = useState("");
-  const [branchFilter, setBranchFilter] = useState<string>("");
+  const [branchFilter, setBranchFilter] = useState<string>("all");
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
@@ -85,7 +85,7 @@ export default function StudentList() {
       .toLowerCase()
       .includes(emailFilter.toLowerCase());
     const matchesBranch =
-      !branchFilter ||
+      branchFilter === "all" ||
       student.branchId === (branchFilter ? parseInt(branchFilter) : undefined);
 
     return matchesName && matchesEmail && matchesBranch;
@@ -134,7 +134,7 @@ export default function StudentList() {
                   <SelectValue placeholder="All Branches" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Branches</SelectItem>
+                  <SelectItem value="all">All Branches</SelectItem>
                   {branches?.map((branch) => (
                     <SelectItem key={branch.id} value={branch.id.toString()}>
                       {branch.name}
