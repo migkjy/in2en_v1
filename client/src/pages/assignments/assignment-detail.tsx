@@ -114,14 +114,31 @@ export default function AssignmentDetail() {
       }
       return response.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/submissions", assignmentId] });
+    onMutate: () => {
       toast({
-        title: "AI Review Complete",
-        description: "All submissions have been reviewed by AI",
+        title: "Starting AI Review",
+        description: "AI review process has begun. Please wait...",
       });
+      // Optimistically update status to processing
+      const previousSubmissions = queryClient.getQueryData(["/api/submissions", assignmentId]);
+      queryClient.setQueryData(
+        ["/api/submissions", assignmentId],
+        (old: any) => old?.map((s: any) => ({
+          ...s,
+          status: s.status === "uploaded" || !s.ocrText ? "processing" : s.status
+        }))
+      );
+      return { previousSubmissions };
     },
-    onError: (error) => {
+    onSettled: () => {
+      // Always refetch to get latest status
+      queryClient.invalidateQueries({ queryKey: ["/api/submissions", assignmentId] });
+    },
+    onError: (error, _, context) => {
+      // Revert optimistic update
+      if (context?.previousSubmissions) {
+        queryClient.setQueryData(["/api/submissions", assignmentId], context.previousSubmissions);
+      }
       toast({
         title: "Error",
         description: error.message || "Failed to process AI review",
