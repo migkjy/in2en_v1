@@ -81,7 +81,7 @@ export const submissions = pgTable("submissions", {
   ocrText: text("ocr_text"),
   aiFeedback: text("ai_feedback"),
   teacherFeedback: text("teacher_feedback"),
-  status: varchar("status", { length: 50 }).default("pending"),
+  status: varchar("status", { length: 50 }).default("uploaded"),
 });
 
 export const comments = pgTable("comments", {

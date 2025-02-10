@@ -459,7 +459,7 @@ export function registerRoutes(app: Express): Server {
             await storage.updateSubmission(submission.id, {
               ocrText: text || null,
               aiFeedback: feedback || null,
-              status: "completed"
+              status: "ai-reviewed"
             });
 
             console.log(`Successfully processed submission ${submission.id}`);

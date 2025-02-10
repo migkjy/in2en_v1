@@ -163,7 +163,7 @@ export default function AssignmentDetail() {
 
   const getStatusBadgeStyle = (status: string) => {
     switch (status) {
-      case "completed":
+      case "ai-reviewed":
         return "bg-green-100 text-green-800";
       case "processing":
         return "bg-blue-100 text-blue-800";
@@ -176,8 +176,8 @@ export default function AssignmentDetail() {
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case "completed":
-        return "Done";
+      case "ai-reviewed":
+        return "AI-Reviewed";
       case "processing":
         return "Processing";
       case "failed":
