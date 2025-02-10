@@ -59,7 +59,7 @@ export default function UploadAssignment() {
       const results = await Promise.all(
         files.map(async (file) => {
           const formData = new FormData();
-          formData.append("files", file);
+          formData.append("file", file);
           formData.append("assignmentId", assignmentId);
           formData.append("studentId", file.studentId!.toString());
 
