@@ -4,7 +4,7 @@ import { useRoute } from "wouter";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
+import { Loader2 } from "lucide-react"; // Updated import
 import {
   Table,
   TableBody,
@@ -21,35 +21,35 @@ export default function AssignmentDetail() {
   const assignmentId = params?.id;
   const { user } = useAuth();
 
-  const { data: assignment, isLoading: isAssignmentLoading } = useQuery<Assignment>({
+  const { data: assignment, isLoading: isAssignmentLoading } = useQuery({
     queryKey: ["/api/assignments", assignmentId],
     enabled: !!assignmentId,
   });
 
-  const { data: submissions, isLoading: isSubmissionsLoading } = useQuery<Submission[]>({
+  const { data: submissions, isLoading: isSubmissionsLoading } = useQuery({
     queryKey: ["/api/submissions", assignmentId],
     enabled: !!assignmentId,
   });
 
-  const { data: assignmentClass, isLoading: isClassLoading } = useQuery<Class>({
+  const { data: assignmentClass, isLoading: isClassLoading } = useQuery({
     queryKey: ["/api/classes", assignment?.classId],
     enabled: !!assignment?.classId,
   });
 
-  const { data: branch, isLoading: isBranchLoading } = useQuery<Branch>({
+  const { data: branch, isLoading: isBranchLoading } = useQuery({
     queryKey: ["/api/branches", assignmentClass?.branchId],
     enabled: !!assignmentClass?.branchId,
   });
 
-  const { data: students } = useQuery<User[]>({
+  const { data: students } = useQuery({
     queryKey: ["/api/classes", assignment?.classId, "students"],
     enabled: !!assignment?.classId,
   });
 
   if (isAssignmentLoading || isClassLoading || isBranchLoading) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900" />
+      <div className="flex items-center justify-center min-h-screen"> {/*Updated className*/}
+        <Loader2 className="h-8 w-8 animate-spin text-border" />
       </div>
     );
   }
