@@ -64,25 +64,28 @@ export default function UploadAssignment() {
       formData.append("assignmentId", assignmentId!);
       formData.append("userId", user.id.toString());
 
-      const res = await apiRequest("POST", "/api/submissions/upload", formData, {
-        credentials: 'include',
-      });
-
-      if (!res.ok) {
-        // Try to get error message from response
-        let errorMessage;
-        try {
-          const errorData = await res.json();
-          errorMessage = errorData.message;
-        } catch {
-          // If response is not JSON, use status text
-          errorMessage = res.statusText || `Error: ${res.status}`;
-        }
-        throw new Error(errorMessage);
+      // Debug output
+      console.log("Uploading files with formData:");
+      for (let [key, value] of formData.entries()) {
+        console.log(`${key}: ${value}`);
       }
 
-      const data = await res.json();
-      return data;
+      try {
+        const res = await apiRequest("POST", "/api/submissions/upload", formData, {
+          credentials: 'include',
+        });
+
+        if (!res.ok) {
+          const text = await res.text();
+          console.error("Upload failed with response:", text);
+          throw new Error(text || res.statusText || `Error: ${res.status}`);
+        }
+
+        return res.json();
+      } catch (error) {
+        console.error("Upload error:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/submissions"] });
