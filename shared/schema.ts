@@ -31,6 +31,7 @@ export const branches = pgTable("branches", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 256 }).notNull(),
   address: text("address"),
+  isHidden: boolean("is_hidden").notNull().default(false),
 });
 
 export const classes = pgTable("classes", {

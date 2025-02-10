@@ -31,7 +31,9 @@ export function registerRoutes(app: Express): Server {
   // Branch routes
   app.get("/api/branches", requireRole([UserRole.ADMIN]), async (req, res) => {
     const branches = await storage.listBranches();
-    res.json(branches);
+    // Filter out hidden branches
+    const visibleBranches = branches.filter(branch => !branch.isHidden);
+    res.json(visibleBranches);
   });
 
   app.post("/api/branches", requireRole([UserRole.ADMIN]), async (req, res) => {
@@ -79,9 +81,21 @@ export function registerRoutes(app: Express): Server {
 
   app.delete("/api/branches/:id", requireRole([UserRole.ADMIN]), async (req, res) => {
     try {
-      await storage.deleteBranch(Number(req.params.id));
+      const branchId = Number(req.params.id);
+
+      // Get all classes in this branch
+      const classes = await storage.listClasses(branchId);
+
+      // Hide all classes in this branch
+      for (const cls of classes) {
+        await storage.updateClass(cls.id, { isHidden: true });
+      }
+
+      // Hide the branch instead of deleting it
+      await storage.updateBranch(branchId, { isHidden: true });
       res.status(204).send();
     } catch (error) {
+      console.error("Error hiding branch:", error);
       if (error instanceof Error) {
         res.status(400).json({ message: error.message });
       } else {
