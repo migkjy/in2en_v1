@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { User } from "@shared/schema";
+import { User, Branch } from "@shared/schema";
 import { Sidebar } from "@/components/layout/sidebar";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -39,7 +39,7 @@ export default function StudentList() {
     queryKey: ["/api/students"],
   });
 
-  const { data: branches } = useQuery({
+  const { data: branches } = useQuery<Branch[]>({
     queryKey: ["/api/branches"],
   });
 
@@ -73,7 +73,7 @@ export default function StudentList() {
 
   const getBranchName = (branchId?: number) => {
     if (!branchId) return "-";
-    const branch = branches?.find((b: any) => b.id === branchId);
+    const branch = branches?.find((b) => b.id === branchId);
     return branch?.name || "-";
   };
 
@@ -86,7 +86,7 @@ export default function StudentList() {
       .includes(emailFilter.toLowerCase());
     const matchesBranch =
       !branchFilter ||
-      student.branchId === (branchFilter ? parseInt(branchFilter) : null);
+      student.branchId === (branchFilter ? parseInt(branchFilter) : undefined);
 
     return matchesName && matchesEmail && matchesBranch;
   });
@@ -135,7 +135,7 @@ export default function StudentList() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">All Branches</SelectItem>
-                  {branches?.map((branch: any) => (
+                  {branches?.map((branch) => (
                     <SelectItem key={branch.id} value={branch.id.toString()}>
                       {branch.name}
                     </SelectItem>
