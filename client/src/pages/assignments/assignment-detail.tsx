@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Assignment, Submission, Class, Branch, Student } from "@shared/schema";
+import { Assignment, Submission, Class, Branch, User } from "@shared/schema";
 import { useRoute } from "wouter";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,7 +41,7 @@ export default function AssignmentDetail() {
     enabled: !!assignmentClass?.branchId,
   });
 
-  const { data: students } = useQuery<Student[]>({
+  const { data: students } = useQuery<User[]>({
     queryKey: ["/api/classes", assignment?.classId, "students"],
     enabled: !!assignment?.classId,
   });
@@ -105,16 +105,6 @@ export default function AssignmentDetail() {
                         className="flex items-center gap-1 px-3 py-1 bg-gray-100 rounded-full text-sm"
                       >
                         {student.name}
-                        {isTeacherOrAdmin && (
-                          <button
-                            className="ml-1 hover:text-red-500"
-                            onClick={() => {
-                              // Handle remove student
-                            }}
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
-                        )}
                       </div>
                     ))}
                   </div>
