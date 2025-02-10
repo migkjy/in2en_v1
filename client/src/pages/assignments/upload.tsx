@@ -13,7 +13,7 @@ import { useAuth } from "@/hooks/use-auth";
 interface UploadFile extends File {
   preview: string;
   studentId?: number;
-  id: string; // UUID for file identification
+  id: string;
 }
 
 export default function UploadAssignment() {
@@ -24,7 +24,6 @@ export default function UploadAssignment() {
   const [files, setFiles] = useState<UploadFile[]>([]);
   const { user } = useAuth();
 
-  // Get assignment details
   const { data: assignment } = useQuery<Assignment>({
     queryKey: ["/api/assignments", assignmentId],
     queryFn: async () => {
@@ -37,7 +36,6 @@ export default function UploadAssignment() {
     enabled: !!assignmentId,
   });
 
-  // Get students list
   const { data: students } = useQuery<{ id: number; name: string }[]>({
     queryKey: ["/api/classes", assignment?.classId, "students"],
     queryFn: async () => {
@@ -57,38 +55,29 @@ export default function UploadAssignment() {
       if (files.length === 0) throw new Error("No files selected");
       if (files.some(f => !f.studentId)) throw new Error("Please assign all files to students");
 
-      const formData = new FormData();
-      files.forEach((file) => {
-        formData.append("files", file);
-        if (file.studentId) {
-          formData.append("studentIds", file.studentId.toString());
-        }
-      });
-      formData.append("assignmentId", assignmentId);
-      formData.append("userId", user.id.toString());
+      // Upload each file individually
+      const results = await Promise.all(
+        files.map(async (file) => {
+          const formData = new FormData();
+          formData.append("files", file);
+          formData.append("assignmentId", assignmentId);
+          formData.append("studentId", file.studentId!.toString());
 
-      // Debug output
-      console.log("Uploading files with formData:");
-      for (let [key, value] of formData.entries()) {
-        console.log(`${key}: ${value}`);
-      }
+          const res = await apiRequest("POST", "/api/submissions/upload", formData, {
+            credentials: 'include',
+          });
 
-      try {
-        const res = await apiRequest("POST", "/api/submissions/upload", formData, {
-          credentials: 'include',
-        });
+          if (!res.ok) {
+            const text = await res.text();
+            console.error("Upload failed with response:", text);
+            throw new Error(text || res.statusText || `Error: ${res.status}`);
+          }
 
-        if (!res.ok) {
-          const text = await res.text();
-          console.error("Upload failed with response:", text);
-          throw new Error(text || res.statusText || `Error: ${res.status}`);
-        }
+          return res.json();
+        })
+      );
 
-        return res.json();
-      } catch (error) {
-        console.error("Upload error:", error);
-        throw error;
-      }
+      return results;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/submissions"] });
@@ -119,7 +108,6 @@ export default function UploadAssignment() {
     e.preventDefault();
     const droppedFiles = Array.from(e.dataTransfer.files).map((file) => {
       const id = generateUUID();
-      // Create a new file with a unique name
       const newFile = new File([file], `${id}-${file.name}`, { type: file.type });
       return {
         ...newFile,

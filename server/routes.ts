@@ -370,31 +370,29 @@ export function registerRoutes(app: Express): Server {
   // Submission routes
   app.post("/api/submissions/upload",
     requireRole([UserRole.TEACHER, UserRole.STUDENT, UserRole.ADMIN]),
-    upload.array("files"),
+    upload.single("files"),
     async (req, res) => {
       try {
-        const files = req.files as Express.Multer.File[];
+        const file = req.file as Express.Multer.File;
         const { assignmentId, studentId } = req.body;
 
-        const results = await Promise.all(
-          files.map(async (file) => {
-            const base64Image = file.buffer.toString("base64");
-            const { text, feedback } = await extractTextFromImage(base64Image);
+        if (!file) {
+          return res.status(400).json({ message: "No file uploaded" });
+        }
 
-            const submission = await storage.createSubmission({
-              assignmentId: Number(assignmentId),
-              studentId: Number(studentId),
-              imageUrl: `data:${file.mimetype};base64,${base64Image}`,
-              ocrText: text,
-              aiFeedback: feedback,
-              status: "pending"
-            });
+        const base64Image = file.buffer.toString("base64");
+        const { text, feedback } = await extractTextFromImage(base64Image);
 
-            return submission;
-          })
-        );
+        const submission = await storage.createSubmission({
+          assignmentId: Number(assignmentId),
+          studentId: Number(studentId),
+          imageUrl: `data:${file.mimetype};base64,${base64Image}`,
+          ocrText: text,
+          aiFeedback: feedback,
+          status: "pending"
+        });
 
-        res.status(201).json(results);
+        res.status(201).json(submission);
       } catch (error) {
         if (error instanceof Error) {
           res.status(400).json({ message: error.message });
