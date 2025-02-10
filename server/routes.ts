@@ -369,7 +369,7 @@ export function registerRoutes(app: Express): Server {
 
   // Submission routes
   app.post("/api/submissions/upload",
-    requireRole([UserRole.TEACHER]),
+    requireRole([UserRole.TEACHER, UserRole.STUDENT, UserRole.ADMIN]),
     upload.array("files"),
     async (req, res) => {
       try {
