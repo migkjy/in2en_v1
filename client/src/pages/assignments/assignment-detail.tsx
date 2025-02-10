@@ -1,9 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
-import { Assignment, Submission, Class, Branch } from "@shared/schema";
+import { Assignment, Submission, Class, Branch, Student } from "@shared/schema";
 import { useRoute } from "wouter";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { X } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -22,32 +23,35 @@ export default function AssignmentDetail() {
 
   const { data: assignment, isLoading: isAssignmentLoading } = useQuery<Assignment>({
     queryKey: ["/api/assignments", assignmentId],
-    queryFn: async () => {
-      if (!assignmentId) throw new Error("Assignment ID is required");
-      const response = await fetch(`/api/assignments/${assignmentId}`);
-      if (!response.ok) throw new Error("Failed to fetch assignment");
-      return response.json();
-    },
     enabled: !!assignmentId,
   });
 
-  const { data: submissions } = useQuery<Submission[]>({
+  const { data: submissions, isLoading: isSubmissionsLoading } = useQuery<Submission[]>({
     queryKey: ["/api/submissions", assignmentId],
     enabled: !!assignmentId,
   });
 
-  const { data: assignmentClass } = useQuery<Class>({
+  const { data: assignmentClass, isLoading: isClassLoading } = useQuery<Class>({
     queryKey: ["/api/classes", assignment?.classId],
     enabled: !!assignment?.classId,
   });
 
-  const { data: branch } = useQuery<Branch>({
+  const { data: branch, isLoading: isBranchLoading } = useQuery<Branch>({
     queryKey: ["/api/branches", assignmentClass?.branchId],
     enabled: !!assignmentClass?.branchId,
   });
 
-  if (isAssignmentLoading) {
-    return <div>Loading...</div>;
+  const { data: students } = useQuery<Student[]>({
+    queryKey: ["/api/classes", assignment?.classId, "students"],
+    enabled: !!assignment?.classId,
+  });
+
+  if (isAssignmentLoading || isClassLoading || isBranchLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900" />
+      </div>
+    );
   }
 
   if (!assignment) {
@@ -71,11 +75,11 @@ export default function AssignmentDetail() {
                 <div className="flex justify-between text-sm text-gray-600">
                   <div>
                     <span className="font-medium">Branch:</span>{" "}
-                    {branch?.name || "Loading..."}
+                    {branch?.name}
                   </div>
                   <div>
                     <span className="font-medium">Class:</span>{" "}
-                    {assignmentClass?.name || "Loading..."} -{" "}
+                    {assignmentClass?.name} -{" "}
                     {assignmentClass?.englishLevel}
                   </div>
                   <div>
@@ -89,6 +93,31 @@ export default function AssignmentDetail() {
                 <div>
                   <h3 className="text-sm font-medium mb-2">Description</h3>
                   <p className="text-gray-600">{assignment.description}</p>
+                </div>
+
+                {/* Students List */}
+                <div>
+                  <h3 className="text-sm font-medium mb-4">Students</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {students?.map((student) => (
+                      <div
+                        key={student.id}
+                        className="flex items-center gap-1 px-3 py-1 bg-gray-100 rounded-full text-sm"
+                      >
+                        {student.name}
+                        {isTeacherOrAdmin && (
+                          <button
+                            className="ml-1 hover:text-red-500"
+                            onClick={() => {
+                              // Handle remove student
+                            }}
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
 
                 {/* Submissions Table */}
@@ -105,7 +134,9 @@ export default function AssignmentDetail() {
                     <TableBody>
                       {submissions?.map((submission) => (
                         <TableRow key={submission.id}>
-                          <TableCell>{submission.studentName}</TableCell>
+                          <TableCell>
+                            {students?.find(s => s.id === submission.studentId)?.name}
+                          </TableCell>
                           <TableCell>
                             <span
                               className={`px-2 py-1 rounded text-sm ${
