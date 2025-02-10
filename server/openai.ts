@@ -1,7 +1,5 @@
 import OpenAI from "openai";
-import { readFileSync } from "fs";
 
-// the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export async function extractTextFromImage(base64Image: string): Promise<{
@@ -11,7 +9,7 @@ export async function extractTextFromImage(base64Image: string): Promise<{
 }> {
   try {
     const visionResponse = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-4-vision-preview",
       messages: [
         {
           role: "system",
@@ -36,21 +34,22 @@ export async function extractTextFromImage(base64Image: string): Promise<{
       response_format: { type: "json_object" }
     });
 
-    const result = JSON.parse(visionResponse.choices[0].message.content);
+    const result = JSON.parse(visionResponse.choices[0].message.content || "{}");
     return {
-      text: result.text,
-      feedback: result.feedback,
-      confidence: Math.max(0, Math.min(1, result.confidence))
+      text: result.text || "",
+      feedback: result.feedback || "",
+      confidence: Math.max(0, Math.min(1, result.confidence || 0))
     };
   } catch (error) {
-    throw new Error("Failed to analyze image: " + error.message);
+    console.error("OpenAI API Error:", error);
+    throw new Error(`Failed to analyze image: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 
 export async function generateFeedback(text: string, englishLevel: string, ageGroup: string): Promise<string> {
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-4",
       messages: [
         {
           role: "system",
@@ -64,8 +63,9 @@ export async function generateFeedback(text: string, englishLevel: string, ageGr
       max_tokens: 500
     });
 
-    return response.choices[0].message.content;
+    return response.choices[0].message.content || "No feedback generated";
   } catch (error) {
-    throw new Error("Failed to generate feedback: " + error.message);
+    console.error("OpenAI API Error:", error);
+    throw new Error(`Failed to generate feedback: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
