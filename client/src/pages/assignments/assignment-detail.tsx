@@ -175,16 +175,7 @@ export default function AssignmentDetail() {
   };
 
   const getStatusText = (status: string) => {
-    switch (status) {
-      case "ai-reviewed":
-        return "AI-Reviewed";
-      case "processing":
-        return "Processing";
-      case "failed":
-        return "Failed";
-      default:
-        return "Unreviewed";
-    }
+    return status.toUpperCase();
   };
 
   return (
