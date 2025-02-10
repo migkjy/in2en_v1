@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
 
 export default function AssignmentDetail() {
-  const [, params] = useRoute("/admin/assignments/:id");
+  const [, params] = useRoute("/assignments/:id");
   const assignmentId = params?.id;
 
   const { data: assignment, isLoading } = useQuery<Assignment>({

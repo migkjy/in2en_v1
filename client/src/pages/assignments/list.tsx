@@ -87,8 +87,7 @@ export default function AssignmentList() {
   };
 
   const handleViewAssignment = (assignment: Assignment) => {
-    const basePath = user?.role.toLowerCase();
-    navigate(`/${basePath}/assignments/${assignment.id}`);
+    navigate(`/assignments/${assignment.id}`);
   };
 
   const handleDeleteAssignment = async () => {
