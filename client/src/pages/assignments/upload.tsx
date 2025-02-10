@@ -12,6 +12,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 interface UploadFile extends File {
   preview: string;
   studentId?: number;
+  id: string; // UUID for file identification
 }
 
 export default function UploadAssignment() {
@@ -78,17 +79,31 @@ export default function UploadAssignment() {
     },
   });
 
+  const generateUUID = () => {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  };
+
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
-    const droppedFiles = Array.from(e.dataTransfer.files).map((file) => ({
-      ...file,
-      preview: URL.createObjectURL(file),
-    }));
+    const droppedFiles = Array.from(e.dataTransfer.files).map((file) => {
+      const id = generateUUID();
+      // Create a new file with a unique name
+      const newFile = new File([file], `${id}-${file.name}`, { type: file.type });
+      return {
+        ...newFile,
+        preview: URL.createObjectURL(file),
+        id,
+      };
+    });
     setFiles((prev) => [...prev, ...droppedFiles]);
   };
 
-  const removeFile = (index: number) => {
-    setFiles((prev) => prev.filter((_, i) => i !== index));
+  const removeFile = (fileId: string) => {
+    setFiles((prev) => prev.filter((file) => file.id !== fileId));
   };
 
   return (
@@ -122,10 +137,15 @@ export default function UploadAssignment() {
                         onChange={(e) => {
                           const selectedFiles = Array.from(
                             e.target.files || []
-                          ).map((file) => ({
-                            ...file,
-                            preview: URL.createObjectURL(file),
-                          }));
+                          ).map((file) => {
+                            const id = generateUUID();
+                            const newFile = new File([file], `${id}-${file.name}`, { type: file.type });
+                            return {
+                              ...newFile,
+                              preview: URL.createObjectURL(file),
+                              id,
+                            };
+                          });
                           setFiles((prev) => [...prev, ...selectedFiles]);
                         }}
                       />
@@ -135,9 +155,9 @@ export default function UploadAssignment() {
 
                 {files.length > 0 && (
                   <div className="grid grid-cols-3 gap-4">
-                    {files.map((file, index) => (
+                    {files.map((file) => (
                       <div
-                        key={index}
+                        key={file.id}
                         className="relative border rounded-lg p-2"
                       >
                         <img
@@ -149,7 +169,7 @@ export default function UploadAssignment() {
                           variant="ghost"
                           size="sm"
                           className="absolute top-1 right-1"
-                          onClick={() => removeFile(index)}
+                          onClick={() => removeFile(file.id)}
                         >
                           <X className="h-4 w-4" />
                         </Button>
@@ -157,12 +177,13 @@ export default function UploadAssignment() {
                           className="mt-2 w-full p-1 text-sm border rounded"
                           value={file.studentId}
                           onChange={(e) => {
-                            const newFiles = [...files];
-                            newFiles[index] = {
-                              ...file,
-                              studentId: Number(e.target.value),
-                            };
-                            setFiles(newFiles);
+                            setFiles((prev) =>
+                              prev.map((f) =>
+                                f.id === file.id
+                                  ? { ...f, studentId: Number(e.target.value) }
+                                  : f
+                              )
+                            );
                           }}
                         >
                           <option value="">Assign to student</option>
