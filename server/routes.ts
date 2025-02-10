@@ -370,15 +370,31 @@ export function registerRoutes(app: Express): Server {
   // Submission routes
   app.post("/api/submissions/upload",
     requireRole([UserRole.TEACHER, UserRole.STUDENT, UserRole.ADMIN]),
-    upload.single("file"), // Changed from "files" to "file"
+    upload.single("file"),
     async (req, res) => {
       try {
-        const file = req.file as Express.Multer.File;
+        const file = req.file;
         const { assignmentId, studentId } = req.body;
 
         if (!file) {
+          console.error("No file in request:", req.files, req.file, req.body);
           return res.status(400).json({ message: "No file uploaded" });
         }
+
+        if (!assignmentId || !studentId) {
+          return res.status(400).json({ 
+            message: "Missing required fields",
+            details: { assignmentId: !!assignmentId, studentId: !!studentId }
+          });
+        }
+
+        console.log("Processing file upload:", {
+          filename: file.originalname,
+          size: file.size,
+          mimetype: file.mimetype,
+          assignmentId,
+          studentId
+        });
 
         const base64Image = file.buffer.toString("base64");
         const { text, feedback } = await extractTextFromImage(base64Image);
@@ -392,8 +408,10 @@ export function registerRoutes(app: Express): Server {
           status: "pending"
         });
 
+        console.log("Submission created successfully:", submission.id);
         res.status(201).json(submission);
       } catch (error) {
+        console.error("Error processing submission:", error);
         if (error instanceof Error) {
           res.status(400).json({ message: error.message });
         } else {

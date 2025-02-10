@@ -63,8 +63,19 @@ export default function UploadAssignment() {
           formData.append("assignmentId", assignmentId);
           formData.append("studentId", file.studentId!.toString());
 
+          console.log('Uploading file:', {
+            fileName: file.name,
+            fileSize: file.size,
+            fileType: file.type,
+            studentId: file.studentId
+          });
+
           const res = await apiRequest("POST", "/api/submissions/upload", formData, {
             credentials: 'include',
+            headers: {
+              // Remove Content-Type header to let the browser set it with the boundary
+              'Accept': 'application/json',
+            },
           });
 
           if (!res.ok) {
@@ -108,12 +119,11 @@ export default function UploadAssignment() {
     e.preventDefault();
     const droppedFiles = Array.from(e.dataTransfer.files).map((file) => {
       const id = generateUUID();
-      const newFile = new File([file], `${id}-${file.name}`, { type: file.type });
       return {
-        ...newFile,
+        ...file,
         preview: URL.createObjectURL(file),
         id,
-      };
+      } as UploadFile;
     });
     setFiles((prev) => [...prev, ...droppedFiles]);
   };
@@ -155,12 +165,11 @@ export default function UploadAssignment() {
                             e.target.files || []
                           ).map((file) => {
                             const id = generateUUID();
-                            const newFile = new File([file], `${id}-${file.name}`, { type: file.type });
                             return {
-                              ...newFile,
+                              ...file,
                               preview: URL.createObjectURL(file),
                               id,
-                            };
+                            } as UploadFile;
                           });
                           setFiles((prev) => [...prev, ...selectedFiles]);
                         }}
