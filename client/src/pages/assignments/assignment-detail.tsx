@@ -1,10 +1,11 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Assignment, Submission, Class, Branch, User } from "@shared/schema";
 import { useRoute } from "wouter";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import {
   Table,
   TableBody,
@@ -15,11 +16,13 @@ import {
 } from "@/components/ui/table";
 import { format } from "date-fns";
 import { useAuth } from "@/hooks/use-auth";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 
 export default function AssignmentDetail() {
   const [, params] = useRoute("/assignments/:id");
   const assignmentId = params?.id;
   const { user } = useAuth();
+  const { toast } = useToast();
 
   // Get assignment details
   const { data: assignment, isLoading: isAssignmentLoading } =
@@ -97,6 +100,36 @@ export default function AssignmentDetail() {
     enabled: !!assignmentId,
   });
 
+  // Add mutation for AI review
+  const aiReviewMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest(
+        "POST",
+        `/api/submissions/${assignmentId}/review`,
+        {}
+      );
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error);
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/submissions", assignmentId] });
+      toast({
+        title: "AI Review Complete",
+        description: "All submissions have been reviewed by AI",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to process AI review",
+        variant: "destructive",
+      });
+    },
+  });
+
   const isTeacherOrAdmin = user?.role === "TEACHER" || user?.role === "ADMIN";
 
   if (isAssignmentLoading || isClassLoading) {
@@ -110,6 +143,32 @@ export default function AssignmentDetail() {
   if (!assignment || !classData) {
     return <div>Assignment or class data not found</div>;
   }
+
+  const getStatusBadgeStyle = (status: string) => {
+    switch (status) {
+      case "completed":
+        return "bg-green-100 text-green-800";
+      case "processing":
+        return "bg-blue-100 text-blue-800";
+      case "failed":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-yellow-100 text-yellow-800";
+    }
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case "completed":
+        return "Done";
+      case "processing":
+        return "Processing";
+      case "failed":
+        return "Failed";
+      default:
+        return "Unreviewed";
+    }
+  };
 
   return (
     <div className="flex h-screen">
@@ -162,7 +221,24 @@ export default function AssignmentDetail() {
 
                 {/* Submissions Table */}
                 <div>
-                  <h3 className="text-lg font-medium mb-4">Submissions</h3>
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-medium">Submissions</h3>
+                    {isTeacherOrAdmin && submissions?.length > 0 && (
+                      <Button
+                        onClick={() => aiReviewMutation.mutate()}
+                        disabled={aiReviewMutation.isPending}
+                      >
+                        {aiReviewMutation.isPending ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Processing...
+                          </>
+                        ) : (
+                          "AI Review"
+                        )}
+                      </Button>
+                    )}
+                  </div>
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -184,14 +260,10 @@ export default function AssignmentDetail() {
                           <TableCell>
                             <span
                               className={`px-2 py-1 rounded text-sm ${
-                                submission.status === "completed"
-                                  ? "bg-green-100 text-green-800"
-                                  : "bg-yellow-100 text-yellow-800"
+                                getStatusBadgeStyle(submission.status)
                               }`}
                             >
-                              {submission.status === "completed"
-                                ? "Done"
-                                : "Unreviewed"}
+                              {getStatusText(submission.status)}
                             </span>
                           </TableCell>
                           <TableCell>

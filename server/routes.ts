@@ -370,7 +370,7 @@ export function registerRoutes(app: Express): Server {
   // Submission routes
   app.post("/api/submissions/upload",
     requireRole([UserRole.TEACHER, UserRole.STUDENT, UserRole.ADMIN]),
-    upload.single("file"), // This line is unchanged but make sure multer is properly configured
+    upload.single("file"),
     async (req, res) => {
       try {
         const file = req.file;
@@ -397,15 +397,13 @@ export function registerRoutes(app: Express): Server {
         });
 
         const base64Image = file.buffer.toString("base64");
-        const { text, feedback } = await extractTextFromImage(base64Image);
 
+        // Save submission without OCR and AI feedback initially
         const submission = await storage.createSubmission({
           assignmentId: Number(assignmentId),
           studentId: Number(studentId),
           imageUrl: `data:${file.mimetype};base64,${base64Image}`,
-          ocrText: text,
-          aiFeedback: feedback,
-          status: "pending"
+          status: "uploaded"
         });
 
         console.log("Submission created successfully:", submission.id);
@@ -417,6 +415,58 @@ export function registerRoutes(app: Express): Server {
         } else {
           res.status(500).json({ message: "An unknown error occurred" });
         }
+      }
+    }
+  );
+
+  // Add new route for AI review
+  app.post("/api/submissions/:assignmentId/review", 
+    requireRole([UserRole.TEACHER, UserRole.ADMIN]),
+    async (req, res) => {
+      try {
+        const assignmentId = Number(req.params.assignmentId);
+        const submissions = await storage.listSubmissions(assignmentId);
+
+        // Filter submissions that haven't been reviewed
+        const pendingSubmissions = submissions.filter(s => 
+          s.status === "uploaded" || !s.ocrText || !s.aiFeedback
+        );
+
+        for (const submission of pendingSubmissions) {
+          try {
+            // Update status to processing
+            await storage.updateSubmission(submission.id, { 
+              status: "processing" 
+            });
+
+            // Extract base64 image from data URL
+            const base64Image = submission.imageUrl.split(',')[1];
+
+            // Process with OpenAI
+            const { text, feedback } = await extractTextFromImage(base64Image);
+
+            // Update submission with results
+            await storage.updateSubmission(submission.id, {
+              ocrText: text,
+              aiFeedback: feedback,
+              status: "completed"
+            });
+          } catch (error) {
+            console.error(`Error processing submission ${submission.id}:`, error);
+            await storage.updateSubmission(submission.id, { 
+              status: "failed",
+              aiFeedback: error.message 
+            });
+          }
+        }
+
+        res.json({ 
+          message: "AI review process completed",
+          processed: pendingSubmissions.length
+        });
+      } catch (error) {
+        console.error("Error in AI review process:", error);
+        res.status(500).json({ message: "Failed to process AI review" });
       }
     }
   );
