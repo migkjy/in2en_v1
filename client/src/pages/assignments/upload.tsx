@@ -37,7 +37,7 @@ export default function UploadAssignment() {
     enabled: !!assignmentId,
   });
 
-  // Get students list for this assignment's class
+  // Get students list
   const { data: students } = useQuery<{ id: number; name: string }[]>({
     queryKey: ["/api/classes", assignment?.classId, "students"],
     queryFn: async () => {
@@ -53,6 +53,9 @@ export default function UploadAssignment() {
   const uploadMutation = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error("Not authenticated");
+      if (!assignmentId) throw new Error("Assignment ID is required");
+      if (files.length === 0) throw new Error("No files selected");
+      if (files.some(f => !f.studentId)) throw new Error("Please assign all files to students");
 
       const formData = new FormData();
       files.forEach((file) => {
@@ -61,7 +64,7 @@ export default function UploadAssignment() {
           formData.append("studentIds", file.studentId.toString());
         }
       });
-      formData.append("assignmentId", assignmentId!);
+      formData.append("assignmentId", assignmentId);
       formData.append("userId", user.id.toString());
 
       // Debug output
