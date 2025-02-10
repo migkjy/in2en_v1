@@ -119,11 +119,10 @@ export default function UploadAssignment() {
     e.preventDefault();
     const droppedFiles = Array.from(e.dataTransfer.files).map((file) => {
       const id = generateUUID();
-      return {
-        ...file,
+      return Object.assign(file, {
         preview: URL.createObjectURL(file),
         id,
-      } as UploadFile;
+      }) as UploadFile;
     });
     setFiles((prev) => [...prev, ...droppedFiles]);
   };
@@ -165,11 +164,10 @@ export default function UploadAssignment() {
                             e.target.files || []
                           ).map((file) => {
                             const id = generateUUID();
-                            return {
-                              ...file,
+                            return Object.assign(file, {
                               preview: URL.createObjectURL(file),
                               id,
-                            } as UploadFile;
+                            }) as UploadFile;
                           });
                           setFiles((prev) => [...prev, ...selectedFiles]);
                         }}
