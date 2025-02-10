@@ -1,3 +1,4 @@
+
 import OpenAI from "openai";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -9,7 +10,7 @@ export async function extractTextFromImage(base64Image: string): Promise<{
 }> {
   try {
     const visionResponse = await openai.chat.completions.create({
-      model: "gpt-4-vision-preview-1106",
+      model: "gpt-4o",
       messages: [
         {
           role: "system",
@@ -31,23 +32,16 @@ export async function extractTextFromImage(base64Image: string): Promise<{
           ],
         },
       ],
-      response_format: { type: "json_object" },
-      max_tokens: 1000
+      response_format: { type: "json_object" }
     });
 
     const result = JSON.parse(visionResponse.choices[0].message.content || "{}");
-
-    // Ensure we have valid data even if the API response is incomplete
-    const response = {
+    
+    return {
       text: result.text || "",
       feedback: result.feedback || "",
       confidence: Math.max(0, Math.min(1, result.confidence || 0))
     };
-
-    // Log the response for debugging
-    console.log("OpenAI Vision API Response:", response);
-
-    return response;
   } catch (error) {
     console.error("OpenAI API Error:", error);
     throw new Error(`Failed to analyze image: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -57,7 +51,7 @@ export async function extractTextFromImage(base64Image: string): Promise<{
 export async function generateFeedback(text: string, englishLevel: string, ageGroup: string): Promise<string> {
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-4",
+      model: "gpt-4o",
       messages: [
         {
           role: "system",
