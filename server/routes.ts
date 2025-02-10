@@ -445,7 +445,9 @@ export function registerRoutes(app: Express): Server {
             console.log(`Processing submission ${submission.id}...`);
 
             // Process with OpenAI
+            console.log("Extracting text from image for submission:", submission.id);
             const { text, feedback } = await extractTextFromImage(base64Image);
+            console.log("Extracted text:", { text, feedback });
 
             console.log(`OCR Results for submission ${submission.id}:`, { text, feedback });
 
