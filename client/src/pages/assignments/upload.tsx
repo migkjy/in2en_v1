@@ -8,6 +8,7 @@ import { Upload, X } from "lucide-react";
 import { useState } from "react";
 import type { Assignment } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useAuth } from "@/hooks/use-auth";
 
 interface UploadFile extends File {
   preview: string;
@@ -21,6 +22,7 @@ export default function UploadAssignment() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const [files, setFiles] = useState<UploadFile[]>([]);
+  const { user } = useAuth();
 
   // Get assignment details
   const { data: assignment } = useQuery<Assignment>({
@@ -50,6 +52,8 @@ export default function UploadAssignment() {
 
   const uploadMutation = useMutation({
     mutationFn: async () => {
+      if (!user) throw new Error("Not authenticated");
+
       const formData = new FormData();
       files.forEach((file) => {
         formData.append("files", file);
@@ -58,8 +62,17 @@ export default function UploadAssignment() {
         }
       });
       formData.append("assignmentId", assignmentId!);
+      formData.append("userId", user.id.toString());
 
-      const res = await apiRequest("POST", "/api/submissions/upload", formData);
+      const res = await apiRequest("POST", "/api/submissions/upload", formData, {
+        credentials: 'include',
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Failed to upload files");
+      }
+
       return res.json();
     },
     onSuccess: () => {

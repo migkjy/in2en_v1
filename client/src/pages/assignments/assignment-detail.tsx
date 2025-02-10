@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Assignment, Submission, Class, Branch, User } from "@shared/schema";
-import { useRoute, useLocation } from "wouter";
+import { useRoute } from "wouter";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,6 @@ import { useAuth } from "@/hooks/use-auth";
 export default function AssignmentDetail() {
   const [, params] = useRoute("/assignments/:id");
   const assignmentId = params?.id;
-  const [, navigate] = useLocation();
   const { user } = useAuth();
 
   // Get assignment details
@@ -201,7 +200,7 @@ export default function AssignmentDetail() {
                               size="sm"
                               className="mr-2"
                               onClick={() =>
-                                navigate(`/submissions/${submission.id}`)
+                                (window.location.href = `/submissions/${submission.id}`)
                               }
                             >
                               View
@@ -213,7 +212,7 @@ export default function AssignmentDetail() {
                                   size="sm"
                                   className="mr-2"
                                   onClick={() =>
-                                    navigate(`/submissions/${submission.id}/edit`)
+                                    (window.location.href = `/submissions/${submission.id}/edit`)
                                   }
                                 >
                                   Edit
@@ -239,7 +238,9 @@ export default function AssignmentDetail() {
                   {isTeacherOrAdmin && (
                     <div className="mt-6">
                       <Button
-                        onClick={() => navigate(`/assignments/${assignmentId}/upload`)}
+                        onClick={() =>
+                          (window.location.href = `/assignments/${assignmentId}/upload`)
+                        }
                       >
                         Bulk Upload
                       </Button>
