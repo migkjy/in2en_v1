@@ -377,12 +377,7 @@ export function registerRoutes(app: Express): Server {
         const { assignmentId, studentId } = req.body;
 
         if (!file) {
-          console.error("No file in request:", {
-            files: req.files,
-            file: req.file,
-            body: req.body,
-            headers: req.headers
-          });
+          console.error("No file in request:", req.files, req.file, req.body);
           return res.status(400).json({ message: "No file uploaded" });
         }
 
@@ -398,8 +393,7 @@ export function registerRoutes(app: Express): Server {
           size: file.size,
           mimetype: file.mimetype,
           assignmentId,
-          studentId,
-          headers: req.headers
+          studentId
         });
 
         const base64Image = file.buffer.toString("base64");

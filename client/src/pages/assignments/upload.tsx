@@ -26,11 +26,25 @@ export default function UploadAssignment() {
 
   const { data: assignment } = useQuery<Assignment>({
     queryKey: ["/api/assignments", assignmentId],
+    queryFn: async () => {
+      const response = await fetch(`/api/assignments/${assignmentId}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch assignment");
+      }
+      return response.json();
+    },
     enabled: !!assignmentId,
   });
 
   const { data: students } = useQuery<{ id: number; name: string }[]>({
     queryKey: ["/api/classes", assignment?.classId, "students"],
+    queryFn: async () => {
+      const response = await fetch(`/api/classes/${assignment?.classId}/students`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch students");
+      }
+      return response.json();
+    },
     enabled: !!assignment?.classId,
   });
 
@@ -45,9 +59,7 @@ export default function UploadAssignment() {
       const results = await Promise.all(
         files.map(async (file) => {
           const formData = new FormData();
-          // Important: Append the actual File object
-          const blob = new Blob([file], { type: file.type });
-          formData.append("file", blob, file.name);
+          formData.append("file", file);
           formData.append("assignmentId", assignmentId);
           formData.append("studentId", file.studentId!.toString());
 
@@ -58,10 +70,12 @@ export default function UploadAssignment() {
             studentId: file.studentId
           });
 
-          const res = await fetch('/api/submissions/upload', {
-            method: 'POST',
-            body: formData,
+          const res = await apiRequest("POST", "/api/submissions/upload", formData, {
             credentials: 'include',
+            headers: {
+              // Remove Content-Type header to let the browser set it with the boundary
+              'Accept': 'application/json',
+            },
           });
 
           if (!res.ok) {
@@ -93,29 +107,28 @@ export default function UploadAssignment() {
     },
   });
 
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    const droppedFiles = Array.from(e.dataTransfer.files).map((file) => {
-      const id = generateUUID();
-      const preview = URL.createObjectURL(file);
-      const uploadFile = new File([file], file.name, { type: file.type }) as UploadFile;
-      uploadFile.preview = preview;
-      uploadFile.id = id;
-      return uploadFile;
-    });
-    setFiles((prev) => [...prev, ...droppedFiles]);
-  };
-
-  const removeFile = (fileId: string) => {
-    setFiles((prev) => prev.filter((file) => file.id !== fileId));
-  };
-
   const generateUUID = () => {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
       const r = Math.random() * 16 | 0;
       const v = c === 'x' ? r : (r & 0x3 | 0x8);
       return v.toString(16);
     });
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const droppedFiles = Array.from(e.dataTransfer.files).map((file) => {
+      const id = generateUUID();
+      return Object.assign(file, {
+        preview: URL.createObjectURL(file),
+        id,
+      }) as UploadFile;
+    });
+    setFiles((prev) => [...prev, ...droppedFiles]);
+  };
+
+  const removeFile = (fileId: string) => {
+    setFiles((prev) => prev.filter((file) => file.id !== fileId));
   };
 
   return (
@@ -151,11 +164,10 @@ export default function UploadAssignment() {
                             e.target.files || []
                           ).map((file) => {
                             const id = generateUUID();
-                            const preview = URL.createObjectURL(file);
-                            const uploadFile = new File([file], file.name, { type: file.type }) as UploadFile;
-                            uploadFile.preview = preview;
-                            uploadFile.id = id;
-                            return uploadFile;
+                            return Object.assign(file, {
+                              preview: URL.createObjectURL(file),
+                              id,
+                            }) as UploadFile;
                           });
                           setFiles((prev) => [...prev, ...selectedFiles]);
                         }}
