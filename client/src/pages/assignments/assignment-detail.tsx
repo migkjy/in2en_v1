@@ -311,7 +311,18 @@ export default function AssignmentDetail() {
                       </Button>
                       {submissions?.length > 0 && (
                         <Button
-                          onClick={() => aiReviewMutation.mutate()}
+                          onClick={() => {
+                            const uploadedSubmissions = submissions?.filter(s => s.status === "uploaded") || [];
+                            if (uploadedSubmissions.length === 0) {
+                              toast({
+                                title: "No submissions to review",
+                                description: "There are no uploaded assignments to review",
+                                variant: "destructive",
+                              });
+                              return;
+                            }
+                            aiReviewMutation.mutate();
+                          }}
                           disabled={aiReviewMutation.isPending}
                         >
                           {aiReviewMutation.isPending ? (
