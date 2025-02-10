@@ -370,7 +370,7 @@ export function registerRoutes(app: Express): Server {
   // Submission routes
   app.post("/api/submissions/upload",
     requireRole([UserRole.TEACHER, UserRole.STUDENT, UserRole.ADMIN]),
-    upload.single("file"),
+    upload.single("file"), // This line is unchanged but make sure multer is properly configured
     async (req, res) => {
       try {
         const file = req.file;

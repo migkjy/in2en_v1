@@ -59,7 +59,8 @@ export default function UploadAssignment() {
       const results = await Promise.all(
         files.map(async (file) => {
           const formData = new FormData();
-          formData.append("file", file);
+          const blob = await (await fetch(file.preview)).blob();
+          formData.append("file", blob, file.name);
           formData.append("assignmentId", assignmentId);
           formData.append("studentId", file.studentId!.toString());
 
