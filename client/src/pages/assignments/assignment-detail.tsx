@@ -4,7 +4,7 @@ import { useRoute } from "wouter";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react"; // Updated import
+import { Loader2 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -21,44 +21,87 @@ export default function AssignmentDetail() {
   const assignmentId = params?.id;
   const { user } = useAuth();
 
-  const { data: assignment, isLoading: isAssignmentLoading } = useQuery({
+  // Get assignment details
+  const { data: assignment, isLoading: isAssignmentLoading } = useQuery<Assignment>({
     queryKey: ["/api/assignments", assignmentId],
+    queryFn: async () => {
+      const response = await fetch(`/api/assignments/${assignmentId}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch assignment");
+      }
+      const data = await response.json();
+      return data;
+    },
     enabled: !!assignmentId,
   });
 
-  const { data: submissions, isLoading: isSubmissionsLoading } = useQuery({
-    queryKey: ["/api/submissions", assignmentId],
-    enabled: !!assignmentId,
-  });
-
-  const { data: assignmentClass, isLoading: isClassLoading } = useQuery({
+  // Get class details including branch info
+  const { data: classData, isLoading: isClassLoading } = useQuery<{class: Class; branch: Branch}>({
     queryKey: ["/api/classes", assignment?.classId],
+    queryFn: async () => {
+      if (!assignment?.classId) throw new Error("Class ID is required");
+
+      const classResponse = await fetch(`/api/classes/${assignment.classId}`);
+      if (!classResponse.ok) {
+        throw new Error("Failed to fetch class");
+      }
+      const classData = await classResponse.json();
+
+      const branchResponse = await fetch(`/api/branches/${classData.branchId}`);
+      if (!branchResponse.ok) {
+        throw new Error("Failed to fetch branch");
+      }
+      const branchData = await branchResponse.json();
+
+      return {
+        class: classData,
+        branch: branchData,
+      };
+    },
     enabled: !!assignment?.classId,
   });
 
-  const { data: branch, isLoading: isBranchLoading } = useQuery({
-    queryKey: ["/api/branches", assignmentClass?.branchId],
-    enabled: !!assignmentClass?.branchId,
-  });
-
-  const { data: students } = useQuery({
+  // Get students list
+  const { data: students } = useQuery<User[]>({
     queryKey: ["/api/classes", assignment?.classId, "students"],
+    queryFn: async () => {
+      if (!assignment?.classId) throw new Error("Class ID is required");
+      const response = await fetch(`/api/classes/${assignment.classId}/students`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch students");
+      }
+      return response.json();
+    },
     enabled: !!assignment?.classId,
   });
 
-  if (isAssignmentLoading || isClassLoading || isBranchLoading) {
+  // Get submissions
+  const { data: submissions } = useQuery<Submission[]>({
+    queryKey: ["/api/submissions", assignmentId],
+    queryFn: async () => {
+      if (!assignmentId) throw new Error("Assignment ID is required");
+      const response = await fetch(`/api/submissions?assignmentId=${assignmentId}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch submissions");
+      }
+      return response.json();
+    },
+    enabled: !!assignmentId,
+  });
+
+  const isTeacherOrAdmin = user?.role === "TEACHER" || user?.role === "ADMIN";
+
+  if (isAssignmentLoading || isClassLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen"> {/*Updated className*/}
+      <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-border" />
       </div>
     );
   }
 
-  if (!assignment) {
-    return <div>Assignment not found</div>;
+  if (!assignment || !classData) {
+    return <div>Assignment or class data not found</div>;
   }
-
-  const isTeacherOrAdmin = user?.role === "TEACHER" || user?.role === "ADMIN";
 
   return (
     <div className="flex h-screen">
@@ -75,12 +118,12 @@ export default function AssignmentDetail() {
                 <div className="flex justify-between text-sm text-gray-600">
                   <div>
                     <span className="font-medium">Branch:</span>{" "}
-                    {branch?.name}
+                    {classData.branch.name}
                   </div>
                   <div>
                     <span className="font-medium">Class:</span>{" "}
-                    {assignmentClass?.name} -{" "}
-                    {assignmentClass?.englishLevel}
+                    {classData.class.name} -{" "}
+                    {classData.class.englishLevel}
                   </div>
                   <div>
                     <span className="font-medium">Due:</span>{" "}
