@@ -2,7 +2,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useLocation } from "wouter";
+import { useRoute, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { Upload, X } from "lucide-react";
 import { useState } from "react";
@@ -15,13 +15,36 @@ interface UploadFile extends File {
 }
 
 export default function UploadAssignment() {
+  const [, params] = useRoute("/assignments/:id/upload");
+  const assignmentId = params?.id;
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const [files, setFiles] = useState<UploadFile[]>([]);
-  const [selectedAssignment, setSelectedAssignment] = useState<number>();
 
-  const { data: assignments } = useQuery<Assignment[]>({
-    queryKey: ["/api/assignments"],
+  // Get assignment details
+  const { data: assignment } = useQuery<Assignment>({
+    queryKey: ["/api/assignments", assignmentId],
+    queryFn: async () => {
+      const response = await fetch(`/api/assignments/${assignmentId}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch assignment");
+      }
+      return response.json();
+    },
+    enabled: !!assignmentId,
+  });
+
+  // Get students list for this assignment's class
+  const { data: students } = useQuery<{ id: number; name: string }[]>({
+    queryKey: ["/api/classes", assignment?.classId, "students"],
+    queryFn: async () => {
+      const response = await fetch(`/api/classes/${assignment?.classId}/students`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch students");
+      }
+      return response.json();
+    },
+    enabled: !!assignment?.classId,
   });
 
   const uploadMutation = useMutation({
@@ -33,7 +56,7 @@ export default function UploadAssignment() {
           formData.append("studentIds", file.studentId.toString());
         }
       });
-      formData.append("assignmentId", selectedAssignment!.toString());
+      formData.append("assignmentId", assignmentId!);
 
       const res = await apiRequest("POST", "/api/submissions/upload", formData);
       return res.json();
@@ -44,7 +67,7 @@ export default function UploadAssignment() {
         title: "Success",
         description: "Homework files uploaded successfully",
       });
-      navigate("/teacher");
+      navigate(`/assignments/${assignmentId}`);
     },
     onError: (error) => {
       toast({
@@ -75,26 +98,12 @@ export default function UploadAssignment() {
         <div className="max-w-4xl mx-auto">
           <Card>
             <CardHeader>
-              <CardTitle>Upload Homework</CardTitle>
+              <CardTitle>
+                Upload Homework - {assignment?.title}
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Assignment</label>
-                  <select
-                    className="w-full p-2 border rounded"
-                    value={selectedAssignment}
-                    onChange={(e) => setSelectedAssignment(Number(e.target.value))}
-                  >
-                    <option value="">Select assignment</option>
-                    {assignments?.map((assignment) => (
-                      <option key={assignment.id} value={assignment.id}>
-                        {assignment.title}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
                 <div
                   onDragOver={(e) => e.preventDefault()}
                   onDrop={handleDrop}
@@ -157,7 +166,11 @@ export default function UploadAssignment() {
                           }}
                         >
                           <option value="">Assign to student</option>
-                          {/* Add student options here */}
+                          {students?.map((student) => (
+                            <option key={student.id} value={student.id}>
+                              {student.name}
+                            </option>
+                          ))}
                         </select>
                       </div>
                     ))}
@@ -167,15 +180,15 @@ export default function UploadAssignment() {
                 <div className="flex justify-end gap-4">
                   <Button
                     variant="outline"
-                    onClick={() => navigate("/teacher")}
+                    onClick={() => navigate(`/assignments/${assignmentId}`)}
                   >
                     Cancel
                   </Button>
                   <Button
                     disabled={
                       uploadMutation.isPending ||
-                      !selectedAssignment ||
-                      files.length === 0
+                      files.length === 0 ||
+                      files.some(f => !f.studentId)
                     }
                     onClick={() => uploadMutation.mutate()}
                   >
