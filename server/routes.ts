@@ -455,8 +455,8 @@ export function registerRoutes(app: Express): Server {
 
             // Update submission with results
             await storage.updateSubmission(submission.id, {
-              ocrText: text,
-              aiFeedback: feedback,
+              ocrText: text || null,
+              aiFeedback: feedback || null,
               status: "completed"
             });
 
