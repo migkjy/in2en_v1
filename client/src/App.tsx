@@ -13,6 +13,7 @@ import CreateAssignment from "@/pages/assignments/create";
 import UploadAssignment from "@/pages/assignments/upload";
 import ReviewAssignment from "@/pages/assignments/review";
 import AssignmentList from "@/pages/assignments/list";
+import AssignmentDetail from "@/pages/assignments/assignment-detail";
 import BranchList from "@/pages/branches/list";
 import BranchDetail from "@/pages/branches/branch-detail";
 import ClassList from "@/pages/classes/list";
@@ -110,6 +111,12 @@ function Router() {
         path="/student" 
         component={StudentDashboard} 
         allowedRole="STUDENT"
+      />
+
+      {/* Common Routes */}
+      <ProtectedRoute 
+        path="/assignments/:id"
+        component={AssignmentDetail}
       />
 
       {/* Redirect to auth by default */}
