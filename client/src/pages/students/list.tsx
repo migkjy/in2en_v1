@@ -15,35 +15,32 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLocation } from "wouter";
 import { CreateStudentDialog } from "./create-dialog";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function StudentList() {
   const [isCreateStudentDialogOpen, setIsCreateStudentDialogOpen] =
     useState(false);
   const [selectedStudent, setSelectedStudent] = useState<User | null>(null);
+  const [nameFilter, setNameFilter] = useState("");
+  const [emailFilter, setEmailFilter] = useState("");
+  const [branchFilter, setBranchFilter] = useState<string>("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
 
   const { data: students, isLoading: isStudentsLoading } = useQuery<User[]>({
     queryKey: ["/api/students"],
-    queryFn: async () => {
-      const response = await fetch("/api/students");
-      if (!response.ok) {
-        throw new Error("Failed to fetch students");
-      }
-      return response.json();
-    },
   });
 
   const { data: branches } = useQuery({
     queryKey: ["/api/branches"],
-    queryFn: async () => {
-      const response = await fetch("/api/branches");
-      if (!response.ok) {
-        throw new Error("Failed to fetch branches");
-      }
-      return response.json();
-    },
   });
 
   const handleDeleteStudent = async (studentId: number) => {
@@ -76,9 +73,23 @@ export default function StudentList() {
 
   const getBranchName = (branchId?: number) => {
     if (!branchId) return "-";
-    const branch = branches?.find((b) => b.id === branchId);
+    const branch = branches?.find((b: any) => b.id === branchId);
     return branch?.name || "-";
   };
+
+  const filteredStudents = students?.filter((student) => {
+    const matchesName = student.name
+      .toLowerCase()
+      .includes(nameFilter.toLowerCase());
+    const matchesEmail = student.email
+      .toLowerCase()
+      .includes(emailFilter.toLowerCase());
+    const matchesBranch =
+      !branchFilter ||
+      student.branchId === (branchFilter ? parseInt(branchFilter) : null);
+
+    return matchesName && matchesEmail && matchesBranch;
+  });
 
   return (
     <div className="flex h-screen">
@@ -93,7 +104,7 @@ export default function StudentList() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm font-medium">Total Students</p>
-                  <p className="text-2xl">{students?.length || 0}</p>
+                  <p className="text-2xl">{filteredStudents?.length || 0}</p>
                 </div>
               </div>
             </CardContent>
@@ -111,6 +122,45 @@ export default function StudentList() {
             </Button>
           </div>
 
+          {/* Search Filters */}
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Branch</label>
+              <Select
+                value={branchFilter}
+                onValueChange={(value) => setBranchFilter(value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="All Branches" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">All Branches</SelectItem>
+                  {branches?.map((branch: any) => (
+                    <SelectItem key={branch.id} value={branch.id.toString()}>
+                      {branch.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Name</label>
+              <Input
+                placeholder="Search by name..."
+                value={nameFilter}
+                onChange={(e) => setNameFilter(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Email</label>
+              <Input
+                placeholder="Search by email..."
+                value={emailFilter}
+                onChange={(e) => setEmailFilter(e.target.value)}
+              />
+            </div>
+          </div>
+
           <Table>
             <TableHeader>
               <TableRow>
@@ -123,7 +173,7 @@ export default function StudentList() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {students?.map((student) => (
+              {filteredStudents?.map((student) => (
                 <TableRow key={student.id}>
                   <TableCell>{student.id}</TableCell>
                   <TableCell>{student.name}</TableCell>
