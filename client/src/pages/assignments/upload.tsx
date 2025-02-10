@@ -69,11 +69,20 @@ export default function UploadAssignment() {
       });
 
       if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.message || "Failed to upload files");
+        // Try to get error message from response
+        let errorMessage;
+        try {
+          const errorData = await res.json();
+          errorMessage = errorData.message;
+        } catch {
+          // If response is not JSON, use status text
+          errorMessage = res.statusText || `Error: ${res.status}`;
+        }
+        throw new Error(errorMessage);
       }
 
-      return res.json();
+      const data = await res.json();
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/submissions"] });
@@ -86,7 +95,7 @@ export default function UploadAssignment() {
     onError: (error) => {
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || "Failed to upload files",
         variant: "destructive",
       });
     },
