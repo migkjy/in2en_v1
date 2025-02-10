@@ -221,23 +221,8 @@ export default function AssignmentDetail() {
 
                 {/* Submissions Table */}
                 <div>
-                  <div className="flex justify-between items-center mb-4">
+                  <div className="mb-4">
                     <h3 className="text-lg font-medium">Submissions</h3>
-                    {isTeacherOrAdmin && submissions?.length > 0 && (
-                      <Button
-                        onClick={() => aiReviewMutation.mutate()}
-                        disabled={aiReviewMutation.isPending}
-                      >
-                        {aiReviewMutation.isPending ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Processing...
-                          </>
-                        ) : (
-                          "AI Review"
-                        )}
-                      </Button>
-                    )}
                   </div>
                   <Table>
                     <TableHeader>
@@ -306,9 +291,9 @@ export default function AssignmentDetail() {
                     </TableBody>
                   </Table>
 
-                  {/* Bulk Upload Button for Teachers/Admins */}
+                  {/* Action Buttons for Teachers/Admins */}
                   {isTeacherOrAdmin && (
-                    <div className="mt-6">
+                    <div className="mt-6 flex gap-4">
                       <Button
                         onClick={() =>
                           (window.location.href = `/assignments/${assignmentId}/upload`)
@@ -316,6 +301,21 @@ export default function AssignmentDetail() {
                       >
                         Bulk Upload
                       </Button>
+                      {submissions?.length > 0 && (
+                        <Button
+                          onClick={() => aiReviewMutation.mutate()}
+                          disabled={aiReviewMutation.isPending}
+                        >
+                          {aiReviewMutation.isPending ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Processing...
+                            </>
+                          ) : (
+                            "AI Feedback"
+                          )}
+                        </Button>
+                      )}
                     </div>
                   )}
                 </div>
