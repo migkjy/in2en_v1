@@ -1,5 +1,5 @@
 import { QueryClientProvider } from "@tanstack/react-query";
-import { Switch, Route, Redirect } from "wouter"; // Added Redirect import
+import { Switch, Route, Redirect } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/hooks/use-auth";
@@ -108,16 +108,23 @@ function Router() {
         allowedRole={["TEACHER", "ADMIN"]}
       />
 
-      {/* Handle /assignments/review and /assignments/review/:id separately */}
+      {/* Handle /assignments/review path */}
       <Route path="/assignments/review">
         {() => {
           const role = localStorage.getItem("userRole");
           if (role === "ADMIN" || role === "TEACHER") {
-            return <ReviewAssignment />;
+            return <Redirect to={role === "ADMIN" ? "/admin/assignments" : "/teacher/assignments"} />;
           }
           return <Redirect to="/" />;
         }}
       </Route>
+
+      {/* Handle /assignments/review/:id path */}
+      <ProtectedRoute
+        path="/assignments/review/:id"
+        component={ReviewAssignment}
+        allowedRole={["TEACHER", "ADMIN"]}
+      />
 
       {/* Student Routes */}
       <ProtectedRoute 
