@@ -16,11 +16,17 @@ export default function SubmissionDetail() {
 
   const submissionId = params?.id ? parseInt(params.id, 10) : null;
 
-  // Redirect if no valid ID
-  if (!submissionId || isNaN(submissionId)) {
-    navigate("/");
-    return null;
-  }
+  useEffect(() => {
+    // Redirect if no valid ID
+    if (!submissionId || isNaN(submissionId)) {
+      toast({
+        title: "Error",
+        description: "Invalid submission ID",
+        variant: "destructive",
+      });
+      navigate("/");
+    }
+  }, [submissionId, navigate, toast]);
 
   // Get submission details
   const { data: submission, isLoading: isSubmissionLoading } = useQuery<Submission>({
@@ -32,7 +38,7 @@ export default function SubmissionDetail() {
       }
       return response.json();
     },
-    enabled: !!submissionId,
+    enabled: !!submissionId && !isNaN(submissionId),
   });
 
   // Get assignment details

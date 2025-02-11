@@ -109,6 +109,27 @@ function Router() {
         allowedRole={["TEACHER", "ADMIN"]}
       />
 
+      {/* Submission Detail Route - Accessible by all authenticated users */}
+      <ProtectedRoute 
+        path="/submissions/:id"
+        component={SubmissionDetail}
+        allowedRole={["STUDENT", "TEACHER", "ADMIN"]}
+      />
+
+      {/* Handle /assignments/review/:id path */}
+      <Route path="/assignments/review/:id">
+        {(params) => {
+          const role = localStorage.getItem("userRole");
+          if (role !== "ADMIN" && role !== "TEACHER") {
+            return <Redirect to="/" />;
+          }
+          if (!params?.id || isNaN(parseInt(params.id, 10))) {
+            return <Redirect to={role === "ADMIN" ? "/admin/assignments" : "/teacher/assignments"} />;
+          }
+          return <ReviewAssignment />;
+        }}
+      </Route>
+
       {/* Handle /assignments/review path - Immediate redirect */}
       <Route path="/assignments/review">
         {() => {
@@ -126,27 +147,6 @@ function Router() {
           );
         }}
       </Route>
-
-      {/* Handle /assignments/review/:id path */}
-      <Route path="/assignments/review/:id">
-        {(params) => {
-          const role = localStorage.getItem("userRole");
-          if (role !== "ADMIN" && role !== "TEACHER") {
-            return <Redirect to="/" />;
-          }
-          if (!params?.id || isNaN(parseInt(params.id, 10))) {
-            return <Redirect to={role === "ADMIN" ? "/admin/assignments" : "/teacher/assignments"} />;
-          }
-          return <ReviewAssignment />;
-        }}
-      </Route>
-
-      {/* Submission Detail Route - Accessible by all authenticated users */}
-      <ProtectedRoute 
-        path="/submissions/:id"
-        component={SubmissionDetail}
-        allowedRole={["STUDENT", "TEACHER", "ADMIN"]}
-      />
 
       {/* Student Routes */}
       <ProtectedRoute 
