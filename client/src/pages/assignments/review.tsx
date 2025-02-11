@@ -87,7 +87,52 @@ const ReviewAssignment: FC = () => {
     );
   }
 
+  if (!params?.id) {
+    return (
+      <div className="flex h-screen">
+        <Sidebar className="w-64" />
+        <main className="flex-1 p-8 overflow-auto">
+          <div className="max-w-6xl mx-auto">
+            <Card>
+              <CardHeader>
+                <CardTitle>Pending Reviews</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {submissions?.map((submission) => (
+                    <div key={submission.id} className="p-4 border rounded">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <h3 className="font-medium">
+                            Assignment ID: {submission.assignmentId}
+                          </h3>
+                          <p className="text-sm text-gray-600">
+                            Status: {submission.status}
+                          </p>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => navigate(`/assignments/review/${submission.id}`)}
+                        >
+                          Review
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   const submissionId = parseInt(params.id, 10);
+  if (isNaN(submissionId)) {
+    return <RedirectToDashboard />;
+  }
 
   // If ID is not a valid number, redirect to assignments page
   if (isNaN(submissionId)) {
