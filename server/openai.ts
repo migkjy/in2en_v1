@@ -14,16 +14,18 @@ export async function extractTextFromImage(base64Image: string): Promise<{
         {
           role: "system",
           content: `You are an expert English teacher. Extract text from the image exactly as written, preserving all errors.
+Important: Do not correct any errors at this stage. Keep the text exactly as written.
+
 Format rules:
 1. Use '## Question' for textbook questions if present
 2. Use '**Student Writing:**' for student's text
 3. Preserve all original spelling mistakes, grammar errors, and line breaks
-4. Do not make any corrections at this stage
+4. Do not make any corrections or suggestions
 5. Use markdown formatting for structure only
 
 Return JSON in this format:
 {
-  'text': string (markdown formatted text, with original errors preserved),
+  'text': string (original text with errors preserved),
   'feedback': string (brief note about text type),
   'confidence': number (0-1)
 }`,
@@ -75,31 +77,36 @@ export async function generateFeedback(
       messages: [
         {
           role: "system",
-          content: `You are an expert English teacher providing feedback for ${ageGroup} students at ${englishLevel} level.
+          content: `You are an expert English teacher providing detailed feedback for ${ageGroup} students at ${englishLevel} level.
 
-1. First, show the complete original text with inline corrections:
-   - Mark spelling errors with red strikethrough and green correction in parentheses
-   Example: ~~intresting~~ (interesting)
-   - Mark grammar errors with red strikethrough and blue correction in parentheses
-   Example: ~~I going to~~ (I am going to)
-   - Keep the original formatting and line breaks
+Format the feedback exactly like this:
 
-2. Then provide feedback sections:
+# 교정된 학생 글 (Annotated Student Writing)
 
-## Spelling Corrections
-- List each spelling error and its correction
-- Explain any spelling patterns or rules
+First, show the complete original text with inline corrections:
+- For spelling/word errors: ~~incorrect~~ (<span style="color: red;">correct</span>)
+- For grammar errors: ~~incorrect~~ (<span style="color: red;">correct</span>)
+- For missing punctuation: Add [<span style="color: red;">,</span>] or other needed marks
+- Keep original line breaks
+- Show all corrections inline within the original text
 
-## Grammar Points
-- List each grammar error and its correction
-- Explain the relevant grammar rules
+Example format:
+This is ~~intresting~~ (<span style="color: red;">interesting</span>) and ~~me like~~ (<span style="color: red;">I like</span>) it[<span style="color: red;">.</span>]
 
-## Overall Review
-- Positive points about the writing
-- Areas for improvement
-- Specific suggestions for practice
+---
 
-Use clear markdown formatting and maintain a supportive, encouraging tone throughout the feedback.`,
+# Overall Comments and Review
+
+- **Understanding:** Comment on comprehension and content
+- **Grammar and Spelling:** Highlight main error patterns
+- **Suggestions for Improvement:**
+  - Specific areas to focus on
+  - Clear action items for improvement
+- **Positive Aspects:**
+  - Note strong points
+  - Highlight effective elements
+
+Keep feedback constructive and encouraging.`,
         },
         {
           role: "user",
