@@ -108,23 +108,37 @@ function Router() {
         allowedRole={["TEACHER", "ADMIN"]}
       />
 
-      {/* Handle /assignments/review path */}
+      {/* Handle /assignments/review path - Immediate redirect */}
       <Route path="/assignments/review">
         {() => {
           const role = localStorage.getItem("userRole");
-          if (role === "ADMIN" || role === "TEACHER") {
-            return <Redirect to={role === "ADMIN" ? "/admin/assignments" : "/teacher/assignments"} />;
-          }
-          return <Redirect to="/" />;
+          return (
+            <Redirect 
+              to={
+                role === "ADMIN" 
+                  ? "/admin/assignments" 
+                  : role === "TEACHER" 
+                  ? "/teacher/assignments"
+                  : "/"
+              } 
+            />
+          );
         }}
       </Route>
 
       {/* Handle /assignments/review/:id path */}
-      <ProtectedRoute
-        path="/assignments/review/:id"
-        component={ReviewAssignment}
-        allowedRole={["TEACHER", "ADMIN"]}
-      />
+      <Route path="/assignments/review/:id">
+        {(params) => {
+          const role = localStorage.getItem("userRole");
+          if (role !== "ADMIN" && role !== "TEACHER") {
+            return <Redirect to="/" />;
+          }
+          if (!params?.id || isNaN(parseInt(params.id, 10))) {
+            return <Redirect to={role === "ADMIN" ? "/admin/assignments" : "/teacher/assignments"} />;
+          }
+          return <ReviewAssignment />;
+        }}
+      </Route>
 
       {/* Student Routes */}
       <ProtectedRoute 

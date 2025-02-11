@@ -20,65 +20,55 @@ const ReviewList: FC = () => {
       const response = await fetch(`/api/submissions?status=pending`);
       if (!response.ok) throw new Error("Failed to fetch submissions");
       return response.json();
-    }
+    },
+    enabled: false // Never automatically fetch data for the list view
   });
 
-  return (
-    <div className="flex h-screen">
-      <Sidebar className="w-64" />
-      <main className="flex-1 p-8 overflow-auto">
-        <div className="max-w-6xl mx-auto">
-          <Card>
-            <CardHeader>
-              <CardTitle>Pending Reviews</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {submissions?.map((submission) => (
-                  <div key={submission.id} className="p-4 border rounded">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <h3 className="font-medium">
-                          Assignment ID: {submission.assignmentId}
-                        </h3>
-                        <p className="text-sm text-gray-600">
-                          Status: {submission.status}
-                        </p>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => navigate(`/assignments/review/${submission.id}`)}
-                      >
-                        Review
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </main>
-    </div>
-  );
+  // Redirect to appropriate dashboard immediately
+  const { user } = useAuth();
+  if (!user) {
+    navigate("/");
+    return null;
+  }
+
+  const dashboardPath = user.role === "ADMIN" ? "/admin/assignments" : "/teacher/assignments";
+  navigate(dashboardPath);
+  return null;
 };
 
 // Detail component for /assignments/review/:id
 const ReviewDetail: FC<{ id: string }> = ({ id }) => {
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  const { user } = useAuth();
+
+  // Validate user and ID
+  if (!user || (user.role !== "TEACHER" && user.role !== "ADMIN")) {
+    navigate("/");
+    return null;
+  }
 
   const submissionId = parseInt(id, 10);
+  if (isNaN(submissionId)) {
+    const dashboardPath = user.role === "ADMIN" ? "/admin/assignments" : "/teacher/assignments";
+    navigate(dashboardPath);
+    return null;
+  }
 
   const { data: submission, isLoading, error } = useQuery<Submission>({
     queryKey: ["/api/submissions", submissionId],
     queryFn: async () => {
-      const response = await fetch(`/api/submissions/${submissionId}`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch submission");
+      try {
+        const response = await fetch(`/api/submissions/${submissionId}`);
+        if (!response.ok) {
+          throw new Error("Failed to fetch submission");
+        }
+        return response.json();
+      } catch (error) {
+        const dashboardPath = user.role === "ADMIN" ? "/admin/assignments" : "/teacher/assignments";
+        navigate(dashboardPath);
+        return null;
       }
-      return response.json();
     },
     retry: false,
     enabled: !isNaN(submissionId),
@@ -109,29 +99,10 @@ const ReviewDetail: FC<{ id: string }> = ({ id }) => {
     },
   });
 
-  if (error) {
-    return (
-      <div className="flex h-screen">
-        <Sidebar className="w-64" />
-        <main className="flex-1 p-8">
-          <div className="max-w-2xl mx-auto">
-            <Card>
-              <CardContent className="p-6">
-                <p className="text-center text-red-600">
-                  {error instanceof Error ? error.message : "An error occurred"}
-                </p>
-                <Button
-                  className="mt-4 mx-auto block"
-                  onClick={() => navigate("/assignments")}
-                >
-                  Go Back to Assignments
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-        </main>
-      </div>
-    );
+  if (error || !submission) {
+    const dashboardPath = user.role === "ADMIN" ? "/admin/assignments" : "/teacher/assignments";
+    navigate(dashboardPath);
+    return null;
   }
 
   if (isLoading) {
@@ -157,74 +128,70 @@ const ReviewDetail: FC<{ id: string }> = ({ id }) => {
       <main className="flex-1 p-8 overflow-auto">
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-2 gap-8">
-            {submission && (
-              <>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Submission Details</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <img
-                        src={submission.imageUrl}
-                        alt="homework"
-                        className="w-full h-40 object-cover rounded mb-4"
-                      />
-                      <div className="space-y-2">
-                        <div className="text-sm">
-                          <p className="font-medium">OCR Text:</p>
-                          <p className="text-gray-600">{submission.ocrText}</p>
-                        </div>
-                        <div className="text-sm">
-                          <p className="font-medium">AI Feedback:</p>
-                          <p className="text-gray-600">{submission.aiFeedback}</p>
-                        </div>
-                      </div>
+            <Card>
+              <CardHeader>
+                <CardTitle>Submission Details</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <img
+                    src={submission.imageUrl}
+                    alt="homework"
+                    className="w-full h-40 object-cover rounded mb-4"
+                  />
+                  <div className="space-y-2">
+                    <div className="text-sm">
+                      <p className="font-medium">OCR Text:</p>
+                      <p className="text-gray-600">{submission.ocrText}</p>
                     </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Teacher Feedback</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-6">
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">
-                          Teacher Feedback
-                        </label>
-                        <Textarea
-                          rows={6}
-                          placeholder="Enter your feedback..."
-                          value={submission.teacherFeedback || ""}
-                          onChange={(e) =>
-                            updateMutation.mutate({
-                              id: submission.id,
-                              teacherFeedback: e.target.value,
-                              status: "pending",
-                            })
-                          }
-                        />
-                      </div>
-
-                      <Button
-                        className="w-full"
-                        onClick={() =>
-                          updateMutation.mutate({
-                            id: submission.id,
-                            teacherFeedback: submission.teacherFeedback || "",
-                            status: "completed",
-                          })
-                        }
-                      >
-                        Complete Review
-                      </Button>
+                    <div className="text-sm">
+                      <p className="font-medium">AI Feedback:</p>
+                      <p className="text-gray-600">{submission.aiFeedback}</p>
                     </div>
-                  </CardContent>
-                </Card>
-              </>
-            )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Teacher Feedback</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">
+                      Teacher Feedback
+                    </label>
+                    <Textarea
+                      rows={6}
+                      placeholder="Enter your feedback..."
+                      value={submission.teacherFeedback || ""}
+                      onChange={(e) =>
+                        updateMutation.mutate({
+                          id: submission.id,
+                          teacherFeedback: e.target.value,
+                          status: "pending",
+                        })
+                      }
+                    />
+                  </div>
+
+                  <Button
+                    className="w-full"
+                    onClick={() =>
+                      updateMutation.mutate({
+                        id: submission.id,
+                        teacherFeedback: submission.teacherFeedback || "",
+                        status: "completed",
+                      })
+                    }
+                  >
+                    Complete Review
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </main>
@@ -235,19 +202,13 @@ const ReviewDetail: FC<{ id: string }> = ({ id }) => {
 // Main component that handles routing
 const ReviewAssignment: FC = () => {
   const [, params] = useRoute("/assignments/review/:id");
-  const { user } = useAuth();
-
-  // If user is not teacher or admin, redirect to home
-  if (!user || (user.role !== "TEACHER" && user.role !== "ADMIN")) {
-    return null;
-  }
 
   // If we have an ID parameter, show the detail view
   if (params?.id) {
     return <ReviewDetail id={params.id} />;
   }
 
-  // Otherwise show the list view
+  // Otherwise show the list view which will handle the redirect
   return <ReviewList />;
 };
 
