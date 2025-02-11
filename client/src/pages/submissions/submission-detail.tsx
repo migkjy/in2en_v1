@@ -7,6 +7,11 @@ import type { Submission, User, Assignment } from "@shared/schema";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
 
+interface SubmissionResponse extends Submission {
+  assignment: Assignment;
+  student: User;
+}
+
 export default function SubmissionDetail() {
   const [, params] = useRoute("/submissions/:id");
   const [, navigate] = useLocation();
@@ -25,11 +30,11 @@ export default function SubmissionDetail() {
     return null;
   }
 
-  const { data: submission, isLoading: isSubmissionLoading, error: submissionError } = useQuery<Submission>({
+  const { data: submissionData, isLoading, error } = useQuery<SubmissionResponse>({
     queryKey: ["/api/submissions", submissionId],
     queryFn: async () => {
       const response = await fetch(`/api/submissions/${submissionId}`, {
-        credentials: 'include'  // Include cookies for authentication
+        credentials: 'include'
       });
 
       if (!response.ok) {
@@ -40,36 +45,6 @@ export default function SubmissionDetail() {
       return response.json();
     },
   });
-
-  const { data: assignment, isLoading: isAssignmentLoading } = useQuery<Assignment>({
-    queryKey: ["/api/assignments", submission?.assignmentId],
-    queryFn: async () => {
-      const response = await fetch(`/api/assignments/${submission!.assignmentId}`, {
-        credentials: 'include'
-      });
-      if (!response.ok) {
-        throw new Error("Failed to fetch assignment");
-      }
-      return response.json();
-    },
-    enabled: !!submission?.assignmentId,
-  });
-
-  const { data: student, isLoading: isStudentLoading } = useQuery<User>({
-    queryKey: ["/api/users", submission?.studentId],
-    queryFn: async () => {
-      const response = await fetch(`/api/users/${submission!.studentId}`, {
-        credentials: 'include'
-      });
-      if (!response.ok) {
-        throw new Error("Failed to fetch student details");
-      }
-      return response.json();
-    },
-    enabled: !!submission?.studentId,
-  });
-
-  const isLoading = isSubmissionLoading || (submission && (isAssignmentLoading || isStudentLoading));
 
   if (isLoading) {
     return (
@@ -91,7 +66,7 @@ export default function SubmissionDetail() {
     );
   }
 
-  if (submissionError) {
+  if (error) {
     return (
       <div className="flex h-screen">
         <Sidebar className="w-64" />
@@ -100,7 +75,7 @@ export default function SubmissionDetail() {
             <Card>
               <CardContent className="p-6">
                 <p className="text-center text-red-600">
-                  {submissionError.message}
+                  {error instanceof Error ? error.message : "Failed to load submission"}
                 </p>
               </CardContent>
             </Card>
@@ -110,7 +85,7 @@ export default function SubmissionDetail() {
     );
   }
 
-  if (!submission || !assignment || !student) {
+  if (!submissionData) {
     return (
       <div className="flex h-screen">
         <Sidebar className="w-64" />
@@ -119,7 +94,7 @@ export default function SubmissionDetail() {
             <Card>
               <CardContent className="p-6">
                 <p className="text-center text-red-600">
-                  Could not load complete submission details
+                  Could not load submission details
                 </p>
               </CardContent>
             </Card>
@@ -128,6 +103,8 @@ export default function SubmissionDetail() {
       </div>
     );
   }
+
+  const { assignment, student, ...submission } = submissionData;
 
   return (
     <div className="flex h-screen">

@@ -368,8 +368,11 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Submission routes
-  // Add this route before the existing submission routes
-  app.get("/api/submissions/:id", requireRole([UserRole.ADMIN, UserRole.TEACHER, UserRole.STUDENT]), async (req, res) => {
+  app.get("/api/submissions/:id", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -392,7 +395,15 @@ export function registerRoutes(app: Express): Server {
         });
       }
 
-      res.json(submission);
+      // Include related data
+      const assignment = await storage.getAssignment(submission.assignmentId);
+      const student = await storage.getUser(submission.studentId);
+
+      res.json({
+        ...submission,
+        assignment,
+        student
+      });
     } catch (error) {
       console.error("Error fetching submission:", error);
       res.status(500).json({
