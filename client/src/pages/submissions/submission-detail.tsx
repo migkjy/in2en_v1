@@ -16,22 +16,13 @@ export default function SubmissionDetail() {
 
   const submissionId = params?.id ? parseInt(params.id, 10) : null;
 
-  useEffect(() => {
-    // Redirect if no valid ID
-    if (!submissionId || isNaN(submissionId)) {
-      toast({
-        title: "Error",
-        description: "Invalid submission ID",
-        variant: "destructive",
-      });
-      navigate("/");
-    }
-  }, [submissionId, navigate, toast]);
-
   // Get submission details
-  const { data: submission, isLoading: isSubmissionLoading } = useQuery<Submission>({
+  const { data: submission, isLoading: isSubmissionLoading, error: submissionError } = useQuery<Submission>({
     queryKey: ["/api/submissions", submissionId],
     queryFn: async () => {
+      if (!submissionId || isNaN(submissionId)) {
+        throw new Error("Invalid submission ID");
+      }
       const response = await fetch(`/api/submissions/${submissionId}`);
       if (!response.ok) {
         throw new Error("Failed to fetch submission");
@@ -39,10 +30,11 @@ export default function SubmissionDetail() {
       return response.json();
     },
     enabled: !!submissionId && !isNaN(submissionId),
+    retry: false
   });
 
   // Get assignment details
-  const { data: assignment } = useQuery<Assignment>({
+  const { data: assignment, isLoading: isAssignmentLoading } = useQuery<Assignment>({
     queryKey: ["/api/assignments", submission?.assignmentId],
     queryFn: async () => {
       if (!submission?.assignmentId) throw new Error("Assignment ID is required");
@@ -53,10 +45,11 @@ export default function SubmissionDetail() {
       return response.json();
     },
     enabled: !!submission?.assignmentId,
+    retry: false
   });
 
   // Get student details
-  const { data: student } = useQuery<User>({
+  const { data: student, isLoading: isStudentLoading } = useQuery<User>({
     queryKey: ["/api/users", submission?.studentId],
     queryFn: async () => {
       if (!submission?.studentId) throw new Error("Student ID is required");
@@ -67,27 +60,55 @@ export default function SubmissionDetail() {
       return response.json();
     },
     enabled: !!submission?.studentId,
+    retry: false
   });
 
+  // Handle initial validation and errors
   useEffect(() => {
-    if (!isSubmissionLoading && (!submission || !assignment || !student)) {
+    if (!user) {
+      navigate("/");
+      return;
+    }
+
+    if (!submissionId || isNaN(submissionId)) {
+      const dashboardPath = user.role === "ADMIN" ? "/admin/assignments" : "/teacher/assignments";
+      navigate(dashboardPath);
+      return;
+    }
+
+    if (submissionError) {
       toast({
         title: "Error",
-        description: "Failed to load submission details",
+        description: "Failed to load submission",
         variant: "destructive",
       });
-      navigate("/");
+      const dashboardPath = user.role === "ADMIN" ? "/admin/assignments" : "/teacher/assignments";
+      navigate(dashboardPath);
     }
-  }, [isSubmissionLoading, submission, assignment, student, toast, navigate]);
+  }, [user, submissionId, submissionError, navigate, toast]);
 
-  if (isSubmissionLoading) {
+  // Show loading state
+  if (isSubmissionLoading || isAssignmentLoading || isStudentLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-border" />
+      <div className="flex h-screen">
+        <Sidebar className="w-64" />
+        <main className="flex-1 p-8">
+          <div className="max-w-2xl mx-auto">
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex justify-center items-center">
+                  <Loader2 className="h-8 w-8 animate-spin" />
+                  <span className="ml-2">Loading submission details...</span>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </main>
       </div>
     );
   }
 
+  // Handle missing data
   if (!submission || !assignment || !student) {
     return null;
   }
