@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
-import type { Submission, Comment } from "@shared/schema";
+import type { Submission } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useState } from "react";
 
@@ -16,11 +16,14 @@ export default function ReviewAssignment() {
 
   const { data: submissions } = useQuery<Submission[]>({
     queryKey: ["/api/submissions"],
-  });
-
-  const { data: comments } = useQuery<Comment[]>({
-    queryKey: ["/api/comments", selectedSubmission],
-    enabled: !!selectedSubmission,
+    queryFn: async () => {
+      // Get all pending submissions
+      const response = await fetch("/api/submissions?status=pending");
+      if (!response.ok) {
+        throw new Error("Failed to fetch submissions");
+      }
+      return response.json();
+    }
   });
 
   const updateMutation = useMutation({
@@ -48,20 +51,8 @@ export default function ReviewAssignment() {
     },
   });
 
-  const commentMutation = useMutation({
-    mutationFn: async (data: { submissionId: number; content: string }) => {
-      const res = await apiRequest("POST", "/api/comments", data);
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ 
-        queryKey: ["/api/comments", selectedSubmission] 
-      });
-    },
-  });
-
   const pendingSubmissions = submissions?.filter(
-    (s) => s.status === "pending"
+    (s) => s.status === "pending" || s.status === "ai-reviewed"
   );
 
   return (
@@ -93,9 +84,6 @@ export default function ReviewAssignment() {
                         className="w-full h-40 object-cover rounded mb-4"
                       />
                       <div className="space-y-2">
-                        <h3 className="font-medium">
-                          Student ID: {submission.studentId}
-                        </h3>
                         <div className="text-sm">
                           <p className="font-medium">OCR Text:</p>
                           <p className="text-gray-600">{submission.ocrText}</p>
@@ -155,52 +143,6 @@ export default function ReviewAssignment() {
                     >
                       Complete Review
                     </Button>
-
-                    {/* Comments Section */}
-                    <div className="mt-8 space-y-4">
-                      <h3 className="font-medium">Comments</h3>
-                      <div className="space-y-4">
-                        {comments?.map((comment) => (
-                          <div
-                            key={comment.id}
-                            className="p-3 bg-gray-50 rounded"
-                          >
-                            <p className="text-sm font-medium">
-                              User {comment.userId}
-                            </p>
-                            <p className="text-sm text-gray-600">
-                              {comment.content}
-                            </p>
-                            <p className="text-xs text-gray-400 mt-1">
-                              {new Date(comment.createdAt).toLocaleString()}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-
-                      <form
-                        onSubmit={(e) => {
-                          e.preventDefault();
-                          const form = e.target as HTMLFormElement;
-                          const content = new FormData(form).get("content");
-                          if (content) {
-                            commentMutation.mutate({
-                              submissionId: selectedSubmission,
-                              content: content.toString(),
-                            });
-                            form.reset();
-                          }
-                        }}
-                        className="flex gap-2"
-                      >
-                        <input
-                          name="content"
-                          className="flex-1 px-3 py-2 border rounded"
-                          placeholder="Add a comment..."
-                        />
-                        <Button type="submit">Send</Button>
-                      </form>
-                    </div>
                   </div>
                 </CardContent>
               </Card>

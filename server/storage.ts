@@ -288,6 +288,15 @@ export class DatabaseStorage implements IStorage {
     await db.delete(assignments).where(eq(assignments.id, id));
   }
 
+  // List all submissions with optional status filter
+  async listAllSubmissions(status?: string): Promise<Submission[]> {
+    const baseQuery = db.select().from(submissions);
+    if (status) {
+      return await baseQuery.where(eq(submissions.status, status));
+    }
+    return await baseQuery;
+  }
+
   // Submission operations
   async createSubmission(data: Partial<Submission>): Promise<Submission> {
     if (!data.imageUrl) {

@@ -495,11 +495,16 @@ export function registerRoutes(app: Express): Server {
   });
 
   app.get("/api/submissions", async (req, res) => {
-    const { assignmentId } = req.query;
-    if (!assignmentId) {
-      return res.status(400).json({ message: "assignmentId is required" });
+    const { assignmentId, status } = req.query;
+    if (!assignmentId && !status) {
+      return res.status(400).json({ message: "assignmentId or status is required" });
     }
-    const submissions = await storage.listSubmissions(Number(assignmentId));
+    let submissions;
+    if (assignmentId) {
+      submissions = await storage.listSubmissions(Number(assignmentId));
+    } else {
+      submissions = await storage.listAllSubmissions(status as string);
+    }
     res.json(submissions);
   });
 
