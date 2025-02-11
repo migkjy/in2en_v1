@@ -1,0 +1,11 @@
+
+/* Styles for corrections */
+del, s {
+  text-decoration: line-through;
+  color: #666;
+}
+
+.correction {
+  color: red;
+  font-weight: 500;
+}

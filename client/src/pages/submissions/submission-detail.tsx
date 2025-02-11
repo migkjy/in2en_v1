@@ -1,3 +1,6 @@
+
+import './submission-detail.css';
+
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -190,7 +193,21 @@ export default function SubmissionDetail() {
                   <div>
                     <h3 className="text-sm font-medium mb-2">AI Feedback</h3>
                     <div className="bg-blue-50 p-4 rounded prose prose-sm max-w-none">
-                      <ReactMarkdown>{submission.aiFeedback}</ReactMarkdown>
+                      <ReactMarkdown
+  components={{
+    span: ({node, children, ...props}) => {
+      if (props.style?.color === 'red') {
+        return <span style={{color: 'red'}}>{children}</span>;
+      }
+      return <span {...props}>{children}</span>;
+    }
+  }}
+  rehypePlugins={[() => (tree) => {
+    // Enable raw HTML
+    tree.data = { ...tree.data, rawHTML: true };
+    return tree;
+  }]}
+>{submission.aiFeedback}</ReactMarkdown>
                     </div>
                   </div>
                 )}
