@@ -6,17 +6,35 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 export async function extractTextFromImage(base64Image: string): Promise<{
   text: string;
   feedback: string;
+  confidence: number;
 }> {
   try {
     const visionResponse = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
         {
+          role: "system",
+          content: `You are an expert English teacher. Extract text from the image and format it in markdown.
+Format rules:
+1. Use '## Question' for textbook questions
+2. Use '**Textbook Content:**' for original text
+3. Use '*Student Answer:*' for student's writing
+4. Use proper markdown paragraphs and sections
+5. Maintain original line breaks and spacing
+
+Return JSON in this format:
+{
+  'text': string (markdown formatted text),
+  'feedback': string (initial observations),
+  'confidence': number (0-1)
+}`
+        },
+        {
           role: "user",
           content: [
             {
               type: "text",
-              text: "Extract and format the text from this homework image. Return the result as a JSON object with a 'text' field containing the extracted text, maintaining original line breaks and spacing."
+              text: "Extract and format the text from this homework image using markdown."
             },
             {
               type: "image_url",
@@ -31,9 +49,11 @@ export async function extractTextFromImage(base64Image: string): Promise<{
     });
 
     const result = JSON.parse(visionResponse.choices[0].message.content || "{}");
+
     return {
       text: result.text || "",
-      feedback: "" // Remove initial feedback as we'll use Assistant API
+      feedback: result.feedback || "",
+      confidence: Math.max(0, Math.min(1, result.confidence || 0)),
     };
   } catch (error) {
     console.error("OpenAI API Error:", error);
@@ -69,19 +89,12 @@ ${text}`
 
     // Wait for the run to complete
     let runStatus = await openai.beta.threads.runs.retrieve(thread.id, run.id);
-    let retryCount = 0;
-    const maxRetries = 30; // 30 seconds timeout
-    while (runStatus.status !== "completed" && retryCount < maxRetries) {
+    while (runStatus.status !== "completed") {
       if (runStatus.status === "failed") {
         throw new Error("Assistant run failed");
       }
       await new Promise(resolve => setTimeout(resolve, 1000));
       runStatus = await openai.beta.threads.runs.retrieve(thread.id, run.id);
-      retryCount++;
-    }
-
-    if (retryCount >= maxRetries) {
-      throw new Error("Assistant run timed out");
     }
 
     // Get the assistant's response
@@ -92,14 +105,8 @@ ${text}`
       throw new Error("No response from assistant");
     }
 
-    // Get text content from the message
-    const content = lastMessage.content[0];
-    if (content.type !== 'text') {
-      throw new Error("Unexpected response format from assistant");
-    }
-
     // Return the feedback text
-    return content.value;
+    return lastMessage.content[0].text.value;
   } catch (error) {
     console.error("OpenAI Assistant API Error:", error);
     throw new Error(
