@@ -496,16 +496,39 @@ export function registerRoutes(app: Express): Server {
 
   app.get("/api/submissions", async (req, res) => {
     const { assignmentId, status } = req.query;
-    if (!assignmentId && !status) {
-      return res.status(400).json({ message: "assignmentId or status is required" });
+
+    try {
+      // Validate parameters
+      if (assignmentId) {
+        const id = parseInt(assignmentId as string, 10);
+        if (isNaN(id)) {
+          return res.status(400).json({ 
+            message: "Invalid assignmentId parameter" 
+          });
+        }
+        const submissions = await storage.listSubmissions(id);
+        return res.json(submissions);
+      }
+
+      if (status) {
+        if (typeof status !== 'string') {
+          return res.status(400).json({ 
+            message: "Invalid status parameter" 
+          });
+        }
+        const submissions = await storage.listAllSubmissions(status);
+        return res.json(submissions);
+      }
+
+      return res.status(400).json({ 
+        message: "Either assignmentId or status parameter is required" 
+      });
+    } catch (error) {
+      console.error("Error fetching submissions:", error);
+      res.status(500).json({ 
+        message: "Internal server error while fetching submissions" 
+      });
     }
-    let submissions;
-    if (assignmentId) {
-      submissions = await storage.listSubmissions(Number(assignmentId));
-    } else {
-      submissions = await storage.listAllSubmissions(status as string);
-    }
-    res.json(submissions);
   });
 
   // Comment routes
