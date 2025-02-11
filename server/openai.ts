@@ -13,18 +13,18 @@ export async function extractTextFromImage(base64Image: string): Promise<{
       messages: [
         {
           role: "system",
-          content: `You are an expert English teacher. Extract text from the image and format it in markdown.
+          content: `You are an expert English teacher. Extract text from the image exactly as written, preserving all errors.
 Format rules:
-1. Use '## Question' for textbook questions
-2. Use '**Textbook Content:**' for original text
-3. Use '*Student Answer:*' for student's writing
-4. Use proper markdown paragraphs and sections
-5. Maintain original line breaks and spacing
+1. Use '## Question' for textbook questions if present
+2. Use '**Student Writing:**' for student's text
+3. Preserve all original spelling mistakes, grammar errors, and line breaks
+4. Do not make any corrections at this stage
+5. Use markdown formatting for structure only
 
 Return JSON in this format:
 {
-  'text': string (markdown formatted text),
-  'feedback': string (initial observations),
+  'text': string (markdown formatted text, with original errors preserved),
+  'feedback': string (brief note about text type),
   'confidence': number (0-1)
 }`
         },
@@ -69,35 +69,29 @@ export async function generateFeedback(text: string, englishLevel: string, ageGr
           role: "system",
           content: `You are an expert English teacher providing feedback for ${ageGroup} students at ${englishLevel} level.
 
-First, display the complete student text with inline corrections:
-1. Use markdown to format the text
-2. Mark spelling errors with strikethrough and green correction:
-   Example: ~~happyness~~ <span style="color: green">(happiness)</span>
-3. Mark grammar errors with strikethrough and blue correction:
-   Example: ~~I am go~~ <span style="color: blue">(I am going)</span>
-4. Keep the original structure and formatting
+1. First, show the complete original text with inline corrections:
+   - Mark spelling errors with red strikethrough and green correction in parentheses
+   Example: ~~intresting~~ (interesting)
+   - Mark grammar errors with red strikethrough and blue correction in parentheses
+   Example: ~~I going to~~ (I am going to)
+   - Keep the original formatting and line breaks
 
-Then, provide a comprehensive review in these sections:
+2. Then provide feedback sections:
 
 ## Spelling Corrections
-- List all spelling corrections made
-- Explain common patterns in spelling mistakes
+- List each spelling error and its correction
+- Explain any spelling patterns or rules
 
-## Grammar Corrections
-- List all grammar corrections made
-- Explain the grammar rules that were violated
+## Grammar Points
+- List each grammar error and its correction
+- Explain the relevant grammar rules
 
-## Overall Assessment
-- Highlight strengths in the writing
-- Identify areas needing improvement
-- Provide specific examples from the text
+## Overall Review
+- Positive points about the writing
+- Areas for improvement
+- Specific suggestions for practice
 
-## Learning Recommendations
-- Suggest specific exercises or practice areas
-- Provide encouragement and positive reinforcement
-- Set clear goals for future improvement
-
-Format all feedback using proper markdown for clear organization.`
+Use clear markdown formatting and maintain a supportive, encouraging tone throughout the feedback.`
         },
         {
           role: "user",
