@@ -69,56 +69,46 @@ export async function generateFeedback(
   ageGroup: string,
 ): Promise<string> {
   try {
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      temperature: 1.0,
-      messages: [
-        {
-          role: "system",
-          content: `You are an expert English teacher providing detailed feedback for ${ageGroup} students at ${englishLevel} level.
+    // Create a thread
+    const thread = await openai.beta.threads.create();
 
-IMPORTANT: Your response must follow this exact format:
+    // Add the message to the thread
+    await openai.beta.threads.messages.create(thread.id, {
+      role: "user",
+      content: `Student level: ${englishLevel}
+Age group: ${ageGroup}
 
-1. First, show the complete text with all corrections inline:
-- Use strikethrough and red-colored spans for corrections exactly like this:
-  ~~incorrect~~ (<span style="color: red;">correct</span>)
-- For missing punctuation, use red-colored spans in brackets like this:
-  word[<span style="color: red;">,</span>] next word
-
-Example of correctly formatted text with corrections:
-This book is about bones ~~insid~~ (<span style="color: red;">inside</span>) our body. ~~I~~ (<span style="color: red;">It</span>) tells us a lot of ~~fact~~ (<span style="color: red;">facts</span>) ~~abaot~~ (<span style="color: red;">about</span>) bones.
-
-2. After the corrected text, add these sections with markdown headings:
-
-## Overall Assessment
-- Understanding of the topic
-- Writing style and clarity
-- Key strengths and achievements
-
-## Areas for Improvement
-- Spelling patterns to work on
-- Grammar points to focus on
-- Specific practice suggestions
-
-## Learning Recommendations
-- Concrete exercises and practice activities
-- Study tips and strategies
-- Encouraging feedback for future work
-
-Format all feedback using proper markdown for clear organization.
-Maintain an encouraging and supportive tone throughout.`
-        },
-        {
-          role: "user",
-          content: text
-        }
-      ],
-      max_tokens: 2000,
+Text to review:
+${text}`
     });
 
-    return response.choices[0].message.content || "No feedback generated";
+    // Run the assistant
+    const run = await openai.beta.threads.runs.create(thread.id, {
+      assistant_id: "asst_TaRTcp8WPBUiZCW4XqlbM4Ra"
+    });
+
+    // Wait for the run to complete
+    let runStatus = await openai.beta.threads.runs.retrieve(thread.id, run.id);
+    while (runStatus.status !== "completed") {
+      if (runStatus.status === "failed") {
+        throw new Error("Assistant run failed");
+      }
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      runStatus = await openai.beta.threads.runs.retrieve(thread.id, run.id);
+    }
+
+    // Get the assistant's response
+    const messages = await openai.beta.threads.messages.list(thread.id);
+    const lastMessage = messages.data[0];
+
+    if (!lastMessage || !lastMessage.content[0]) {
+      throw new Error("No response from assistant");
+    }
+
+    // Return the feedback text
+    return lastMessage.content[0].text.value;
   } catch (error) {
-    console.error("OpenAI API Error:", error);
+    console.error("OpenAI Assistant API Error:", error);
     throw new Error(
       `Failed to generate feedback: ${error instanceof Error ? error.message : "Unknown error"}`,
     );
