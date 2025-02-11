@@ -191,7 +191,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Add this route after the existing class routes
+  // Add this route before the existing class routes
   app.get("/api/classes/:id", requireRole([UserRole.ADMIN, UserRole.TEACHER]), async (req, res) => {
     const id = parseInt(req.params.id);
     if (isNaN(id)) {
@@ -368,6 +368,31 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Submission routes
+  // Add this route before the existing submission routes
+  app.get("/api/submissions/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({
+          message: "Invalid submission ID"
+        });
+      }
+
+      const submission = await storage.getSubmission(id);
+      if (!submission) {
+        return res.status(404).json({
+          message: "Submission not found"
+        });
+      }
+
+      res.json(submission);
+    } catch (error) {
+      console.error("Error fetching submission:", error);
+      res.status(500).json({
+        message: "Internal server error while fetching submission"
+      });
+    }
+  });
   app.post("/api/submissions/upload",
     requireRole([UserRole.TEACHER, UserRole.STUDENT, UserRole.ADMIN]),
     upload.single("file"),
@@ -502,8 +527,8 @@ export function registerRoutes(app: Express): Server {
       if (assignmentId) {
         const id = parseInt(assignmentId as string, 10);
         if (isNaN(id)) {
-          return res.status(400).json({ 
-            message: "Invalid assignmentId parameter" 
+          return res.status(400).json({
+            message: "Invalid assignmentId parameter"
           });
         }
         const submissions = await storage.listSubmissions(id);
@@ -512,21 +537,21 @@ export function registerRoutes(app: Express): Server {
 
       if (status) {
         if (typeof status !== 'string') {
-          return res.status(400).json({ 
-            message: "Invalid status parameter" 
+          return res.status(400).json({
+            message: "Invalid status parameter"
           });
         }
         const submissions = await storage.listAllSubmissions(status);
         return res.json(submissions);
       }
 
-      return res.status(400).json({ 
-        message: "Either assignmentId or status parameter is required" 
+      return res.status(400).json({
+        message: "Either assignmentId or status parameter is required"
       });
     } catch (error) {
       console.error("Error fetching submissions:", error);
-      res.status(500).json({ 
-        message: "Internal server error while fetching submissions" 
+      res.status(500).json({
+        message: "Internal server error while fetching submissions"
       });
     }
   });
@@ -835,7 +860,7 @@ export function registerRoutes(app: Express): Server {
 
   app.delete("/api/age-groups/:id", requireRole([UserRole.ADMIN]), async (req, res) => {
     try {
-      await storage.deleteAgeGroup(Number(req.params.id));
+      await storage.deleteAgeGroup(Number(req.paramsid));
       res.status(204).send();
     } catch (error) {
       if (error instanceof Error) {

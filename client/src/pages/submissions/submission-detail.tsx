@@ -29,84 +29,44 @@ export default function SubmissionDetail() {
     queryKey: ["/api/submissions", submissionId],
     queryFn: async () => {
       try {
-        console.log("Fetching submission:", submissionId);
         const response = await fetch(`/api/submissions/${submissionId}`);
-
-        const contentType = response.headers.get("content-type");
-        if (!contentType?.includes("application/json")) {
-          const text = await response.text();
-          console.error("Non-JSON response:", text);
-          throw new Error("Invalid response format from server");
-        }
-
         if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || "Failed to fetch submission");
+          const errorData = await response.json().catch(() => ({ message: "Failed to fetch submission" }));
+          throw new Error(errorData.message);
         }
-
         return response.json();
       } catch (error) {
         console.error("Submission fetch error:", error);
-        throw new Error(error instanceof Error ? error.message : "Failed to fetch submission");
+        throw error;
       }
     },
-    retry: false
   });
 
-  const { data: assignment, isLoading: isAssignmentLoading } = useQuery<Assignment>({
+  const { data: assignment } = useQuery<Assignment>({
     queryKey: ["/api/assignments", submission?.assignmentId],
     queryFn: async () => {
-      try {
-        const response = await fetch(`/api/assignments/${submission!.assignmentId}`);
-
-        const contentType = response.headers.get("content-type");
-        if (!contentType?.includes("application/json")) {
-          throw new Error("Invalid response format from server");
-        }
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || "Failed to fetch assignment");
-        }
-
-        return response.json();
-      } catch (error) {
-        console.error("Assignment fetch error:", error);
-        throw error;
+      const response = await fetch(`/api/assignments/${submission!.assignmentId}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch assignment");
       }
+      return response.json();
     },
     enabled: !!submission?.assignmentId,
-    retry: false
   });
 
-  const { data: student, isLoading: isStudentLoading } = useQuery<User>({
+  const { data: student } = useQuery<User>({
     queryKey: ["/api/users", submission?.studentId],
     queryFn: async () => {
-      try {
-        const response = await fetch(`/api/users/${submission!.studentId}`);
-
-        const contentType = response.headers.get("content-type");
-        if (!contentType?.includes("application/json")) {
-          throw new Error("Invalid response format from server");
-        }
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || "Failed to fetch student");
-        }
-
-        return response.json();
-      } catch (error) {
-        console.error("Student fetch error:", error);
-        throw error;
+      const response = await fetch(`/api/users/${submission!.studentId}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch student details");
       }
+      return response.json();
     },
     enabled: !!submission?.studentId,
-    retry: false
   });
 
-  // Loading states
-  if (isSubmissionLoading || (submission && (isAssignmentLoading || isStudentLoading))) {
+  if (isSubmissionLoading) {
     return (
       <div className="flex h-screen">
         <Sidebar className="w-64" />
@@ -116,7 +76,7 @@ export default function SubmissionDetail() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-center">
                   <Loader2 className="h-8 w-8 animate-spin" />
-                  <span className="ml-2">Loading details...</span>
+                  <span className="ml-2">Loading submission...</span>
                 </div>
               </CardContent>
             </Card>
@@ -126,7 +86,6 @@ export default function SubmissionDetail() {
     );
   }
 
-  // Error state
   if (submissionError) {
     return (
       <div className="flex h-screen">
@@ -155,7 +114,7 @@ export default function SubmissionDetail() {
             <Card>
               <CardContent className="p-6">
                 <p className="text-center text-red-600">
-                  Failed to load complete submission details
+                  Could not load complete submission details
                 </p>
               </CardContent>
             </Card>
