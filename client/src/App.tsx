@@ -28,6 +28,13 @@ function Router() {
     <Switch>
       <Route path="/auth" component={AuthPage} />
 
+      {/* Submission Detail Route - Accessible by all authenticated users */}
+      <ProtectedRoute 
+        path="/submissions/:id"
+        component={SubmissionDetail}
+        allowedRole={["STUDENT", "TEACHER", "ADMIN"]}
+      />
+
       {/* Admin Routes */}
       <ProtectedRoute 
         path="/admin" 
@@ -109,13 +116,6 @@ function Router() {
         allowedRole={["TEACHER", "ADMIN"]}
       />
 
-      {/* Submission Detail Route - Accessible by all authenticated users */}
-      <ProtectedRoute 
-        path="/submissions/:id"
-        component={SubmissionDetail}
-        allowedRole={["STUDENT", "TEACHER", "ADMIN"]}
-      />
-
       {/* Handle /assignments/review/:id path */}
       <Route path="/assignments/review/:id">
         {(params) => {
@@ -157,7 +157,21 @@ function Router() {
 
       {/* Redirect to auth by default */}
       <Route path="/">
-        <AuthPage />
+        {() => {
+          const role = localStorage.getItem("userRole");
+          if (!role) return <AuthPage />;
+
+          switch (role) {
+            case "ADMIN":
+              return <Redirect to="/admin" />;
+            case "TEACHER":
+              return <Redirect to="/teacher" />;
+            case "STUDENT":
+              return <Redirect to="/student" />;
+            default:
+              return <AuthPage />;
+          }
+        }}
       </Route>
 
       <Route component={NotFound} />

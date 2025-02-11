@@ -34,8 +34,7 @@ export default function AssignmentDetail() {
         if (!response.ok) {
           throw new Error("Failed to fetch assignment");
         }
-        const data = await response.json();
-        return data;
+        return response.json();
       },
       enabled: !!assignmentId,
     });
@@ -162,7 +161,8 @@ export default function AssignmentDetail() {
     return <div>Assignment or class data not found</div>;
   }
 
-  const getStatusBadgeStyle = (status: string) => {
+  const getStatusBadgeStyle = (status: string | null) => {
+    if (!status) return "bg-gray-100 text-gray-800";
     switch (status) {
       case "ai-reviewed":
         return "bg-green-100 text-green-800";
@@ -175,8 +175,12 @@ export default function AssignmentDetail() {
     }
   };
 
-  const getStatusText = (status: string) => {
-    return status.toUpperCase();
+  const getStatusText = (status: string | null) => {
+    return status ? status.toUpperCase() : "PENDING";
+  };
+
+  const handleViewSubmission = (submissionId: number) => {
+    navigate(`/submissions/${submissionId}`);
   };
 
   return (
@@ -265,7 +269,7 @@ export default function AssignmentDetail() {
                               variant="outline"
                               size="sm"
                               className="mr-2"
-                              onClick={() => navigate(`/submissions/${submission.id}`)}
+                              onClick={() => handleViewSubmission(submission.id)}
                             >
                               View
                             </Button>
@@ -297,7 +301,7 @@ export default function AssignmentDetail() {
                   </Table>
 
                   {/* Action Buttons for Teachers/Admins */}
-                  {isTeacherOrAdmin && (
+                  {isTeacherOrAdmin && submissions?.length > 0 && (
                     <div className="mt-6 flex gap-4">
                       <Button
                         onClick={() =>
@@ -306,32 +310,30 @@ export default function AssignmentDetail() {
                       >
                         Bulk Upload
                       </Button>
-                      {submissions?.length > 0 && (
-                        <Button
-                          onClick={() => {
-                            const uploadedSubmissions = submissions?.filter(s => s.status === "uploaded") || [];
-                            if (uploadedSubmissions.length === 0) {
-                              toast({
-                                title: "No submissions to review",
-                                description: "There are no uploaded assignments to review",
-                                variant: "destructive",
-                              });
-                              return;
-                            }
-                            aiReviewMutation.mutate();
-                          }}
-                          disabled={aiReviewMutation.isPending}
-                        >
-                          {aiReviewMutation.isPending ? (
-                            <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              Processing...
-                            </>
-                          ) : (
-                            "AI Feedback"
-                          )}
-                        </Button>
-                      )}
+                      <Button
+                        onClick={() => {
+                          const uploadedSubmissions = submissions?.filter(s => s.status === "uploaded") || [];
+                          if (uploadedSubmissions.length === 0) {
+                            toast({
+                              title: "No submissions to review",
+                              description: "There are no uploaded assignments to review",
+                              variant: "destructive",
+                            });
+                            return;
+                          }
+                          aiReviewMutation.mutate();
+                        }}
+                        disabled={aiReviewMutation.isPending}
+                      >
+                        {aiReviewMutation.isPending ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Processing...
+                          </>
+                        ) : (
+                          "AI Feedback"
+                        )}
+                      </Button>
                     </div>
                   )}
                 </div>

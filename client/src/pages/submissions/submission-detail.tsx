@@ -66,12 +66,22 @@ export default function SubmissionDetail() {
   // Handle initial validation and errors
   useEffect(() => {
     if (!user) {
-      navigate("/");
+      navigate("/auth");
       return;
     }
 
     if (!submissionId || isNaN(submissionId)) {
-      const dashboardPath = user.role === "ADMIN" ? "/admin/assignments" : "/teacher/assignments";
+      toast({
+        title: "Error",
+        description: "Invalid submission ID",
+        variant: "destructive",
+      });
+      const dashboardPath = 
+        user.role === "ADMIN" 
+          ? "/admin"
+          : user.role === "TEACHER"
+          ? "/teacher"
+          : "/student";
       navigate(dashboardPath);
       return;
     }
@@ -82,8 +92,6 @@ export default function SubmissionDetail() {
         description: "Failed to load submission",
         variant: "destructive",
       });
-      const dashboardPath = user.role === "ADMIN" ? "/admin/assignments" : "/teacher/assignments";
-      navigate(dashboardPath);
     }
   }, [user, submissionId, submissionError, navigate, toast]);
 
