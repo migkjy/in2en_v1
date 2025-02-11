@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { Submission, User, Assignment } from "@shared/schema";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
+import ReactMarkdown from 'react-markdown';
 
 interface SubmissionResponse extends Submission {
   assignment: Assignment;
@@ -131,8 +132,8 @@ export default function SubmissionDetail() {
                 {submission.ocrText && (
                   <div>
                     <h3 className="text-sm font-medium mb-2">OCR Text</h3>
-                    <div className="bg-gray-50 p-4 rounded">
-                      <p className="whitespace-pre-wrap">{submission.ocrText}</p>
+                    <div className="bg-gray-50 p-4 rounded prose prose-sm max-w-none">
+                      <ReactMarkdown>{submission.ocrText}</ReactMarkdown>
                     </div>
                   </div>
                 )}
@@ -140,8 +141,8 @@ export default function SubmissionDetail() {
                 {submission.aiFeedback && (
                   <div>
                     <h3 className="text-sm font-medium mb-2">AI Feedback</h3>
-                    <div className="bg-blue-50 p-4 rounded">
-                      <p className="whitespace-pre-wrap">{submission.aiFeedback}</p>
+                    <div className="bg-blue-50 p-4 rounded prose prose-sm max-w-none">
+                      <ReactMarkdown>{submission.aiFeedback}</ReactMarkdown>
                     </div>
                   </div>
                 )}
@@ -149,8 +150,8 @@ export default function SubmissionDetail() {
                 {submission.teacherFeedback && (
                   <div>
                     <h3 className="text-sm font-medium mb-2">Teacher Feedback</h3>
-                    <div className="bg-green-50 p-4 rounded">
-                      <p className="whitespace-pre-wrap">{submission.teacherFeedback}</p>
+                    <div className="bg-green-50 p-4 rounded prose prose-sm max-w-none">
+                      <ReactMarkdown>{submission.teacherFeedback}</ReactMarkdown>
                     </div>
                   </div>
                 )}
