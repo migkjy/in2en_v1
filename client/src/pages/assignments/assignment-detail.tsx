@@ -265,7 +265,7 @@ export default function AssignmentDetail() {
                               variant="outline"
                               size="sm"
                               className="mr-2"
-                              onClick={() => navigate(`/assignments/review/${submission.id}`)}
+                              onClick={() => navigate(`/submissions/${submission.id}`)}
                             >
                               View
                             </Button>

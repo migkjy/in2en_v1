@@ -21,6 +21,7 @@ import ClassDetail from "@/pages/classes/class-detail";
 import TeacherList from "@/pages/teachers/list";
 import TeacherDetail from "@/pages/teachers/teacher-detail";
 import StudentList from "@/pages/students/list";
+import SubmissionDetail from "@/pages/submissions/submission-detail";
 
 function Router() {
   return (
@@ -139,6 +140,13 @@ function Router() {
           return <ReviewAssignment />;
         }}
       </Route>
+
+      {/* Submission Detail Route - Accessible by all authenticated users */}
+      <ProtectedRoute 
+        path="/submissions/:id"
+        component={SubmissionDetail}
+        allowedRole={["STUDENT", "TEACHER", "ADMIN"]}
+      />
 
       {/* Student Routes */}
       <ProtectedRoute 
