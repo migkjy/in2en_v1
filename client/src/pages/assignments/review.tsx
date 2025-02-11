@@ -3,27 +3,31 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { useLocation } from "wouter";
+import { useLocation, useRoute } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import type { Submission } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useState } from "react";
 
 export default function ReviewAssignment() {
+  const [, params] = useRoute("/assignments/review/:id");
+  const submissionId = params?.id ? parseInt(params.id, 10) : null;
   const [, navigate] = useLocation();
   const { toast } = useToast();
-  const [selectedSubmission, setSelectedSubmission] = useState<number>();
 
-  const { data: submissions } = useQuery<Submission[]>({
-    queryKey: ["/api/submissions"],
+  const { data: submission, isLoading } = useQuery<Submission>({
+    queryKey: ["/api/submissions", submissionId],
     queryFn: async () => {
-      // Get all pending submissions
-      const response = await fetch("/api/submissions?status=pending");
+      if (!submissionId || isNaN(submissionId)) {
+        throw new Error("Invalid submission ID");
+      }
+      const response = await fetch(`/api/submissions/${submissionId}`);
       if (!response.ok) {
-        throw new Error("Failed to fetch submissions");
+        throw new Error("Failed to fetch submission");
       }
       return response.json();
-    }
+    },
+    enabled: !!submissionId && !isNaN(submissionId),
   });
 
   const updateMutation = useMutation({
@@ -51,9 +55,45 @@ export default function ReviewAssignment() {
     },
   });
 
-  const pendingSubmissions = submissions?.filter(
-    (s) => s.status === "pending" || s.status === "ai-reviewed"
-  );
+  if (!submissionId || isNaN(submissionId)) {
+    return (
+      <div className="flex h-screen">
+        <Sidebar className="w-64" />
+        <main className="flex-1 p-8">
+          <div className="max-w-2xl mx-auto">
+            <Card>
+              <CardContent className="p-6">
+                <p className="text-center text-gray-600">Invalid submission ID</p>
+                <Button
+                  className="mt-4 mx-auto block"
+                  onClick={() => navigate("/assignments")}
+                >
+                  Go Back to Assignments
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen">
+        <Sidebar className="w-64" />
+        <main className="flex-1 p-8">
+          <div className="max-w-2xl mx-auto">
+            <Card>
+              <CardContent className="p-6">
+                <p className="text-center">Loading...</p>
+              </CardContent>
+            </Card>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen">
@@ -61,23 +101,15 @@ export default function ReviewAssignment() {
       <main className="flex-1 p-8 overflow-auto">
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-2 gap-8">
-            {/* Submissions List */}
+            {/* Submission Details */}
             <Card>
               <CardHeader>
-                <CardTitle>Pending Reviews</CardTitle>
+                <CardTitle>Submission Details</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {pendingSubmissions?.map((submission) => (
-                    <div
-                      key={submission.id}
-                      className={`p-4 border rounded cursor-pointer ${
-                        selectedSubmission === submission.id
-                          ? "border-blue-500 bg-blue-50"
-                          : "hover:bg-gray-50"
-                      }`}
-                      onClick={() => setSelectedSubmission(submission.id)}
-                    >
+                  {submission && (
+                    <div className="space-y-4">
                       <img
                         src={submission.imageUrl}
                         alt="homework"
@@ -94,16 +126,16 @@ export default function ReviewAssignment() {
                         </div>
                       </div>
                     </div>
-                  ))}
+                  )}
                 </div>
               </CardContent>
             </Card>
 
             {/* Review Form */}
-            {selectedSubmission && (
+            {submission && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Review Submission</CardTitle>
+                  <CardTitle>Teacher Feedback</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-6">
@@ -114,14 +146,10 @@ export default function ReviewAssignment() {
                       <Textarea
                         rows={6}
                         placeholder="Enter your feedback..."
-                        value={
-                          submissions?.find(
-                            (s) => s.id === selectedSubmission
-                          )?.teacherFeedback || ""
-                        }
+                        value={submission.teacherFeedback || ""}
                         onChange={(e) =>
                           updateMutation.mutate({
-                            id: selectedSubmission,
+                            id: submission.id,
                             teacherFeedback: e.target.value,
                             status: "pending",
                           })
@@ -133,10 +161,8 @@ export default function ReviewAssignment() {
                       className="w-full"
                       onClick={() =>
                         updateMutation.mutate({
-                          id: selectedSubmission,
-                          teacherFeedback: submissions?.find(
-                            (s) => s.id === selectedSubmission
-                          )?.teacherFeedback || "",
+                          id: submission.id,
+                          teacherFeedback: submission.teacherFeedback || "",
                           status: "completed",
                         })
                       }
