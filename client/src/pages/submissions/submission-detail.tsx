@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { Submission, User, Assignment } from "@shared/schema";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
+import { useEffect } from "react";
 
 export default function SubmissionDetail() {
   const [, params] = useRoute("/submissions/:id");
@@ -15,84 +16,72 @@ export default function SubmissionDetail() {
 
   const submissionId = params?.id ? parseInt(params.id, 10) : null;
 
+  // Handle authentication and invalid ID on mount
+  useEffect(() => {
+    if (!user) {
+      navigate("/auth");
+      return;
+    }
+
+    if (!submissionId || isNaN(submissionId)) {
+      toast({
+        title: "Error",
+        description: "Invalid submission ID",
+        variant: "destructive",
+      });
+      navigate("/");
+    }
+  }, [user, submissionId, navigate, toast]);
+
   // Get submission details
   const { data: submission, isLoading: isSubmissionLoading } = useQuery<Submission>({
     queryKey: ["/api/submissions", submissionId],
     queryFn: async () => {
-      console.log("Fetching submission:", submissionId);
       if (!submissionId || isNaN(submissionId)) {
         throw new Error("Invalid submission ID");
       }
       const response = await fetch(`/api/submissions/${submissionId}`);
       if (!response.ok) {
-        const error = await response.text();
-        console.error("Submission fetch error:", error);
         throw new Error("Failed to fetch submission");
       }
-      const data = await response.json();
-      console.log("Submission data:", data);
-      return data;
+      return response.json();
     },
-    enabled: !!submissionId && !isNaN(submissionId),
+    enabled: !!submissionId && !isNaN(submissionId) && !!user,
+    retry: 1,
   });
 
   // Get assignment details
   const { data: assignment, isLoading: isAssignmentLoading } = useQuery<Assignment>({
     queryKey: ["/api/assignments", submission?.assignmentId],
     queryFn: async () => {
-      console.log("Fetching assignment:", submission?.assignmentId);
       if (!submission?.assignmentId) throw new Error("Assignment ID is required");
       const response = await fetch(`/api/assignments/${submission.assignmentId}`);
       if (!response.ok) {
-        const error = await response.text();
-        console.error("Assignment fetch error:", error);
         throw new Error("Failed to fetch assignment");
       }
-      const data = await response.json();
-      console.log("Assignment data:", data);
-      return data;
+      return response.json();
     },
     enabled: !!submission?.assignmentId,
+    retry: 1,
   });
 
   // Get student details
   const { data: student, isLoading: isStudentLoading } = useQuery<User>({
     queryKey: ["/api/users", submission?.studentId],
     queryFn: async () => {
-      console.log("Fetching student:", submission?.studentId);
       if (!submission?.studentId) throw new Error("Student ID is required");
       const response = await fetch(`/api/users/${submission.studentId}`);
       if (!response.ok) {
-        const error = await response.text();
-        console.error("Student fetch error:", error);
         throw new Error("Failed to fetch student");
       }
-      const data = await response.json();
-      console.log("Student data:", data);
-      return data;
+      return response.json();
     },
     enabled: !!submission?.studentId,
+    retry: 1,
   });
 
-  // Handle authentication
-  if (!user) {
-    navigate("/auth");
-    return null;
-  }
-
-  // Handle invalid ID
-  if (!submissionId || isNaN(submissionId)) {
-    toast({
-      title: "Error",
-      description: "Invalid submission ID",
-      variant: "destructive",
-    });
-    navigate("/");
-    return null;
-  }
-
   // Show loading state
-  if (isSubmissionLoading || isAssignmentLoading || isStudentLoading) {
+  if (!user || isSubmissionLoading || isAssignmentLoading || isStudentLoading) {
     return (
       <div className="flex h-screen">
         <Sidebar className="w-64" />
@@ -112,14 +101,23 @@ export default function SubmissionDetail() {
     );
   }
 
-  // Handle errors or missing data
+  // Handle missing data after loading
   if (!submission || !assignment || !student) {
-    toast({
-      title: "Error",
-      description: "Failed to load submission details",
-      variant: "destructive",
-    });
-    return null;
+    // Return the layout without data
+    return (
+      <div className="flex h-screen">
+        <Sidebar className="w-64" />
+        <main className="flex-1 p-8">
+          <div className="max-w-2xl mx-auto">
+            <Card>
+              <CardContent className="p-6">
+                <p className="text-center text-red-600">Failed to load submission details</p>
+              </CardContent>
+            </Card>
+          </div>
+        </main>
+      </div>
+    );
   }
 
   return (
@@ -172,9 +170,7 @@ export default function SubmissionDetail() {
                   <div>
                     <h3 className="text-sm font-medium mb-2">Teacher Feedback</h3>
                     <div className="bg-green-50 p-4 rounded">
-                      <p className="whitespace-pre-wrap">
-                        {submission.teacherFeedback}
-                      </p>
+                      <p className="whitespace-pre-wrap">{submission.teacherFeedback}</p>
                     </div>
                   </div>
                 )}
