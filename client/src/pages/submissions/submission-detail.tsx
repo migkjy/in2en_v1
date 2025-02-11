@@ -6,13 +6,14 @@ import { useToast } from "@/hooks/use-toast";
 import type { Submission, User, Assignment } from "@shared/schema";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
+import { useEffect } from "react";
 
 export default function SubmissionDetail() {
   const [, params] = useRoute("/submissions/:id");
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const { user } = useAuth();
-  
+
   const submissionId = params?.id ? parseInt(params.id, 10) : null;
 
   // Redirect if no valid ID
@@ -62,6 +63,17 @@ export default function SubmissionDetail() {
     enabled: !!submission?.studentId,
   });
 
+  useEffect(() => {
+    if (!isSubmissionLoading && (!submission || !assignment || !student)) {
+      toast({
+        title: "Error",
+        description: "Failed to load submission details",
+        variant: "destructive",
+      });
+      navigate("/");
+    }
+  }, [isSubmissionLoading, submission, assignment, student, toast, navigate]);
+
   if (isSubmissionLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -71,12 +83,6 @@ export default function SubmissionDetail() {
   }
 
   if (!submission || !assignment || !student) {
-    toast({
-      title: "Error",
-      description: "Failed to load submission details",
-      variant: "destructive",
-    });
-    navigate("/");
     return null;
   }
 
