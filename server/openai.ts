@@ -72,17 +72,31 @@ export async function generateFeedback(
     // Create a thread
     const thread = await openai.beta.threads.create();
 
-    // Add the message to the thread
+    // Add a system message to set the context and format
     await openai.beta.threads.messages.create(thread.id, {
       role: "user",
-      content: `Student level: ${englishLevel}
-Age group: ${ageGroup}
+      content: `You are an English teacher providing feedback on student writing.
+Please analyze the following text considering the student's level and age group.
+Format your feedback using markdown with the following structure:
+
+1. Corrections with strike-through and suggestions:
+   - Use '~~incorrect~~' for marking errors
+   - Follow with '(correction)' in red text using markdown
+
+2. Feedback should focus on:
+   - Grammar and spelling
+   - Sentence structure
+   - Word choice
+   - Overall clarity
+
+Student's English Level: ${englishLevel}
+Age Group: ${ageGroup}
 
 Text to review:
 ${text}`
     });
 
-    // Run the assistant
+    // Run the assistant with the specific ID
     const run = await openai.beta.threads.runs.create(thread.id, {
       assistant_id: "asst_TaRTcp8WPBUiZCW4XqlbM4Ra"
     });
@@ -105,7 +119,12 @@ ${text}`
       throw new Error("No response from assistant");
     }
 
-    return lastMessage.content[0].text.value;
+    // Check the type of content and extract the text appropriately
+    if (lastMessage.content[0].type === 'text') {
+      return lastMessage.content[0].text.value;
+    } else {
+      throw new Error("Unexpected response format from assistant");
+    }
   } catch (error) {
     console.error("OpenAI Assistant API Error:", error);
     throw new Error(
