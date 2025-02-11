@@ -17,7 +17,7 @@ export default function SubmissionDetail() {
   const submissionId = params?.id ? parseInt(params.id, 10) : null;
 
   // Get submission details
-  const { data: submission, isLoading: isSubmissionLoading, error: submissionError } = useQuery<Submission>({
+  const { data: submission, isLoading: isSubmissionLoading } = useQuery<Submission>({
     queryKey: ["/api/submissions", submissionId],
     queryFn: async () => {
       if (!submissionId || isNaN(submissionId)) {
@@ -30,11 +30,11 @@ export default function SubmissionDetail() {
       return response.json();
     },
     enabled: !!submissionId && !isNaN(submissionId),
-    retry: false
+    retry: false,
   });
 
   // Get assignment details
-  const { data: assignment, isLoading: isAssignmentLoading } = useQuery<Assignment>({
+  const { data: assignment } = useQuery<Assignment>({
     queryKey: ["/api/assignments", submission?.assignmentId],
     queryFn: async () => {
       if (!submission?.assignmentId) throw new Error("Assignment ID is required");
@@ -45,11 +45,10 @@ export default function SubmissionDetail() {
       return response.json();
     },
     enabled: !!submission?.assignmentId,
-    retry: false
   });
 
   // Get student details
-  const { data: student, isLoading: isStudentLoading } = useQuery<User>({
+  const { data: student } = useQuery<User>({
     queryKey: ["/api/users", submission?.studentId],
     queryFn: async () => {
       if (!submission?.studentId) throw new Error("Student ID is required");
@@ -60,43 +59,31 @@ export default function SubmissionDetail() {
       return response.json();
     },
     enabled: !!submission?.studentId,
-    retry: false
   });
 
-  // Handle initial validation and errors
+  // Handle authentication
   useEffect(() => {
     if (!user) {
       navigate("/auth");
       return;
     }
+  }, [user, navigate]);
 
+  // Handle invalid ID
+  useEffect(() => {
     if (!submissionId || isNaN(submissionId)) {
       toast({
         title: "Error",
         description: "Invalid submission ID",
         variant: "destructive",
       });
-      const dashboardPath = 
-        user.role === "ADMIN" 
-          ? "/admin"
-          : user.role === "TEACHER"
-          ? "/teacher"
-          : "/student";
-      navigate(dashboardPath);
+      navigate("/");
       return;
     }
-
-    if (submissionError) {
-      toast({
-        title: "Error",
-        description: "Failed to load submission",
-        variant: "destructive",
-      });
-    }
-  }, [user, submissionId, submissionError, navigate, toast]);
+  }, [submissionId, toast, navigate]);
 
   // Show loading state
-  if (isSubmissionLoading || isAssignmentLoading || isStudentLoading) {
+  if (isSubmissionLoading) {
     return (
       <div className="flex h-screen">
         <Sidebar className="w-64" />
@@ -116,7 +103,6 @@ export default function SubmissionDetail() {
     );
   }
 
-  // Handle missing data
   if (!submission || !assignment || !student) {
     return null;
   }
