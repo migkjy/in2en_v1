@@ -28,7 +28,7 @@ export default function SubmissionDetail() {
   }
 
   // Get submission details
-  const { data: submission, isLoading: isSubmissionLoading } = useQuery<Submission>({
+  const { data: submission, isLoading: isSubmissionLoading, error: submissionError } = useQuery<Submission>({
     queryKey: ["/api/submissions", submissionId],
     queryFn: async () => {
       const response = await fetch(`/api/submissions/${submissionId}`);
@@ -37,9 +37,11 @@ export default function SubmissionDetail() {
       }
       return response.json();
     },
+    retry: 2,
+    retryDelay: 1000,
   });
 
-  // Get assignment details
+  // Get assignment details if submission is loaded
   const { data: assignment, isLoading: isAssignmentLoading } = useQuery<Assignment>({
     queryKey: ["/api/assignments", submission?.assignmentId],
     queryFn: async () => {
@@ -50,23 +52,27 @@ export default function SubmissionDetail() {
       return response.json();
     },
     enabled: !!submission?.assignmentId,
+    retry: 2,
+    retryDelay: 1000,
   });
 
-  // Get student details
+  // Get student details if submission is loaded
   const { data: student, isLoading: isStudentLoading } = useQuery<User>({
     queryKey: ["/api/users", submission?.studentId],
     queryFn: async () => {
       const response = await fetch(`/api/users/${submission!.studentId}`);
       if (!response.ok) {
-        throw new Error("Failed to fetch student");
+        throw new Error("Failed to fetch student details");
       }
       return response.json();
     },
     enabled: !!submission?.studentId,
+    retry: 2,
+    retryDelay: 1000,
   });
 
   // Show loading state
-  if (isSubmissionLoading || isAssignmentLoading || isStudentLoading) {
+  if (isSubmissionLoading || (submission && (isAssignmentLoading || isStudentLoading))) {
     return (
       <div className="flex h-screen">
         <Sidebar className="w-64" />
@@ -74,7 +80,7 @@ export default function SubmissionDetail() {
           <div className="max-w-2xl mx-auto">
             <Card>
               <CardContent className="p-6">
-                <div className="flex justify-center items-center">
+                <div className="flex items-center justify-center">
                   <Loader2 className="h-8 w-8 animate-spin" />
                   <span className="ml-2">Loading submission details...</span>
                 </div>
@@ -86,8 +92,8 @@ export default function SubmissionDetail() {
     );
   }
 
-  // Handle missing data
-  if (!submission || !assignment || !student) {
+  // Handle submission fetch error
+  if (submissionError) {
     return (
       <div className="flex h-screen">
         <Sidebar className="w-64" />
@@ -95,7 +101,9 @@ export default function SubmissionDetail() {
           <div className="max-w-2xl mx-auto">
             <Card>
               <CardContent className="p-6">
-                <p className="text-center text-red-600">Failed to load submission details</p>
+                <p className="text-center text-red-600">
+                  Failed to load submission. Please try again later.
+                </p>
               </CardContent>
             </Card>
           </div>
@@ -104,6 +112,27 @@ export default function SubmissionDetail() {
     );
   }
 
+  // Handle missing data after successful loading
+  if (!submission || !assignment || !student) {
+    return (
+      <div className="flex h-screen">
+        <Sidebar className="w-64" />
+        <main className="flex-1 p-8">
+          <div className="max-w-2xl mx-auto">
+            <Card>
+              <CardContent className="p-6">
+                <p className="text-center text-red-600">
+                  Could not load complete submission details
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Main content
   return (
     <div className="flex h-screen">
       <Sidebar className="w-64" />
