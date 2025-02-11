@@ -1,12 +1,21 @@
 /* Styles for corrections */
-del, s {
+del, s, .strikethrough {
   text-decoration: line-through;
   color: #666;
+  display: inline;
 }
 
 .correction {
   color: red;
   font-weight: 500;
+}
+
+/* Style for strikethrough with custom characters */
+.markdown-content del::before,
+.markdown-content del::after {
+  content: "~~";
+  text-decoration: none;
+  display: inline;
 }
 
 /* Add styles for markdown content */

@@ -199,13 +199,11 @@ export default function SubmissionDetail() {
                               return <span style={{color: 'red'}}>{children}</span>;
                             }
                             return <span {...props}>{children}</span>;
+                          },
+                          del: ({node, children}) => {
+                            return <del className="strikethrough">{children}</del>;
                           }
                         }}
-                        rehypePlugins={[() => (tree) => {
-                          // Enable raw HTML
-                          tree.data = { ...tree.data, rawHTML: true };
-                          return tree;
-                        }]}
                       >{submission.aiFeedback}</ReactMarkdown>
                     </div>
                   </div>
