@@ -7,26 +7,36 @@ import { useLocation, useRoute } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import type { Submission } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { useState } from "react";
 
 export default function ReviewAssignment() {
   const [, params] = useRoute("/assignments/review/:id");
-  const submissionId = params?.id ? parseInt(params.id, 10) : null;
   const [, navigate] = useLocation();
   const { toast } = useToast();
 
-  const { data: submission, isLoading } = useQuery<Submission>({
+  // If no ID parameter is provided, redirect to assignments page
+  if (!params?.id) {
+    navigate("/assignments");
+    return null;
+  }
+
+  const submissionId = parseInt(params.id, 10);
+
+  // If ID is not a valid number, redirect to assignments page
+  if (isNaN(submissionId)) {
+    navigate("/assignments");
+    return null;
+  }
+
+  const { data: submission, isLoading, error } = useQuery<Submission>({
     queryKey: ["/api/submissions", submissionId],
     queryFn: async () => {
-      if (!submissionId || isNaN(submissionId)) {
-        throw new Error("Invalid submission ID");
-      }
       const response = await fetch(`/api/submissions/${submissionId}`);
       if (!response.ok) {
         throw new Error("Failed to fetch submission");
       }
       return response.json();
     },
+    retry: false,
     enabled: !!submissionId && !isNaN(submissionId),
   });
 
@@ -55,7 +65,7 @@ export default function ReviewAssignment() {
     },
   });
 
-  if (!submissionId || isNaN(submissionId)) {
+  if (error) {
     return (
       <div className="flex h-screen">
         <Sidebar className="w-64" />
@@ -63,7 +73,9 @@ export default function ReviewAssignment() {
           <div className="max-w-2xl mx-auto">
             <Card>
               <CardContent className="p-6">
-                <p className="text-center text-gray-600">Invalid submission ID</p>
+                <p className="text-center text-red-600">
+                  {error instanceof Error ? error.message : "An error occurred"}
+                </p>
                 <Button
                   className="mt-4 mx-auto block"
                   onClick={() => navigate("/assignments")}
