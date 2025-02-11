@@ -70,7 +70,8 @@ export async function generateFeedback(
 ): Promise<string> {
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-4-vision-preview",
+      model: "gpt-4o",
+      temperature: 1.0,
       messages: [
         {
           role: "system",
