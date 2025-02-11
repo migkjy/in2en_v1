@@ -107,18 +107,6 @@ function Router() {
         component={UploadAssignment}
         allowedRole={["TEACHER", "ADMIN"]}
       />
-      <ProtectedRoute 
-        path="/assignments/review/:id"
-        component={ReviewAssignment}
-        allowedRole={["TEACHER", "ADMIN"]}
-      />
-
-      {/* Student Routes */}
-      <ProtectedRoute 
-        path="/student" 
-        component={StudentDashboard} 
-        allowedRole="STUDENT"
-      />
 
       {/* Handle invalid /assignments/review path */}
       <Route path="/assignments/review">
@@ -134,6 +122,20 @@ function Router() {
           return <Redirect to="/" />;
         }}
       </Route>
+
+      {/* Handle valid review routes */}
+      <ProtectedRoute 
+        path="/assignments/review/:id"
+        component={ReviewAssignment}
+        allowedRole={["TEACHER", "ADMIN"]}
+      />
+
+      {/* Student Routes */}
+      <ProtectedRoute 
+        path="/student" 
+        component={StudentDashboard} 
+        allowedRole="STUDENT"
+      />
 
       {/* Redirect to auth by default */}
       <Route path="/">

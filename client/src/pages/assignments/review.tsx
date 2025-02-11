@@ -3,13 +3,28 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { useLocation, useRoute } from "wouter";
+import { useRoute, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import type { Submission } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
+import { FC } from "react";
 
-export default function ReviewAssignment() {
+const RedirectToDashboard: FC = () => {
+  const [, navigate] = useLocation();
+  const { user } = useAuth();
+
+  const dashboardPath = user?.role === "ADMIN" 
+    ? "/admin/assignments"
+    : user?.role === "TEACHER" 
+    ? "/teacher/assignments" 
+    : "/student";
+
+  navigate(dashboardPath);
+  return <></>;
+};
+
+const ReviewAssignment: FC = () => {
   const [match, params] = useRoute("/assignments/review/:id");
   const [, navigate] = useLocation();
   const { toast } = useToast();
@@ -17,28 +32,19 @@ export default function ReviewAssignment() {
 
   // If route doesn't match or no user, redirect to appropriate dashboard
   if (!match || !user) {
-    const dashboardPath = user?.role === "ADMIN" 
-      ? "/admin/dashboard"
-      : user?.role === "TEACHER" 
-      ? "/teacher/dashboard" 
-      : "/student/dashboard";
-
-    navigate(dashboardPath);
-    return null;
+    return <RedirectToDashboard />;
   }
 
   // If no ID parameter is provided, redirect to assignments page
   if (!params?.id) {
-    navigate("/assignments");
-    return null;
+    return <RedirectToDashboard />;
   }
 
   const submissionId = parseInt(params.id, 10);
 
   // If ID is not a valid number, redirect to assignments page
   if (isNaN(submissionId)) {
-    navigate("/assignments");
-    return null;
+    return <RedirectToDashboard />;
   }
 
   const { data: submission, isLoading, error } = useQuery<Submission>({
@@ -204,4 +210,6 @@ export default function ReviewAssignment() {
       </main>
     </div>
   );
-}
+};
+
+export default ReviewAssignment;
