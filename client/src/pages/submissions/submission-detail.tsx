@@ -28,112 +28,85 @@ export default function SubmissionDetail() {
   const { data: submission, isLoading: isSubmissionLoading, error: submissionError } = useQuery<Submission>({
     queryKey: ["/api/submissions", submissionId],
     queryFn: async () => {
-      console.log("Fetching submission:", submissionId);
-      const response = await fetch(`/api/submissions/${submissionId}`);
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Submission fetch error:", errorText);
-        throw new Error(errorText || "Failed to fetch submission");
+      try {
+        console.log("Fetching submission:", submissionId);
+        const response = await fetch(`/api/submissions/${submissionId}`);
+
+        const contentType = response.headers.get("content-type");
+        if (!contentType?.includes("application/json")) {
+          const text = await response.text();
+          console.error("Non-JSON response:", text);
+          throw new Error("Invalid response format from server");
+        }
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || "Failed to fetch submission");
+        }
+
+        return response.json();
+      } catch (error) {
+        console.error("Submission fetch error:", error);
+        throw new Error(error instanceof Error ? error.message : "Failed to fetch submission");
       }
-      const data = await response.json();
-      console.log("Submission data:", data);
-      return data;
     },
+    retry: false
   });
 
   const { data: assignment, isLoading: isAssignmentLoading } = useQuery<Assignment>({
     queryKey: ["/api/assignments", submission?.assignmentId],
     queryFn: async () => {
-      console.log("Fetching assignment:", submission?.assignmentId);
-      const response = await fetch(`/api/assignments/${submission!.assignmentId}`);
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Assignment fetch error:", errorText);
-        throw new Error(errorText || "Failed to fetch assignment");
+      try {
+        const response = await fetch(`/api/assignments/${submission!.assignmentId}`);
+
+        const contentType = response.headers.get("content-type");
+        if (!contentType?.includes("application/json")) {
+          throw new Error("Invalid response format from server");
+        }
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || "Failed to fetch assignment");
+        }
+
+        return response.json();
+      } catch (error) {
+        console.error("Assignment fetch error:", error);
+        throw error;
       }
-      const data = await response.json();
-      console.log("Assignment data:", data);
-      return data;
     },
     enabled: !!submission?.assignmentId,
+    retry: false
   });
 
   const { data: student, isLoading: isStudentLoading } = useQuery<User>({
     queryKey: ["/api/users", submission?.studentId],
     queryFn: async () => {
-      console.log("Fetching student:", submission?.studentId);
-      const response = await fetch(`/api/users/${submission!.studentId}`);
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Student fetch error:", errorText);
-        throw new Error(errorText || "Failed to fetch student");
+      try {
+        const response = await fetch(`/api/users/${submission!.studentId}`);
+
+        const contentType = response.headers.get("content-type");
+        if (!contentType?.includes("application/json")) {
+          throw new Error("Invalid response format from server");
+        }
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || "Failed to fetch student");
+        }
+
+        return response.json();
+      } catch (error) {
+        console.error("Student fetch error:", error);
+        throw error;
       }
-      const data = await response.json();
-      console.log("Student data:", data);
-      return data;
     },
     enabled: !!submission?.studentId,
+    retry: false
   });
 
-  if (isSubmissionLoading) {
-    return (
-      <div className="flex h-screen">
-        <Sidebar className="w-64" />
-        <main className="flex-1 p-8">
-          <div className="max-w-2xl mx-auto">
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-center">
-                  <Loader2 className="h-8 w-8 animate-spin" />
-                  <span className="ml-2">Loading submission...</span>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </main>
-      </div>
-    );
-  }
-
-  if (submissionError) {
-    return (
-      <div className="flex h-screen">
-        <Sidebar className="w-64" />
-        <main className="flex-1 p-8">
-          <div className="max-w-2xl mx-auto">
-            <Card>
-              <CardContent className="p-6">
-                <p className="text-center text-red-600">
-                  {submissionError.message}
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        </main>
-      </div>
-    );
-  }
-
-  if (!submission) {
-    return (
-      <div className="flex h-screen">
-        <Sidebar className="w-64" />
-        <main className="flex-1 p-8">
-          <div className="max-w-2xl mx-auto">
-            <Card>
-              <CardContent className="p-6">
-                <p className="text-center text-red-600">
-                  No submission found
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        </main>
-      </div>
-    );
-  }
-
-  if (isAssignmentLoading || isStudentLoading) {
+  // Loading states
+  if (isSubmissionLoading || (submission && (isAssignmentLoading || isStudentLoading))) {
     return (
       <div className="flex h-screen">
         <Sidebar className="w-64" />
@@ -153,7 +126,27 @@ export default function SubmissionDetail() {
     );
   }
 
-  if (!assignment || !student) {
+  // Error state
+  if (submissionError) {
+    return (
+      <div className="flex h-screen">
+        <Sidebar className="w-64" />
+        <main className="flex-1 p-8">
+          <div className="max-w-2xl mx-auto">
+            <Card>
+              <CardContent className="p-6">
+                <p className="text-center text-red-600">
+                  {submissionError.message}
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (!submission || !assignment || !student) {
     return (
       <div className="flex h-screen">
         <Sidebar className="w-64" />
