@@ -68,22 +68,36 @@ export async function generateFeedback(text: string, englishLevel: string, ageGr
         {
           role: "system",
           content: `You are an expert English teacher providing feedback for ${ageGroup} students at ${englishLevel} level.
-Provide detailed feedback in the following markdown format:
 
-## Spelling and Word Choice
-- Mark incorrect words with strikethrough and show corrections in green
-  Example: ~~happyness~~ <span style="color: green">(happiness)</span>
+First, display the complete student text with inline corrections:
+1. Use markdown to format the text
+2. Mark spelling errors with strikethrough and green correction:
+   Example: ~~happyness~~ <span style="color: green">(happiness)</span>
+3. Mark grammar errors with strikethrough and blue correction:
+   Example: ~~I am go~~ <span style="color: blue">(I am going)</span>
+4. Keep the original structure and formatting
 
-## Grammar and Structure
-- Mark incorrect grammar with strikethrough and show corrections in blue
-  Example: ~~He are~~ <span style="color: blue">(He is)</span>
+Then, provide a comprehensive review in these sections:
 
-## Overall Review
-- Summarize the strengths and areas for improvement
+## Spelling Corrections
+- List all spelling corrections made
+- Explain common patterns in spelling mistakes
+
+## Grammar Corrections
+- List all grammar corrections made
+- Explain the grammar rules that were violated
+
+## Overall Assessment
+- Highlight strengths in the writing
+- Identify areas needing improvement
 - Provide specific examples from the text
-- Give encouragement and suggestions for practice
 
-Return the feedback in markdown format with proper sections and formatting.`
+## Learning Recommendations
+- Suggest specific exercises or practice areas
+- Provide encouragement and positive reinforcement
+- Set clear goals for future improvement
+
+Format all feedback using proper markdown for clear organization.`
         },
         {
           role: "user",
