@@ -6,7 +6,6 @@ import { useToast } from "@/hooks/use-toast";
 import type { Submission, User, Assignment } from "@shared/schema";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
-import { useEffect } from "react";
 
 export default function SubmissionDetail() {
   const [, params] = useRoute("/submissions/:id");
@@ -20,70 +19,80 @@ export default function SubmissionDetail() {
   const { data: submission, isLoading: isSubmissionLoading } = useQuery<Submission>({
     queryKey: ["/api/submissions", submissionId],
     queryFn: async () => {
+      console.log("Fetching submission:", submissionId);
       if (!submissionId || isNaN(submissionId)) {
         throw new Error("Invalid submission ID");
       }
       const response = await fetch(`/api/submissions/${submissionId}`);
       if (!response.ok) {
+        const error = await response.text();
+        console.error("Submission fetch error:", error);
         throw new Error("Failed to fetch submission");
       }
-      return response.json();
+      const data = await response.json();
+      console.log("Submission data:", data);
+      return data;
     },
     enabled: !!submissionId && !isNaN(submissionId),
-    retry: false,
   });
 
   // Get assignment details
-  const { data: assignment } = useQuery<Assignment>({
+  const { data: assignment, isLoading: isAssignmentLoading } = useQuery<Assignment>({
     queryKey: ["/api/assignments", submission?.assignmentId],
     queryFn: async () => {
+      console.log("Fetching assignment:", submission?.assignmentId);
       if (!submission?.assignmentId) throw new Error("Assignment ID is required");
       const response = await fetch(`/api/assignments/${submission.assignmentId}`);
       if (!response.ok) {
+        const error = await response.text();
+        console.error("Assignment fetch error:", error);
         throw new Error("Failed to fetch assignment");
       }
-      return response.json();
+      const data = await response.json();
+      console.log("Assignment data:", data);
+      return data;
     },
     enabled: !!submission?.assignmentId,
   });
 
   // Get student details
-  const { data: student } = useQuery<User>({
+  const { data: student, isLoading: isStudentLoading } = useQuery<User>({
     queryKey: ["/api/users", submission?.studentId],
     queryFn: async () => {
+      console.log("Fetching student:", submission?.studentId);
       if (!submission?.studentId) throw new Error("Student ID is required");
       const response = await fetch(`/api/users/${submission.studentId}`);
       if (!response.ok) {
+        const error = await response.text();
+        console.error("Student fetch error:", error);
         throw new Error("Failed to fetch student");
       }
-      return response.json();
+      const data = await response.json();
+      console.log("Student data:", data);
+      return data;
     },
     enabled: !!submission?.studentId,
   });
 
   // Handle authentication
-  useEffect(() => {
-    if (!user) {
-      navigate("/auth");
-      return;
-    }
-  }, [user, navigate]);
+  if (!user) {
+    navigate("/auth");
+    return null;
+  }
 
   // Handle invalid ID
-  useEffect(() => {
-    if (!submissionId || isNaN(submissionId)) {
-      toast({
-        title: "Error",
-        description: "Invalid submission ID",
-        variant: "destructive",
-      });
-      navigate("/");
-      return;
-    }
-  }, [submissionId, toast, navigate]);
+  if (!submissionId || isNaN(submissionId)) {
+    toast({
+      title: "Error",
+      description: "Invalid submission ID",
+      variant: "destructive",
+    });
+    navigate("/");
+    return null;
+  }
 
   // Show loading state
-  if (isSubmissionLoading) {
+  if (isSubmissionLoading || isAssignmentLoading || isStudentLoading) {
     return (
       <div className="flex h-screen">
         <Sidebar className="w-64" />
@@ -103,7 +112,13 @@ export default function SubmissionDetail() {
     );
   }
 
+  // Handle errors or missing data
   if (!submission || !assignment || !student) {
+    toast({
+      title: "Error",
+      description: "Failed to load submission details",
+      variant: "destructive",
+    });
     return null;
   }
 
@@ -123,11 +138,13 @@ export default function SubmissionDetail() {
                 {/* Submission Image */}
                 <div>
                   <h3 className="text-sm font-medium mb-2">Submitted Work</h3>
-                  <img
-                    src={submission.imageUrl}
-                    alt="Submitted homework"
-                    className="w-full max-w-2xl mx-auto rounded-lg shadow-md"
-                  />
+                  {submission.imageUrl && (
+                    <img
+                      src={submission.imageUrl}
+                      alt="Submitted homework"
+                      className="w-full max-w-2xl mx-auto rounded-lg shadow-md"
+                    />
+                  )}
                 </div>
 
                 {/* OCR Text */}
@@ -155,7 +172,9 @@ export default function SubmissionDetail() {
                   <div>
                     <h3 className="text-sm font-medium mb-2">Teacher Feedback</h3>
                     <div className="bg-green-50 p-4 rounded">
-                      <p className="whitespace-pre-wrap">{submission.teacherFeedback}</p>
+                      <p className="whitespace-pre-wrap">
+                        {submission.teacherFeedback}
+                      </p>
                     </div>
                   </div>
                 )}
