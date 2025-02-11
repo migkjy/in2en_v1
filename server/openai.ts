@@ -2,6 +2,7 @@ import OpenAI from "openai";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
+// the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 export async function extractTextFromImage(base64Image: string): Promise<{
   text: string;
   feedback: string;
@@ -13,45 +14,41 @@ export async function extractTextFromImage(base64Image: string): Promise<{
       messages: [
         {
           role: "system",
-          content: `You are an expert English teacher. Extract text from the image exactly as written, preserving all errors.
-Important: Do not correct any errors at this stage. Keep the text exactly as written.
-
+          content: `You are an expert English teacher. Extract text from the image and format it in markdown.
 Format rules:
-1. Use '## Question' for textbook questions if present
-2. Use '**Student Writing:**' for student's text
-3. Preserve all original spelling mistakes, grammar errors, and line breaks
-4. Do not make any corrections or suggestions
-5. Use markdown formatting for structure only
+1. Use '## Question' for textbook questions
+2. Use '**Textbook Content:**' for original text
+3. Use '*Student Answer:*' for student's writing
+4. Use proper markdown paragraphs and sections
+5. Maintain original line breaks and spacing
 
 Return JSON in this format:
 {
-  'text': string (original text with errors preserved),
-  'feedback': string (brief note about text type),
+  'text': string (markdown formatted text),
+  'feedback': string (initial observations),
   'confidence': number (0-1)
-}`,
+}`
         },
         {
           role: "user",
           content: [
             {
               type: "text",
-              text: "Extract and format the text from this homework image using markdown.",
+              text: "Extract and format the text from this homework image using markdown."
             },
             {
               type: "image_url",
               image_url: {
-                url: `data:image/jpeg;base64,${base64Image}`,
-              },
-            },
+                url: `data:image/jpeg;base64,${base64Image}`
+              }
+            }
           ],
         },
       ],
       response_format: { type: "json_object" },
     });
 
-    const result = JSON.parse(
-      visionResponse.choices[0].message.content || "{}",
-    );
+    const result = JSON.parse(visionResponse.choices[0].message.content || "{}");
 
     return {
       text: result.text || "",
@@ -73,45 +70,47 @@ export async function generateFeedback(
 ): Promise<string> {
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-4-vision-preview",
       messages: [
         {
           role: "system",
           content: `You are an expert English teacher providing detailed feedback for ${ageGroup} students at ${englishLevel} level.
 
-Format the feedback exactly like this:
+IMPORTANT: Your response must follow this exact format:
 
-# 교정된 학생 글 (Annotated Student Writing)
+1. First, show the complete text with all corrections inline:
+- Use strikethrough and red-colored spans for corrections exactly like this:
+  ~~incorrect~~ (<span style="color: red;">correct</span>)
+- For missing punctuation, use red-colored spans in brackets like this:
+  word[<span style="color: red;">,</span>] next word
 
-First, show the complete original text with inline corrections:
-- For spelling/word errors: ~~incorrect~~ (<span style="color: red;">correct</span>)
-- For grammar errors: ~~incorrect~~ (<span style="color: red;">correct</span>)
-- For missing punctuation: Add [<span style="color: red;">,</span>] or other needed marks
-- Keep original line breaks
-- Show all corrections inline within the original text
+Example of correctly formatted text with corrections:
+This book is about bones ~~insid~~ (<span style="color: red;">inside</span>) our body. ~~I~~ (<span style="color: red;">It</span>) tells us a lot of ~~fact~~ (<span style="color: red;">facts</span>) ~~abaot~~ (<span style="color: red;">about</span>) bones.
 
-Example format:
-This is ~~intresting~~ (<span style="color: red;">interesting</span>) and ~~me like~~ (<span style="color: red;">I like</span>) it[<span style="color: red;">.</span>]
+2. After the corrected text, add these sections with markdown headings:
 
----
+## Overall Assessment
+- Understanding of the topic
+- Writing style and clarity
+- Key strengths and achievements
 
-# Overall Comments and Review
+## Areas for Improvement
+- Spelling patterns to work on
+- Grammar points to focus on
+- Specific practice suggestions
 
-- **Understanding:** Comment on comprehension and content
-- **Grammar and Spelling:** Highlight main error patterns
-- **Suggestions for Improvement:**
-  - Specific areas to focus on
-  - Clear action items for improvement
-- **Positive Aspects:**
-  - Note strong points
-  - Highlight effective elements
+## Learning Recommendations
+- Concrete exercises and practice activities
+- Study tips and strategies
+- Encouraging feedback for future work
 
-Keep feedback constructive and encouraging.`,
+Format all feedback using proper markdown for clear organization.
+Maintain an encouraging and supportive tone throughout.`
         },
         {
           role: "user",
-          content: text,
-        },
+          content: text
+        }
       ],
       max_tokens: 2000,
     });
