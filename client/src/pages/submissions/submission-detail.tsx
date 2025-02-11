@@ -6,7 +6,6 @@ import { useToast } from "@/hooks/use-toast";
 import type { Submission, User, Assignment } from "@shared/schema";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
-import { useEffect } from "react";
 
 export default function SubmissionDetail() {
   const [, params] = useRoute("/submissions/:id");
@@ -14,74 +13,60 @@ export default function SubmissionDetail() {
   const { toast } = useToast();
   const { user } = useAuth();
 
+  // Handle authentication
+  if (!user) {
+    navigate("/auth");
+    return null;
+  }
+
   const submissionId = params?.id ? parseInt(params.id, 10) : null;
 
-  // Handle authentication and invalid ID on mount
-  useEffect(() => {
-    if (!user) {
-      navigate("/auth");
-      return;
-    }
-
-    if (!submissionId || isNaN(submissionId)) {
-      toast({
-        title: "Error",
-        description: "Invalid submission ID",
-        variant: "destructive",
-      });
-      navigate("/");
-    }
-  }, [user, submissionId, navigate, toast]);
+  // Handle invalid ID
+  if (!submissionId || isNaN(submissionId)) {
+    navigate("/");
+    return null;
+  }
 
   // Get submission details
   const { data: submission, isLoading: isSubmissionLoading } = useQuery<Submission>({
     queryKey: ["/api/submissions", submissionId],
     queryFn: async () => {
-      if (!submissionId || isNaN(submissionId)) {
-        throw new Error("Invalid submission ID");
-      }
       const response = await fetch(`/api/submissions/${submissionId}`);
       if (!response.ok) {
         throw new Error("Failed to fetch submission");
       }
       return response.json();
     },
-    enabled: !!submissionId && !isNaN(submissionId) && !!user,
-    retry: 1,
   });
 
   // Get assignment details
   const { data: assignment, isLoading: isAssignmentLoading } = useQuery<Assignment>({
     queryKey: ["/api/assignments", submission?.assignmentId],
     queryFn: async () => {
-      if (!submission?.assignmentId) throw new Error("Assignment ID is required");
-      const response = await fetch(`/api/assignments/${submission.assignmentId}`);
+      const response = await fetch(`/api/assignments/${submission!.assignmentId}`);
       if (!response.ok) {
         throw new Error("Failed to fetch assignment");
       }
       return response.json();
     },
     enabled: !!submission?.assignmentId,
-    retry: 1,
   });
 
   // Get student details
   const { data: student, isLoading: isStudentLoading } = useQuery<User>({
     queryKey: ["/api/users", submission?.studentId],
     queryFn: async () => {
-      if (!submission?.studentId) throw new Error("Student ID is required");
-      const response = await fetch(`/api/users/${submission.studentId}`);
+      const response = await fetch(`/api/users/${submission!.studentId}`);
       if (!response.ok) {
         throw new Error("Failed to fetch student");
       }
       return response.json();
     },
     enabled: !!submission?.studentId,
-    retry: 1,
   });
 
   // Show loading state
-  if (!user || isSubmissionLoading || isAssignmentLoading || isStudentLoading) {
+  if (isSubmissionLoading || isAssignmentLoading || isStudentLoading) {
     return (
       <div className="flex h-screen">
         <Sidebar className="w-64" />
@@ -101,9 +86,8 @@ export default function SubmissionDetail() {
     );
   }
 
-  // Handle missing data after loading
+  // Handle missing data
   if (!submission || !assignment || !student) {
-    // Return the layout without data
     return (
       <div className="flex h-screen">
         <Sidebar className="w-64" />
@@ -127,23 +111,21 @@ export default function SubmissionDetail() {
         <div className="max-w-6xl mx-auto">
           <Card>
             <CardHeader>
-              <CardTitle>
-                {assignment.title} - {student.name}
-              </CardTitle>
+              <CardTitle>{assignment.title} - {student.name}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
                 {/* Submission Image */}
-                <div>
-                  <h3 className="text-sm font-medium mb-2">Submitted Work</h3>
-                  {submission.imageUrl && (
+                {submission.imageUrl && (
+                  <div>
+                    <h3 className="text-sm font-medium mb-2">Submitted Work</h3>
                     <img
                       src={submission.imageUrl}
                       alt="Submitted homework"
                       className="w-full max-w-2xl mx-auto rounded-lg shadow-md"
                     />
-                  )}
-                </div>
+                  </div>
+                )}
 
                 {/* OCR Text */}
                 {submission.ocrText && (
