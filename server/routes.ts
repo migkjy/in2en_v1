@@ -369,7 +369,7 @@ export function registerRoutes(app: Express): Server {
 
   // Submission routes
   // Add this route before the existing submission routes
-  app.get("/api/submissions/:id", async (req, res) => {
+  app.get("/api/submissions/:id", requireRole([UserRole.ADMIN, UserRole.TEACHER, UserRole.STUDENT]), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -382,6 +382,13 @@ export function registerRoutes(app: Express): Server {
       if (!submission) {
         return res.status(404).json({
           message: "Submission not found"
+        });
+      }
+
+      // Check if the user has permission to view this submission
+      if (req.user.role === UserRole.STUDENT && submission.studentId !== req.user.id) {
+        return res.status(403).json({
+          message: "You don't have permission to view this submission"
         });
       }
 
@@ -860,7 +867,7 @@ export function registerRoutes(app: Express): Server {
 
   app.delete("/api/age-groups/:id", requireRole([UserRole.ADMIN]), async (req, res) => {
     try {
-      await storage.deleteAgeGroup(Number(req.paramsid));
+      await storage.deleteAgeGroup(Number(req.params.id));
       res.status(204).send();
     } catch (error) {
       if (error instanceof Error) {

@@ -28,24 +28,25 @@ export default function SubmissionDetail() {
   const { data: submission, isLoading: isSubmissionLoading, error: submissionError } = useQuery<Submission>({
     queryKey: ["/api/submissions", submissionId],
     queryFn: async () => {
-      try {
-        const response = await fetch(`/api/submissions/${submissionId}`);
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ message: "Failed to fetch submission" }));
-          throw new Error(errorData.message);
-        }
-        return response.json();
-      } catch (error) {
-        console.error("Submission fetch error:", error);
-        throw error;
+      const response = await fetch(`/api/submissions/${submissionId}`, {
+        credentials: 'include'  // Include cookies for authentication
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: "Failed to fetch submission" }));
+        throw new Error(errorData.message);
       }
+
+      return response.json();
     },
   });
 
-  const { data: assignment } = useQuery<Assignment>({
+  const { data: assignment, isLoading: isAssignmentLoading } = useQuery<Assignment>({
     queryKey: ["/api/assignments", submission?.assignmentId],
     queryFn: async () => {
-      const response = await fetch(`/api/assignments/${submission!.assignmentId}`);
+      const response = await fetch(`/api/assignments/${submission!.assignmentId}`, {
+        credentials: 'include'
+      });
       if (!response.ok) {
         throw new Error("Failed to fetch assignment");
       }
@@ -54,10 +55,12 @@ export default function SubmissionDetail() {
     enabled: !!submission?.assignmentId,
   });
 
-  const { data: student } = useQuery<User>({
+  const { data: student, isLoading: isStudentLoading } = useQuery<User>({
     queryKey: ["/api/users", submission?.studentId],
     queryFn: async () => {
-      const response = await fetch(`/api/users/${submission!.studentId}`);
+      const response = await fetch(`/api/users/${submission!.studentId}`, {
+        credentials: 'include'
+      });
       if (!response.ok) {
         throw new Error("Failed to fetch student details");
       }
@@ -66,7 +69,9 @@ export default function SubmissionDetail() {
     enabled: !!submission?.studentId,
   });
 
-  if (isSubmissionLoading) {
+  const isLoading = isSubmissionLoading || (submission && (isAssignmentLoading || isStudentLoading));
+
+  if (isLoading) {
     return (
       <div className="flex h-screen">
         <Sidebar className="w-64" />
@@ -76,7 +81,7 @@ export default function SubmissionDetail() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-center">
                   <Loader2 className="h-8 w-8 animate-spin" />
-                  <span className="ml-2">Loading submission...</span>
+                  <span className="ml-2">Loading submission details...</span>
                 </div>
               </CardContent>
             </Card>
