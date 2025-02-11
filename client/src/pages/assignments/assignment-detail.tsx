@@ -232,6 +232,43 @@ export default function AssignmentDetail() {
                   </div>
                 </div>
 
+                {/* Action Buttons for Teachers/Admins */}
+                {isTeacherOrAdmin && (
+                  <div className="flex gap-4">
+                    <Button
+                      onClick={() =>
+                        navigate(`/assignments/${assignmentId}/upload`)
+                      }
+                    >
+                      Bulk Upload
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        const uploadedSubmissions = submissions?.filter(s => s.status === "uploaded") || [];
+                        if (uploadedSubmissions.length === 0) {
+                          toast({
+                            title: "No submissions to review",
+                            description: "There are no uploaded assignments to review",
+                            variant: "destructive",
+                          });
+                          return;
+                        }
+                        aiReviewMutation.mutate();
+                      }}
+                      disabled={aiReviewMutation.isPending}
+                    >
+                      {aiReviewMutation.isPending ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Processing...
+                        </>
+                      ) : (
+                        "AI Feedback"
+                      )}
+                    </Button>
+                  </div>
+                )}
+
                 {/* Submissions Table */}
                 <div>
                   <div className="mb-4">
@@ -299,43 +336,6 @@ export default function AssignmentDetail() {
                       ))}
                     </TableBody>
                   </Table>
-
-                  {/* Action Buttons for Teachers/Admins */}
-                  {isTeacherOrAdmin && submissions?.length > 0 && (
-                    <div className="mt-6 flex gap-4">
-                      <Button
-                        onClick={() =>
-                          navigate(`/assignments/${assignmentId}/upload`)
-                        }
-                      >
-                        Bulk Upload
-                      </Button>
-                      <Button
-                        onClick={() => {
-                          const uploadedSubmissions = submissions?.filter(s => s.status === "uploaded") || [];
-                          if (uploadedSubmissions.length === 0) {
-                            toast({
-                              title: "No submissions to review",
-                              description: "There are no uploaded assignments to review",
-                              variant: "destructive",
-                            });
-                            return;
-                          }
-                          aiReviewMutation.mutate();
-                        }}
-                        disabled={aiReviewMutation.isPending}
-                      >
-                        {aiReviewMutation.isPending ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Processing...
-                          </>
-                        ) : (
-                          "AI Feedback"
-                        )}
-                      </Button>
-                    </div>
-                  )}
                 </div>
               </div>
             </CardContent>
