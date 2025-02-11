@@ -21,9 +21,20 @@ del, s {
 
 /* Style for strikethrough text */
 .markdown-content s,
-.markdown-content del {
+.markdown-content del,
+.markdown-content del code {
   text-decoration: line-through;
+  text-decoration-color: #ff0000;
+  text-decoration-thickness: 2px;
   color: #666;
+}
+
+/* Style for inline code */
+.markdown-content code {
+  background-color: #f5f5f5;
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  font-size: 0.9em;
 }
 
 /* Style for correction spans */

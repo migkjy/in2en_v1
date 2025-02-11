@@ -11,6 +11,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface SubmissionResponse extends Submission {
   assignment: Assignment;
@@ -183,7 +184,9 @@ export default function SubmissionDetail() {
                   <div>
                     <h3 className="text-sm font-medium mb-2">OCR Text</h3>
                     <div className="bg-gray-50 p-4 rounded prose prose-sm max-w-none">
-                      <ReactMarkdown>{submission.ocrText}</ReactMarkdown>
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {submission.ocrText}
+                      </ReactMarkdown>
                     </div>
                   </div>
                 )}
@@ -192,21 +195,11 @@ export default function SubmissionDetail() {
                   <div>
                     <h3 className="text-sm font-medium mb-2">AI Feedback</h3>
                     <div className="bg-blue-50 p-4 rounded prose prose-sm max-w-none markdown-content">
-                      <ReactMarkdown
-                        components={{
-                          span: ({node, children, ...props}) => {
-                            if (props.style?.color === 'red') {
-                              return <span style={{color: 'red'}}>{children}</span>;
-                            }
-                            return <span {...props}>{children}</span>;
-                          }
-                        }}
-                        rehypePlugins={[() => (tree) => {
-                          // Enable raw HTML
-                          tree.data = { ...tree.data, rawHTML: true };
-                          return tree;
-                        }]}
-                      >{submission.aiFeedback}</ReactMarkdown>
+                      <ReactMarkdown 
+                        remarkPlugins={[remarkGfm]}
+                      >
+                        {submission.aiFeedback}
+                      </ReactMarkdown>
                     </div>
                   </div>
                 )}
@@ -215,7 +208,9 @@ export default function SubmissionDetail() {
                   <div>
                     <h3 className="text-sm font-medium mb-2">Teacher Feedback</h3>
                     <div className="bg-green-50 p-4 rounded prose prose-sm max-w-none">
-                      <ReactMarkdown>{submission.teacherFeedback}</ReactMarkdown>
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {submission.teacherFeedback}
+                      </ReactMarkdown>
                     </div>
                   </div>
                 )}
