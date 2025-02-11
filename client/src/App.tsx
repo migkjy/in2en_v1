@@ -29,11 +29,7 @@ function Router() {
       <Route path="/auth" component={AuthPage} />
 
       {/* Submission Detail Route - Accessible by all authenticated users */}
-      <ProtectedRoute 
-        path="/submissions/:id"
-        component={SubmissionDetail}
-        allowedRole={["STUDENT", "TEACHER", "ADMIN"]}
-      />
+      <Route path="/submissions/:id" component={SubmissionDetail} />
 
       {/* Admin Routes */}
       <ProtectedRoute 
@@ -115,38 +111,8 @@ function Router() {
         component={UploadAssignment}
         allowedRole={["TEACHER", "ADMIN"]}
       />
-
-      {/* Handle /assignments/review/:id path */}
-      <Route path="/assignments/review/:id">
-        {(params) => {
-          const role = localStorage.getItem("userRole");
-          if (role !== "ADMIN" && role !== "TEACHER") {
-            return <Redirect to="/" />;
-          }
-          if (!params?.id || isNaN(parseInt(params.id, 10))) {
-            return <Redirect to={role === "ADMIN" ? "/admin/assignments" : "/teacher/assignments"} />;
-          }
-          return <ReviewAssignment />;
-        }}
-      </Route>
-
-      {/* Handle /assignments/review path - Immediate redirect */}
-      <Route path="/assignments/review">
-        {() => {
-          const role = localStorage.getItem("userRole");
-          return (
-            <Redirect 
-              to={
-                role === "ADMIN" 
-                  ? "/admin/assignments" 
-                  : role === "TEACHER" 
-                  ? "/teacher/assignments"
-                  : "/"
-              } 
-            />
-          );
-        }}
-      </Route>
+      <Route path="/assignments/review/:id" component={ReviewAssignment} />
+      <Route path="/assignments/review" component={ReviewAssignment} />
 
       {/* Student Routes */}
       <ProtectedRoute 

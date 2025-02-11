@@ -13,7 +13,6 @@ export default function SubmissionDetail() {
   const { toast } = useToast();
   const { user } = useAuth();
 
-  // Handle authentication
   if (!user) {
     navigate("/auth");
     return null;
@@ -21,58 +20,68 @@ export default function SubmissionDetail() {
 
   const submissionId = params?.id ? parseInt(params.id, 10) : null;
 
-  // Handle invalid ID
   if (!submissionId || isNaN(submissionId)) {
     navigate("/");
     return null;
   }
 
-  // Get submission details
   const { data: submission, isLoading: isSubmissionLoading, error: submissionError } = useQuery<Submission>({
     queryKey: ["/api/submissions", submissionId],
     queryFn: async () => {
-      const response = await fetch(`/api/submissions/${submissionId}`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch submission");
+      try {
+        const response = await fetch(`/api/submissions/${submissionId}`);
+        if (!response.ok) {
+          const error = await response.text();
+          throw new Error(error || 'Failed to fetch submission');
+        }
+        return response.json();
+      } catch (error) {
+        console.error('Submission fetch error:', error);
+        throw error;
       }
-      return response.json();
     },
-    retry: 2,
-    retryDelay: 1000,
   });
 
-  // Get assignment details if submission is loaded
   const { data: assignment, isLoading: isAssignmentLoading } = useQuery<Assignment>({
     queryKey: ["/api/assignments", submission?.assignmentId],
     queryFn: async () => {
-      const response = await fetch(`/api/assignments/${submission!.assignmentId}`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch assignment");
+      try {
+        const response = await fetch(`/api/assignments/${submission!.assignmentId}`);
+        if (!response.ok) {
+          const error = await response.text();
+          throw new Error(error || 'Failed to fetch assignment');
+        }
+        return response.json();
+      } catch (error) {
+        console.error('Assignment fetch error:', error);
+        throw error;
       }
-      return response.json();
     },
     enabled: !!submission?.assignmentId,
-    retry: 2,
-    retryDelay: 1000,
   });
 
-  // Get student details if submission is loaded
   const { data: student, isLoading: isStudentLoading } = useQuery<User>({
     queryKey: ["/api/users", submission?.studentId],
     queryFn: async () => {
-      const response = await fetch(`/api/users/${submission!.studentId}`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch student details");
+      try {
+        const response = await fetch(`/api/users/${submission!.studentId}`);
+        if (!response.ok) {
+          const error = await response.text();
+          throw new Error(error || 'Failed to fetch student details');
+        }
+        return response.json();
+      } catch (error) {
+        console.error('Student fetch error:', error);
+        throw error;
       }
-      return response.json();
     },
     enabled: !!submission?.studentId,
-    retry: 2,
-    retryDelay: 1000,
   });
 
-  // Show loading state
-  if (isSubmissionLoading || (submission && (isAssignmentLoading || isStudentLoading))) {
+  const isLoading = isSubmissionLoading || 
+    (submission && (isAssignmentLoading || isStudentLoading));
+
+  if (isLoading) {
     return (
       <div className="flex h-screen">
         <Sidebar className="w-64" />
@@ -92,8 +101,7 @@ export default function SubmissionDetail() {
     );
   }
 
-  // Handle submission fetch error
-  if (submissionError) {
+  if (submissionError || !submission || !assignment || !student) {
     return (
       <div className="flex h-screen">
         <Sidebar className="w-64" />
@@ -102,7 +110,7 @@ export default function SubmissionDetail() {
             <Card>
               <CardContent className="p-6">
                 <p className="text-center text-red-600">
-                  Failed to load submission. Please try again later.
+                  {submissionError ? submissionError.message : 'Failed to load submission details'}
                 </p>
               </CardContent>
             </Card>
@@ -112,27 +120,6 @@ export default function SubmissionDetail() {
     );
   }
 
-  // Handle missing data after successful loading
-  if (!submission || !assignment || !student) {
-    return (
-      <div className="flex h-screen">
-        <Sidebar className="w-64" />
-        <main className="flex-1 p-8">
-          <div className="max-w-2xl mx-auto">
-            <Card>
-              <CardContent className="p-6">
-                <p className="text-center text-red-600">
-                  Could not load complete submission details
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        </main>
-      </div>
-    );
-  }
-
-  // Main content
   return (
     <div className="flex h-screen">
       <Sidebar className="w-64" />
@@ -144,7 +131,6 @@ export default function SubmissionDetail() {
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
-                {/* Submission Image */}
                 {submission.imageUrl && (
                   <div>
                     <h3 className="text-sm font-medium mb-2">Submitted Work</h3>
@@ -156,7 +142,6 @@ export default function SubmissionDetail() {
                   </div>
                 )}
 
-                {/* OCR Text */}
                 {submission.ocrText && (
                   <div>
                     <h3 className="text-sm font-medium mb-2">OCR Text</h3>
@@ -166,7 +151,6 @@ export default function SubmissionDetail() {
                   </div>
                 )}
 
-                {/* AI Feedback */}
                 {submission.aiFeedback && (
                   <div>
                     <h3 className="text-sm font-medium mb-2">AI Feedback</h3>
@@ -176,7 +160,6 @@ export default function SubmissionDetail() {
                   </div>
                 )}
 
-                {/* Teacher Feedback */}
                 {submission.teacherFeedback && (
                   <div>
                     <h3 className="text-sm font-medium mb-2">Teacher Feedback</h3>
