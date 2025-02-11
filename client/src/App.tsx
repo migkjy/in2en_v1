@@ -95,18 +95,6 @@ function Router() {
         component={CreateAssignment} 
         allowedRole="TEACHER"
       />
-      <ProtectedRoute 
-        path="/teacher/assignments/review/:id" 
-        component={ReviewAssignment} 
-        allowedRole="TEACHER"
-      />
-
-      {/* Student Routes */}
-      <ProtectedRoute 
-        path="/student" 
-        component={StudentDashboard} 
-        allowedRole="STUDENT"
-      />
 
       {/* Common Routes - Accessible by both Teacher and Admin */}
       <ProtectedRoute 
@@ -119,10 +107,30 @@ function Router() {
         component={UploadAssignment}
         allowedRole={["TEACHER", "ADMIN"]}
       />
+      <ProtectedRoute 
+        path="/assignments/review/:id"
+        component={ReviewAssignment}
+        allowedRole={["TEACHER", "ADMIN"]}
+      />
+
+      {/* Student Routes */}
+      <ProtectedRoute 
+        path="/student" 
+        component={StudentDashboard} 
+        allowedRole="STUDENT"
+      />
 
       {/* Redirect to auth by default */}
       <Route path="/">
         <AuthPage />
+      </Route>
+
+      {/* Catch invalid /assignments/review paths */}
+      <Route path="/assignments/review">
+        {() => {
+          window.location.href = "/";
+          return null;
+        }}
       </Route>
 
       <Route component={NotFound} />
