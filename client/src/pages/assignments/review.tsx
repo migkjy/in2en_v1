@@ -7,11 +7,25 @@ import { useLocation, useRoute } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import type { Submission } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function ReviewAssignment() {
-  const [, params] = useRoute("/assignments/review/:id");
+  const [match, params] = useRoute("/assignments/review/:id");
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  const { user } = useAuth();
+
+  // If route doesn't match or no user, redirect to appropriate dashboard
+  if (!match || !user) {
+    const dashboardPath = user?.role === "ADMIN" 
+      ? "/admin/dashboard"
+      : user?.role === "TEACHER" 
+      ? "/teacher/dashboard" 
+      : "/student/dashboard";
+
+    navigate(dashboardPath);
+    return null;
+  }
 
   // If no ID parameter is provided, redirect to assignments page
   if (!params?.id) {
