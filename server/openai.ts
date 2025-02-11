@@ -9,7 +9,7 @@ export async function extractTextFromImage(base64Image: string): Promise<{
 }> {
   try {
     const visionResponse = await openai.chat.completions.create({
-      model: "gpt-4-1106-preview",
+      model: "gpt-4o",
       messages: [
         {
           role: "system",
@@ -73,7 +73,7 @@ export async function generateFeedback(
 ): Promise<string> {
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-4-1106-preview",
+      model: "gpt-4o",
       messages: [
         {
           role: "system",
