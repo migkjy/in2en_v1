@@ -108,27 +108,16 @@ function Router() {
         allowedRole={["TEACHER", "ADMIN"]}
       />
 
-      {/* Handle invalid /assignments/review path */}
+      {/* Handle /assignments/review and /assignments/review/:id separately */}
       <Route path="/assignments/review">
         {() => {
           const role = localStorage.getItem("userRole");
-          if (role === "ADMIN") {
-            return <Redirect to="/admin/assignments" />;
-          } else if (role === "TEACHER") {
-            return <Redirect to="/teacher/assignments" />;
-          } else if (role === "STUDENT") {
-            return <Redirect to="/student" />;
+          if (role === "ADMIN" || role === "TEACHER") {
+            return <ReviewAssignment />;
           }
           return <Redirect to="/" />;
         }}
       </Route>
-
-      {/* Handle valid review routes */}
-      <ProtectedRoute 
-        path="/assignments/review/:id"
-        component={ReviewAssignment}
-        allowedRole={["TEACHER", "ADMIN"]}
-      />
 
       {/* Student Routes */}
       <ProtectedRoute 
