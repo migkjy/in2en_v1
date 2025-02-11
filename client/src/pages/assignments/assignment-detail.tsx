@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Assignment, Submission, Class, Branch, User } from "@shared/schema";
-import { useRoute } from "wouter";
+import { useRoute, useLocation } from "wouter";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 
 export default function AssignmentDetail() {
   const [, params] = useRoute("/assignments/:id");
+  const [, navigate] = useLocation();
   const assignmentId = params?.id;
   const { user } = useAuth();
   const { toast } = useToast();
@@ -264,7 +265,7 @@ export default function AssignmentDetail() {
                               variant="outline"
                               size="sm"
                               className="mr-2"
-                              onClick={() => window.location.href = `/submissions/${submission.id}`}
+                              onClick={() => navigate(`/assignments/review/${submission.id}`)}
                             >
                               View
                             </Button>
@@ -274,9 +275,7 @@ export default function AssignmentDetail() {
                                   variant="outline"
                                   size="sm"
                                   className="mr-2"
-                                  onClick={() =>
-                                    (window.location.href = `/submissions/${submission.id}/edit`)
-                                  }
+                                  onClick={() => navigate(`/assignments/review/${submission.id}/edit`)}
                                 >
                                   Edit
                                 </Button>
@@ -302,7 +301,7 @@ export default function AssignmentDetail() {
                     <div className="mt-6 flex gap-4">
                       <Button
                         onClick={() =>
-                          (window.location.href = `/assignments/${assignmentId}/upload`)
+                          navigate(`/assignments/${assignmentId}/upload`)
                         }
                       >
                         Bulk Upload
