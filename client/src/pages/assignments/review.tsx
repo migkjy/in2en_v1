@@ -25,19 +25,66 @@ const RedirectToDashboard: FC = () => {
 };
 
 const ReviewAssignment: FC = () => {
-  const [match, params] = useRoute("/assignments/review/:id");
+  const [match, params] = useRoute("/assignments/review/:id?");
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const { user } = useAuth();
 
-  // If route doesn't match or no user, redirect to appropriate dashboard
-  if (!match || !user) {
+  // If no user, redirect to appropriate dashboard
+  if (!user) {
     return <RedirectToDashboard />;
   }
 
-  // If no ID parameter is provided, redirect to assignments page
+  // If no ID parameter is provided, show all submissions
   if (!params?.id) {
-    return <RedirectToDashboard />;
+    const { data: submissions } = useQuery<Submission[]>({
+      queryKey: ["/api/submissions", "pending"],
+      queryFn: async () => {
+        const response = await fetch(`/api/submissions?status=pending`);
+        if (!response.ok) throw new Error("Failed to fetch submissions");
+        return response.json();
+      }
+    });
+
+    return (
+      <div className="flex h-screen">
+        <Sidebar className="w-64" />
+        <main className="flex-1 p-8 overflow-auto">
+          <div className="max-w-6xl mx-auto">
+            <Card>
+              <CardHeader>
+                <CardTitle>Pending Reviews</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {submissions?.map((submission) => (
+                    <div key={submission.id} className="p-4 border rounded">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <h3 className="font-medium">
+                            Assignment ID: {submission.assignmentId}
+                          </h3>
+                          <p className="text-sm text-gray-600">
+                            Status: {submission.status}
+                          </p>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => navigate(`/assignments/review/${submission.id}`)}
+                        >
+                          Review
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </main>
+      </div>
+    );
   }
 
   const submissionId = parseInt(params.id, 10);
