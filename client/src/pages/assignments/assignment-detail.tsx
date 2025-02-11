@@ -265,41 +265,43 @@ export default function AssignmentDetail() {
                             </span>
                           </TableCell>
                           <TableCell>
-                            <div className="flex gap-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleViewSubmission(submission.id)}
-                              >
-                                View
-                              </Button>
-                              {isTeacherOrAdmin && (
-                                <>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => navigate(`/assignments/review/${submission.id}`)}
-                                  >
-                                    Review
-                                  </Button>
-                                  <Button
-                                    variant="destructive"
-                                    size="sm"
-                                    onClick={() => {
-                                      // Handle delete
-                                    }}
-                                  >
-                                    Delete
-                                  </Button>
-                                </>
-                              )}
-                            </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="mr-2"
+                              onClick={() => handleViewSubmission(submission.id)}
+                            >
+                              View
+                            </Button>
+                            {isTeacherOrAdmin && (
+                              <>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="mr-2"
+                                  onClick={() => navigate(`/assignments/review/${submission.id}/edit`)}
+                                >
+                                  Edit
+                                </Button>
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  onClick={() => {
+                                    // Handle delete
+                                  }}
+                                >
+                                  Delete
+                                </Button>
+                              </>
+                            )}
                           </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
-                  {isTeacherOrAdmin && (
+
+                  {/* Action Buttons for Teachers/Admins */}
+                  {isTeacherOrAdmin && submissions?.length > 0 && (
                     <div className="mt-6 flex gap-4">
                       <Button
                         onClick={() =>
