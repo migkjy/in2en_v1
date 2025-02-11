@@ -105,7 +105,6 @@ ${text}`
       throw new Error("No response from assistant");
     }
 
-    // Return the feedback text
     return lastMessage.content[0].text.value;
   } catch (error) {
     console.error("OpenAI Assistant API Error:", error);
