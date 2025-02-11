@@ -264,7 +264,7 @@ export default function AssignmentDetail() {
                               variant="outline"
                               size="sm"
                               className="mr-2"
-                              onClick={() => window.location.href = `/submissions/${submission.id}/view`}
+                              onClick={() => window.location.href = `/submissions/${submission.id}`}
                             >
                               View
                             </Button>
