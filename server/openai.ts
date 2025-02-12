@@ -5,12 +5,14 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 // Base64 이미지 크기 줄이기 함수
 function compressBase64Image(base64: string): string {
   // 데이터 URL 형식에서 실제 base64 부분만 추출
-  const base64Data = base64.split(';base64,').pop() || '';
+  const base64Data = base64.split(";base64,").pop() || "";
 
   // base64 문자열이 너무 길면 잘라내기
   const maxLength = 85000; // 약 64KB 정도의 크기로 제한
   if (base64Data.length > maxLength) {
-    console.log(`Compressing base64 image from ${base64Data.length} to ${maxLength} chars`);
+    console.log(
+      `Compressing base64 image from ${base64Data.length} to ${maxLength} chars`,
+    );
     return base64Data.substring(0, maxLength);
   }
 
@@ -95,28 +97,12 @@ Student Profile:
 
 Text to Review:
 ${text}
-
-Please provide feedback in this exact format:
-
-1. Grammar and Spelling Corrections:
-- ~~incorrect text~~ **correction**: [suggested correction]
-(List all grammar and spelling errors with corrections)
-
-2. Sentence Structure Improvements:
-- ~~original sentence~~ **improvement**: [improved version]
-(List sentences that need structural improvement)
-
-3. Vocabulary Suggestions:
-- ~~basic word choice~~ **suggestion**: [more appropriate word]
-(List words that could be improved)
-
-4. Overall Feedback:
-(Provide encouraging feedback about strengths and areas for improvement)`
+`,
     });
 
     // Create a run with the specific assistant
     const run = await openai.beta.threads.runs.create(thread.id, {
-      assistant_id: "asst_TaRTcp8WPBUiZCW4XqlbM4Ra"
+      assistant_id: "asst_TaRTcp8WPBUiZCW4XqlbM4Ra",
     });
 
     // Poll for completion
@@ -124,7 +110,9 @@ Please provide feedback in this exact format:
 
     // Get the assistant's response
     const messages = await openai.beta.threads.messages.list(thread.id);
-    const assistantMessage = messages.data.find(msg => msg.role === "assistant");
+    const assistantMessage = messages.data.find(
+      (msg) => msg.role === "assistant",
+    );
 
     if (!assistantMessage || !assistantMessage.content[0]) {
       throw new Error("No feedback received from assistant");
@@ -140,21 +128,29 @@ Please provide feedback in this exact format:
 }
 
 // Helper function to wait for run completion
-async function waitForRunCompletion(threadId: string, runId: string, maxAttempts = 60) {
+async function waitForRunCompletion(
+  threadId: string,
+  runId: string,
+  maxAttempts = 60,
+) {
   for (let i = 0; i < maxAttempts; i++) {
     const run = await openai.beta.threads.runs.retrieve(threadId, runId);
 
-    if (run.status === 'completed') {
+    if (run.status === "completed") {
       return run;
     }
 
-    if (run.status === 'failed' || run.status === 'cancelled' || run.status === 'expired') {
+    if (
+      run.status === "failed" ||
+      run.status === "cancelled" ||
+      run.status === "expired"
+    ) {
       throw new Error(`Run failed with status: ${run.status}`);
     }
 
     // Wait for 1 second before checking again
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
   }
 
-  throw new Error('Timeout waiting for run completion');
+  throw new Error("Timeout waiting for run completion");
 }
