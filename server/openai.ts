@@ -72,35 +72,45 @@ export async function generateFeedback(
     // Create a thread
     const thread = await openai.beta.threads.create();
 
-    // Add a system message to set the context and format
+    // Add the initial message with clear formatting instructions
     await openai.beta.threads.messages.create(thread.id, {
       role: "user",
-      content: `As an English teacher, please review the following text written by a student.
+      content: `As an English teacher reviewing student work, please provide feedback on the following text.
 
-Student Information:
+Student Profile:
 - English Level: ${englishLevel}
 - Age Group: ${ageGroup}
 
 Text to Review:
 ${text}
 
-Please provide feedback following these strict rules:
-1. Use '~~incorrect~~' for marking errors
-2. Follow each error with a correction in bold like this: **correction**: [suggested text]
-3. Organize feedback in this order:
-   - Grammar and spelling corrections
-   - Sentence structure improvements
-   - Vocabulary suggestions
-   - Overall feedback
+Provide feedback in this exact format:
 
-Format Example:
-~~I am go~~ **correction**: I am going
-~~to school~~ **correction**: to school by bus.
+1. Grammar and Spelling Corrections:
+- ~~incorrect text~~ **correction**: [suggested correction]
+(List all grammar and spelling errors with corrections)
 
-Conclude with a brief, encouraging summary of the student's strengths and areas for improvement.`
+2. Sentence Structure Improvements:
+- ~~original sentence~~ **improvement**: [improved version]
+(List sentences that need structural improvement)
+
+3. Vocabulary Suggestions:
+- ~~basic word choice~~ **suggestion**: [more appropriate word]
+(List words that could be improved)
+
+4. Overall Feedback:
+(Provide encouraging feedback about strengths and areas for improvement)
+
+Remember:
+- Always use ~~text~~ for marking errors
+- Always use **correction/improvement/suggestion**: [text] format
+- Be encouraging and constructive
+- Consider the student's level and age
+- Keep corrections appropriate to their level`
     });
 
-    // Run the assistant with the specific ID
+    // Run the assistant with timeout and better error handling
+    console.log("Running assistant with ID:", process.env.OPENAI_ASSISTANT_ID);
     const run = await openai.beta.threads.runs.create(thread.id, {
       assistant_id: process.env.OPENAI_ASSISTANT_ID!
     });
@@ -112,11 +122,13 @@ Conclude with a brief, encouraging summary of the student's strengths and areas 
 
     while (runStatus.status !== "completed" && attempts < maxAttempts) {
       if (runStatus.status === "failed" || runStatus.status === "cancelled") {
+        console.error("Assistant run failed:", runStatus.last_error);
         throw new Error(`Assistant run ${runStatus.status}: ${runStatus.last_error?.message || 'Unknown error'}`);
       }
       await new Promise(resolve => setTimeout(resolve, 1000));
       runStatus = await openai.beta.threads.runs.retrieve(thread.id, run.id);
       attempts++;
+      console.log("Assistant run status:", runStatus.status, "attempt:", attempts);
     }
 
     if (attempts >= maxAttempts) {
@@ -125,7 +137,7 @@ Conclude with a brief, encouraging summary of the student's strengths and areas 
 
     // Get the assistant's response
     const messages = await openai.beta.threads.messages.list(thread.id);
-    const lastMessage = messages.data[messages.data.length -1];
+    const lastMessage = messages.data[0]; // Get the most recent message
 
     if (!lastMessage || !lastMessage.content[0]) {
       throw new Error("No response from assistant");
@@ -133,6 +145,7 @@ Conclude with a brief, encouraging summary of the student's strengths and areas 
 
     // Check the type of content and extract the text appropriately
     if (lastMessage.content[0].type === 'text') {
+      console.log("Assistant response:", lastMessage.content[0].text.value);
       return lastMessage.content[0].text.value;
     } else {
       throw new Error("Unexpected response format from assistant");
