@@ -1,5 +1,5 @@
-
 import OpenAI from "openai";
+import type { MessageContentText } from "openai/resources/beta/threads/messages/messages";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -15,14 +15,15 @@ function compressBase64Image(base64: string): string {
   return base64Data;
 }
 
-export async function extractTextFromImage(base64Image: string): Promise<{
+interface TextExtractionResult {
   text: string;
   confidence: number;
-}> {
+}
+
+export async function extractTextFromImage(base64Image: string): Promise<TextExtractionResult> {
   try {
     const compressedImage = compressBase64Image(base64Image);
 
-    // API 할당량 초과 체크
     if (!process.env.OPENAI_API_KEY) {
       throw new Error("OpenAI API key is not configured");
     }
@@ -68,20 +69,25 @@ Return JSON in this format:
     });
 
     const responseContent = visionResponse.choices[0].message.content;
-    let result = {};
+    let result: TextExtractionResult = {
+      text: "",
+      confidence: 0
+    };
+
     try {
-      result = JSON.parse(responseContent || "{}");
+      const parsedResult = JSON.parse(responseContent || "{}") as Partial<TextExtractionResult>;
+      result = {
+        text: parsedResult.text || "",
+        confidence: Math.max(0, Math.min(1, parsedResult.confidence || 0))
+      };
     } catch (parseError) {
       console.error("JSON parse error:", parseError);
       throw new Error("Failed to parse response JSON from vision API");
     }
 
-    return {
-      text: result.text || "",
-      confidence: Math.max(0, Math.min(1, result.confidence || 0)),
-    };
+    return result;
   } catch (error) {
-    if (error.status === 429) {
+    if (error instanceof Error && error.message.includes("429")) {
       throw new Error("OpenAI API quota exceeded. Please try again later.");
     }
     console.error("OpenAI API Error:", error);
@@ -111,11 +117,11 @@ Student Profile:
 
 Text to Review:
 ${text}
-`,
+`
     });
 
     const run = await openai.beta.threads.runs.create(thread.id, {
-      assistant_id: "asst_TaRTcp8WPBUiZCW4XqlbM4Ra",
+      assistant_id: "asst_TaRTcp8WPBUiZCW4XqlbM4Ra"
     });
 
     const completedRun = await waitForRunCompletion(thread.id, run.id);
@@ -128,9 +134,14 @@ ${text}
       throw new Error("No feedback received from assistant");
     }
 
-    return assistantMessage.content[0].text.value;
+    const content = assistantMessage.content[0];
+    if (content.type !== 'text') {
+      throw new Error("Unexpected response format from assistant");
+    }
+
+    return content.text.value;
   } catch (error) {
-    if (error.status === 429) {
+    if (error instanceof Error && error.message.includes("429")) {
       throw new Error("OpenAI API quota exceeded. Please try again later.");
     }
     console.error("OpenAI API Error:", error);
@@ -144,7 +155,7 @@ async function waitForRunCompletion(
   threadId: string,
   runId: string,
   maxAttempts = 60,
-): Promise<any> {
+) {
   for (let i = 0; i < maxAttempts; i++) {
     try {
       const run = await openai.beta.threads.runs.retrieve(threadId, runId);
@@ -153,17 +164,13 @@ async function waitForRunCompletion(
         return run;
       }
 
-      if (
-        run.status === "failed" ||
-        run.status === "cancelled" ||
-        run.status === "expired"
-      ) {
+      if (run.status === "failed" || run.status === "cancelled" || run.status === "expired") {
         throw new Error(`Run failed with status: ${run.status}`);
       }
 
       await new Promise((resolve) => setTimeout(resolve, 1000));
     } catch (error) {
-      if (error.status === 429) {
+      if (error instanceof Error && error.message.includes("429")) {
         throw new Error("OpenAI API quota exceeded. Please try again later.");
       }
       throw error;
