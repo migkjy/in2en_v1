@@ -481,9 +481,19 @@ export function registerRoutes(app: Express): Server {
         const file = req.file;
         const { assignmentId, studentId } = req.body;
 
+        console.log("Upload request received:", { assignmentId, studentId });
+
         if (!file) {
           console.error("No file in request:", req.files, req.file, req.body);
           return res.status(400).json({ message: "No file uploaded" });
+        }
+
+        if (!assignmentId || !studentId) {
+          console.error("Missing required fields:", { assignmentId, studentId });
+          return res.status(400).json({ 
+            message: "Missing required fields",
+            details: { assignmentId: !!assignmentId, studentId: !!studentId }
+          });
         }
 
         if (!assignmentId || !studentId) {
