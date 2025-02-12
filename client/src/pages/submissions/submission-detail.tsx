@@ -180,7 +180,6 @@ export default function SubmissionDetail() {
                   </div>
                 )}
 
-                {/* Hide OCR Text section 
                 {submission.ocrText && (
                   <div>
                     <h3 className="text-sm font-medium mb-2">OCR Text</h3>
@@ -191,7 +190,6 @@ export default function SubmissionDetail() {
                     </div>
                   </div>
                 )}
-                */}
 
                 {submission.aiFeedback && (
                   <div>
