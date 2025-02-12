@@ -2,14 +2,31 @@ import OpenAI from "openai";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
+// Base64 이미지 크기 줄이기 함수
+function compressBase64Image(base64: string): string {
+  // 데이터 URL 형식에서 실제 base64 부분만 추출
+  const base64Data = base64.split(';base64,').pop() || '';
+
+  // base64 문자열이 너무 길면 잘라내기
+  const maxLength = 85000; // 약 64KB 정도의 크기로 제한
+  if (base64Data.length > maxLength) {
+    console.log(`Compressing base64 image from ${base64Data.length} to ${maxLength} chars`);
+    return base64Data.substring(0, maxLength);
+  }
+
+  return base64Data;
+}
+
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 export async function extractTextFromImage(base64Image: string): Promise<{
   text: string;
   confidence: number;
 }> {
   try {
+    // 이미지 크기 압축
+    const compressedImage = compressBase64Image(base64Image);
     const userContent = `Extract and format the text from this homework image using markdown.
-Image: data:image/jpeg;base64,${base64Image}`;
+Image: data:image/jpeg;base64,${compressedImage}`;
 
     const visionResponse = await openai.chat.completions.create({
       model: "gpt-4o",
