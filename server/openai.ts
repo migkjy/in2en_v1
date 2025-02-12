@@ -5,10 +5,12 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 export async function extractTextFromImage(base64Image: string): Promise<{
   text: string;
-  feedback: string;
   confidence: number;
 }> {
   try {
+    const userContent = `Extract and format the text from this homework image using markdown.
+Image: data:image/jpeg;base64,${base64Image}`;
+
     const visionResponse = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
@@ -24,35 +26,29 @@ Format rules:
 
 Return JSON in this format:
 {
-  'text': string (markdown formatted text),
-  'feedback': string (initial observations),
-  'confidence': number (0-1)
-}`
+  "text": string (markdown formatted text),
+  "confidence": number (0-1)
+}`,
         },
         {
           role: "user",
-          content: [
-            {
-              type: "text",
-              text: "Extract and format the text from this homework image using markdown."
-            },
-            {
-              type: "image_url",
-              image_url: {
-                url: `data:image/jpeg;base64,${base64Image}`
-              }
-            }
-          ],
+          content: userContent,
         },
       ],
       response_format: { type: "json_object" },
     });
 
-    const result = JSON.parse(visionResponse.choices[0].message.content || "{}");
+    const responseContent = visionResponse.choices[0].message.content;
+    let result = {};
+    try {
+      result = JSON.parse(responseContent || "{}");
+    } catch (parseError) {
+      console.error("JSON parse error:", parseError);
+      throw new Error("Failed to parse response JSON from vision API");
+    }
 
     return {
       text: result.text || "",
-      feedback: result.feedback || "",
       confidence: Math.max(0, Math.min(1, result.confidence || 0)),
     };
   } catch (error) {

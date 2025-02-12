@@ -25,6 +25,68 @@ function requireRole(roles: UserRole[]) {
   };
 }
 
+// Processing submission with AI review
+export async function processSubmissionWithAI(submissionId: number) {
+  try {
+    const submission = await storage.getSubmission(submissionId);
+    if (!submission) {
+      throw new Error(`Submission ${submissionId} not found`);
+    }
+
+    // Update status to processing
+    await storage.updateSubmission(submission.id, {
+      status: "processing"
+    });
+
+    // Extract base64 image from data URL
+    const base64Image = submission.imageUrl.split(',')[1];
+    console.log(`Processing submission ${submission.id}...`);
+
+    // Process with OpenAI
+    console.log("Extracting text from image for submission:", submission.id);
+    const { text, confidence } = await extractTextFromImage(base64Image);
+    console.log("Extracted text:", { text });
+
+    if (!text) {
+      throw new Error("Failed to extract text from image");
+    }
+
+    // Get student and class info for feedback generation
+    const assignment = await storage.getAssignment(submission.assignmentId);
+    if (!assignment) {
+      throw new Error("Assignment not found");
+    }
+
+    const classInfo = await storage.getClass(assignment.classId);
+    if (!classInfo) {
+      throw new Error("Class not found");
+    }
+
+    // Generate AI feedback using the extracted text
+    console.log("Generating feedback for submission:", submission.id);
+    const feedback = await generateFeedback(text, classInfo.englishLevel, classInfo.ageGroup);
+    console.log("Generated feedback:", feedback);
+
+    // Update submission with results
+    await storage.updateSubmission(submission.id, {
+      ocrText: text,
+      aiFeedback: feedback,
+      status: "ai-reviewed"
+    });
+
+    console.log(`Successfully processed submission ${submission.id}`);
+    return submission.id;
+
+  } catch (error) {
+    console.error("Error in processSubmissionWithAI:", error);
+    await storage.updateSubmission(submissionId, {
+      status: "failed",
+      aiFeedback: error instanceof Error ? error.message : 'Unknown error'
+    });
+    throw error;
+  }
+}
+
 export function registerRoutes(app: Express): Server {
   setupAuth(app);
 
@@ -462,57 +524,17 @@ export function registerRoutes(app: Express): Server {
     }
   );
 
-  // Add new route for reprocessing a single submission
+  // Rewrite the single submission reprocess route
   app.post("/api/submissions/:id/reprocess",
     requireRole([UserRole.TEACHER, UserRole.ADMIN]),
     async (req, res) => {
       try {
         const submissionId = Number(req.params.id);
-        const submission = await storage.getSubmission(submissionId);
+        await processSubmissionWithAI(submissionId);
 
-        if (!submission) {
-          return res.status(404).json({ message: "Submission not found" });
-        }
-
-        // Update status to processing
-        await storage.updateSubmission(submission.id, {
-          status: "processing"
-        });
-
-        try {
-          // Extract base64 image from data URL
-          const base64Image = submission.imageUrl.split(',')[1];
-
-          console.log(`Reprocessing submission ${submission.id}...`);
-
-          // Process with OpenAI
-          const { text, feedback } = await extractTextFromImage(base64Image);
-          console.log(`OCR Results for submission ${submission.id}:`, { text, feedback });
-
-          if (!text && !feedback) {
-            throw new Error("Failed to extract text and generate feedback");
-          }
-
-          // Update submission with results
-          await storage.updateSubmission(submission.id, {
-            ocrText: text,
-            aiFeedback: feedback,
-            status: "ai-reviewed"
-          });
-
-          console.log(`Successfully reprocessed submission ${submission.id}`);
-
-          // Return the updated submission
-          const updatedSubmission = await storage.getSubmission(submissionId);
-          res.json(updatedSubmission);
-        } catch (error) {
-          console.error(`Error reprocessing submission ${submission.id}:`, error);
-          await storage.updateSubmission(submission.id, {
-            status: "failed",
-            aiFeedback: error instanceof Error ? error.message : 'Unknown error'
-          });
-          throw error;
-        }
+        // Return the updated submission
+        const updatedSubmission = await storage.getSubmission(submissionId);
+        res.json(updatedSubmission);
       } catch (error) {
         console.error("Error in reprocessing:", error);
         res.status(500).json({ message: "Failed to reprocess submission" });
@@ -520,7 +542,7 @@ export function registerRoutes(app: Express): Server {
     }
   );
 
-  // Add new route for AI review
+  // Rewrite the /api/submissions/:assignmentId/review route
   app.post("/api/submissions/:assignmentId/review",
     requireRole([UserRole.TEACHER, UserRole.ADMIN]),
     async (req, res) => {
@@ -530,50 +552,21 @@ export function registerRoutes(app: Express): Server {
 
         // Only process submissions with 'uploaded' status
         const pendingSubmissions = submissions.filter(s => s.status === "uploaded");
+        const processedIds = [];
 
         for (const submission of pendingSubmissions) {
           try {
-            // Update status to processing
-            await storage.updateSubmission(submission.id, {
-              status: "processing"
-            });
-
-            // Extract base64 image from data URL
-            const base64Image = submission.imageUrl.split(',')[1];
-
-            console.log(`Processing submission ${submission.id}...`);
-
-            // Process with OpenAI
-            console.log("Extracting text from image for submission:", submission.id);
-            const { text, feedback } = await extractTextFromImage(base64Image);
-            console.log("Extracted text:", { text, feedback });
-
-            console.log(`OCR Results for submission ${submission.id}:`, { text, feedback });
-
-            if (!text && !feedback) {
-              throw new Error("Failed to extract text and generate feedback");
-            }
-
-            // Update submission with results
-            await storage.updateSubmission(submission.id, {
-              ocrText: text || null,
-              aiFeedback: feedback || null,
-              status: "ai-reviewed"
-            });
-
-            console.log(`Successfully processed submission ${submission.id}`);
+            const processedId = await processSubmissionWithAI(submission.id);
+            processedIds.push(processedId);
           } catch (error) {
             console.error(`Error processing submission ${submission.id}:`, error);
-            await storage.updateSubmission(submission.id, {
-              status: "failed",
-              aiFeedback: error instanceof Error ? error.message : 'Unknown error'
-            });
+            // Continue with other submissions even if one fails
           }
         }
 
         res.json({
           message: "AI review process completed",
-          processed: pendingSubmissions.length
+          processed: processedIds.length
         });
       } catch (error) {
         console.error("Error in AI review process:", error);
@@ -859,7 +852,8 @@ export function registerRoutes(app: Express): Server {
       res.status(204).send();
     } catch (error) {
       if (error instanceof Error) {
-        res.status(400).json({ message: error.message });      } else {
+        res.status(400).json({ message: error.message });
+      } else {
         res.status(500).json({ message: "An unknown error occurred" });
       }
     }
