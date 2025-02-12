@@ -82,19 +82,13 @@ export async function generateFeedback(
   ageGroup: string,
 ): Promise<string> {
   try {
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        {
-          role: "system",
-          content: `You are an expert English teacher. Analyze the student's text and provide detailed feedback.
-Remember to consider the student's English level and age group when providing feedback.
-Keep the feedback constructive and encouraging.`,
-        },
-        {
-          role: "user",
-          content: `Please provide feedback on the following text written by a student.
+    // Create a new thread
+    const thread = await openai.beta.threads.create();
 
+    // Add the student's text as a message to the thread
+    await openai.beta.threads.messages.create(thread.id, {
+      role: "user",
+      content: `Please provide feedback on the following text:
 Student Profile:
 - English Level: ${englishLevel}
 - Age Group: ${ageGroup}
@@ -102,7 +96,7 @@ Student Profile:
 Text to Review:
 ${text}
 
-Provide feedback in this exact format:
+Please provide feedback in this exact format:
 
 1. Grammar and Spelling Corrections:
 - ~~incorrect text~~ **correction**: [suggested correction]
@@ -117,16 +111,50 @@ Provide feedback in this exact format:
 (List words that could be improved)
 
 4. Overall Feedback:
-(Provide encouraging feedback about strengths and areas for improvement)`,
-        },
-      ],
+(Provide encouraging feedback about strengths and areas for improvement)`
     });
 
-    return response.choices[0].message.content || "No feedback generated";
+    // Create a run with the specific assistant
+    const run = await openai.beta.threads.runs.create(thread.id, {
+      assistant_id: "asst_TaRTcp8WPBUiZCW4XqlbM4Ra"
+    });
+
+    // Poll for completion
+    let completedRun = await waitForRunCompletion(thread.id, run.id);
+
+    // Get the assistant's response
+    const messages = await openai.beta.threads.messages.list(thread.id);
+    const assistantMessage = messages.data.find(msg => msg.role === "assistant");
+
+    if (!assistantMessage || !assistantMessage.content[0]) {
+      throw new Error("No feedback received from assistant");
+    }
+
+    return assistantMessage.content[0].text.value;
   } catch (error) {
     console.error("OpenAI API Error:", error);
     throw new Error(
       `Failed to generate feedback: ${error instanceof Error ? error.message : "Unknown error"}`,
     );
   }
+}
+
+// Helper function to wait for run completion
+async function waitForRunCompletion(threadId: string, runId: string, maxAttempts = 60) {
+  for (let i = 0; i < maxAttempts; i++) {
+    const run = await openai.beta.threads.runs.retrieve(threadId, runId);
+
+    if (run.status === 'completed') {
+      return run;
+    }
+
+    if (run.status === 'failed' || run.status === 'cancelled' || run.status === 'expired') {
+      throw new Error(`Run failed with status: ${run.status}`);
+    }
+
+    // Wait for 1 second before checking again
+    await new Promise(resolve => setTimeout(resolve, 1000));
+  }
+
+  throw new Error('Timeout waiting for run completion');
 }
