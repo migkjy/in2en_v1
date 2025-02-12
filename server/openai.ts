@@ -31,7 +31,7 @@ export async function extractTextFromImage(base64Image: string): Promise<{
 Image: data:image/jpeg;base64,${compressedImage}`;
 
     const visionResponse = await openai.chat.completions.create({
-      model: "gpt-4-vision-preview",
+      model: "gpt-4-vision-preview-v2",
       messages: [
         {
           role: "system",
