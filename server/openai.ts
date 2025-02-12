@@ -26,8 +26,10 @@ export async function extractTextFromImage(base64Image: string): Promise<{
 }> {
   try {
     const compressedImage = compressBase64Image(base64Image);
+    console.log("Making API call to OpenAI Vision...");
+
     const visionResponse = await openai.chat.completions.create({
-      model: "gpt-4-vision-preview",
+      model: "gpt-4o",
       messages: [
         {
           role: "system",
@@ -39,14 +41,21 @@ Format rules:
 2. Use '**Student Writing:**' for student's text
 3. Preserve all original spelling mistakes, grammar errors, and line breaks
 4. Do not make any corrections or suggestions
-5. Use markdown formatting for structure only`,
+5. Use markdown formatting for structure only
+
+Response format:
+{
+  "text": "extracted text with original errors",
+  "feedback": "brief note about text type",
+  "confidence": 0.95
+}`
         },
         {
           role: "user",
           content: [
             { 
               type: "text", 
-              text: "Extract and format the text from this homework image using markdown."
+              text: "Extract and format the text from this homework image exactly as written, preserving any errors."
             },
             {
               type: "image_url",
@@ -54,13 +63,15 @@ Format rules:
                 url: `data:image/jpeg;base64,${compressedImage}`
               }
             }
-          ],
+          ]
         }
       ],
       response_format: { type: "json_object" }
     });
 
+    console.log("Received response from OpenAI Vision");
     const result = JSON.parse(visionResponse.choices[0].message.content || "{}");
+    console.log("Parsed result:", result);
 
     return {
       text: result.text || "",
@@ -110,12 +121,12 @@ Please provide feedback in this exact format:
 (List words that could be improved)
 
 4. Overall Feedback:
-(Provide encouraging feedback about strengths and areas for improvement)`,
+(Provide encouraging feedback about strengths and areas for improvement)`
     });
 
     // Create a run with the specific assistant
     const run = await openai.beta.threads.runs.create(thread.id, {
-      assistant_id: "asst_TaRTcp8WPBUiZCW4XqlbM4Ra",
+      assistant_id: "asst_TaRTcp8WPBUiZCW4XqlbM4Ra"
     });
 
     // Poll for completion
@@ -123,9 +134,7 @@ Please provide feedback in this exact format:
 
     // Get the assistant's response
     const messages = await openai.beta.threads.messages.list(thread.id);
-    const assistantMessage = messages.data.find(
-      (msg) => msg.role === "assistant",
-    );
+    const assistantMessage = messages.data.find(msg => msg.role === "assistant");
 
     if (!assistantMessage || !assistantMessage.content[0]) {
       throw new Error("No feedback received from assistant");
@@ -141,29 +150,21 @@ Please provide feedback in this exact format:
 }
 
 // Helper function to wait for run completion
-async function waitForRunCompletion(
-  threadId: string,
-  runId: string,
-  maxAttempts = 60,
-) {
+async function waitForRunCompletion(threadId: string, runId: string, maxAttempts = 60) {
   for (let i = 0; i < maxAttempts; i++) {
     const run = await openai.beta.threads.runs.retrieve(threadId, runId);
 
-    if (run.status === "completed") {
+    if (run.status === 'completed') {
       return run;
     }
 
-    if (
-      run.status === "failed" ||
-      run.status === "cancelled" ||
-      run.status === "expired"
-    ) {
+    if (run.status === 'failed' || run.status === 'cancelled' || run.status === 'expired') {
       throw new Error(`Run failed with status: ${run.status}`);
     }
 
     // Wait for 1 second before checking again
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 1000));
   }
 
-  throw new Error("Timeout waiting for run completion");
+  throw new Error('Timeout waiting for run completion');
 }
