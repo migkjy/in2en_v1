@@ -27,45 +27,44 @@ export async function extractTextFromImage(base64Image: string): Promise<{
   try {
     // 이미지 크기 압축
     const compressedImage = compressBase64Image(base64Image);
-    const userContent = `Extract and format the text from this homework image using markdown.
-Image: data:image/jpeg;base64,${compressedImage}`;
+    //     const userContent = `Extract and format the text from this homework image using markdown.
+    // Image: data:image/jpeg;base64,${compressedImage}`;
 
     const visionResponse = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
         {
           role: "system",
-          content: `You are an expert English teacher. Extract text from the image and format it in markdown following these strict rules:
+          content: `You are an expert English teacher. Extract text from the image exactly as written, preserving all errors.
+Important: Do not correct any errors at this stage. Keep the text exactly as written.
 
-1. Format the text hierarchically using markdown:
-   - Use '## Question' for section headers
-   - Use '**Textbook Content:**' in bold for original text
-   - Use '*Student Answer:*' in italics for student writing
-   
-2. For corrections, use this exact markdown format:
-   - Incorrect text: ~~incorrect~~ (**correct**)
-   - Missing punctuation: word**[,]** next word
-   - Important terms remain in **bold**
-   
-3. Use proper markdown for structure:
-   - Double line breaks between sections
-   - Single line breaks within sections
-   - Maintain consistent indentation
-   
-4. Corrections should be clearly visible in the rendered markdown:
-   - Strikethrough must be applied to the exact incorrect text
-   - Corrections should be in bold and parentheses
-   - Each correction on its own line if multiple corrections exist
+Format rules:
+1. Use '## Question' for textbook questions if present
+2. Use '**Student Writing:**' for student's text
+3. Preserve all original spelling mistakes, grammar errors, and line breaks
+4. Do not make any corrections or suggestions
+5. Use markdown formatting for structure only
 
 Return JSON in this format:
 {
-  "text": string (markdown formatted text),
+  "text": string (markdown formatted text, original text with errors preserved),
   "confidence": number (0-1)
 }`,
         },
         {
           role: "user",
-          content: userContent,
+          content: [
+            {
+              type: "text",
+              text: "Extract and format the text from this homework image using markdown.",
+            },
+            {
+              type: "image_url",
+              image_url: {
+                url: `data:image/jpeg;base64,${compressedImage}`,
+              },
+            },
+          ],
         },
       ],
       response_format: { type: "json_object" },
