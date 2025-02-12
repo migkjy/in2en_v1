@@ -493,28 +493,10 @@ export function registerRoutes(app: Express): Server {
             throw new Error("Failed to extract text and generate feedback");
           }
 
-          // Get assignment and class details for AI feedback
-          const assignment = await storage.getAssignment(submission.assignmentId);
-          if (!assignment) {
-            throw new Error("Assignment not found");
-          }
-
-          const classData = await storage.getClass(assignment.classId);
-          if (!classData) {
-            throw new Error("Class not found");
-          }
-
-          // Generate AI feedback
-          const aiFeedback = await generateFeedback(
-            text,
-            classData.englishLevel,
-            classData.ageGroup
-          );
-
           // Update submission with results
           await storage.updateSubmission(submission.id, {
             ocrText: text,
-            aiFeedback: aiFeedback,
+            aiFeedback: feedback,
             status: "ai-reviewed"
           });
 
