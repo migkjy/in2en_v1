@@ -82,13 +82,18 @@ export async function generateFeedback(
   ageGroup: string,
 ): Promise<string> {
   try {
-    // Create a thread
-    const thread = await openai.beta.threads.create();
-
-    // Add the initial message with clear formatting instructions
-    await openai.beta.threads.messages.create(thread.id, {
-      role: "user",
-      content: `As an English teacher reviewing student work, please provide feedback on the following text.
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: `You are an expert English teacher. Analyze the student's text and provide detailed feedback.
+Remember to consider the student's English level and age group when providing feedback.
+Keep the feedback constructive and encouraging.`,
+        },
+        {
+          role: "user",
+          content: `Please provide feedback on the following text written by a student.
 
 Student Profile:
 - English Level: ${englishLevel}
@@ -112,60 +117,14 @@ Provide feedback in this exact format:
 (List words that could be improved)
 
 4. Overall Feedback:
-(Provide encouraging feedback about strengths and areas for improvement)
-
-Remember:
-- Always use ~~text~~ for marking errors
-- Always use **correction/improvement/suggestion**: [text] format
-- Be encouraging and constructive
-- Consider the student's level and age
-- Keep corrections appropriate to their level`
+(Provide encouraging feedback about strengths and areas for improvement)`,
+        },
+      ],
     });
 
-    // Run the assistant with timeout and better error handling
-    console.log("Running assistant with ID:", process.env.OPENAI_ASSISTANT_ID);
-    const run = await openai.beta.threads.runs.create(thread.id, {
-      assistant_id: process.env.OPENAI_ASSISTANT_ID!
-    });
-
-    // Wait for the run to complete with timeout
-    const maxAttempts = 30; // 30 seconds timeout
-    let attempts = 0;
-    let runStatus = await openai.beta.threads.runs.retrieve(thread.id, run.id);
-
-    while (runStatus.status !== "completed" && attempts < maxAttempts) {
-      if (runStatus.status === "failed" || runStatus.status === "cancelled") {
-        console.error("Assistant run failed:", runStatus.last_error);
-        throw new Error(`Assistant run ${runStatus.status}: ${runStatus.last_error?.message || 'Unknown error'}`);
-      }
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      runStatus = await openai.beta.threads.runs.retrieve(thread.id, run.id);
-      attempts++;
-      console.log("Assistant run status:", runStatus.status, "attempt:", attempts);
-    }
-
-    if (attempts >= maxAttempts) {
-      throw new Error("Assistant run timed out after 30 seconds");
-    }
-
-    // Get the assistant's response
-    const messages = await openai.beta.threads.messages.list(thread.id);
-    const lastMessage = messages.data[0]; // Get the most recent message
-
-    if (!lastMessage || !lastMessage.content[0]) {
-      throw new Error("No response from assistant");
-    }
-
-    // Check the type of content and extract the text appropriately
-    if (lastMessage.content[0].type === 'text') {
-      console.log("Assistant response:", lastMessage.content[0].text.value);
-      return lastMessage.content[0].text.value;
-    } else {
-      throw new Error("Unexpected response format from assistant");
-    }
-
+    return response.choices[0].message.content || "No feedback generated";
   } catch (error) {
-    console.error("OpenAI Assistant API Error:", error);
+    console.error("OpenAI API Error:", error);
     throw new Error(
       `Failed to generate feedback: ${error instanceof Error ? error.message : "Unknown error"}`,
     );
