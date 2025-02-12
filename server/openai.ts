@@ -30,8 +30,8 @@ export async function extractTextFromImage(base64Image: string): Promise<{
     const userContent = `Extract and format the text from this homework image using markdown.
 Image: data:image/jpeg;base64,${compressedImage}`;
 
-    const visionResponse = await openai.createChatCompletion({
-      model: "gpt-4-vision-preview", // 모델 이름 수정
+    const visionResponse = await openai.chat.completions.create({
+      model: "gpt-4-vision-preview",
       messages: [
         {
           role: "system",
