@@ -69,64 +69,40 @@ export async function generateFeedback(
   ageGroup: string,
 ): Promise<string> {
   try {
-    // Create a thread
-    const thread = await openai.beta.threads.create();
-
-    // Add a system message to set the context and format
-    await openai.beta.threads.messages.create(thread.id, {
-      role: "user",
-      content: `You are an English teacher providing feedback on student writing.
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: `You are an expert English teacher providing feedback on student writing.
 Please analyze the following text considering the student's level and age group.
-Format your feedback using markdown with the following structure:
 
-1. Corrections with strike-through and suggestions:
-   - Use '~~incorrect~~' for marking errors
-   - Follow with '(correction)' in red text using markdown
-
-2. Feedback should focus on:
-   - Grammar and spelling
-   - Sentence structure
-   - Word choice
-   - Overall clarity
+IMPORTANT FORMATTING RULES:
+1. Use markdown format with '~~text~~' for corrections
+2. Immediately after each correction, add the suggested correction in red text using '**correction**: [suggestion]'
+3. Structure your feedback in this order:
+   - Grammar and spelling corrections
+   - Sentence structure improvements
+   - Vocabulary suggestions
+   - Overall feedback
 
 Student's English Level: ${englishLevel}
 Age Group: ${ageGroup}
 
-Text to review:
-${text}`
+Example format:
+~~I am go~~ **correction**: I am going
+~~to school~~ **correction**: to school by bus.`
+        },
+        {
+          role: "user",
+          content: text
+        }
+      ]
     });
 
-    // Run the assistant with the specific ID
-    const run = await openai.beta.threads.runs.create(thread.id, {
-      assistant_id: "asst_TaRTcp8WPBUiZCW4XqlbM4Ra"
-    });
-
-    // Wait for the run to complete
-    let runStatus = await openai.beta.threads.runs.retrieve(thread.id, run.id);
-    while (runStatus.status !== "completed") {
-      if (runStatus.status === "failed") {
-        throw new Error("Assistant run failed");
-      }
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      runStatus = await openai.beta.threads.runs.retrieve(thread.id, run.id);
-    }
-
-    // Get the assistant's response
-    const messages = await openai.beta.threads.messages.list(thread.id);
-    const lastMessage = messages.data[0];
-
-    if (!lastMessage || !lastMessage.content[0]) {
-      throw new Error("No response from assistant");
-    }
-
-    // Check the type of content and extract the text appropriately
-    if (lastMessage.content[0].type === 'text') {
-      return lastMessage.content[0].text.value;
-    } else {
-      throw new Error("Unexpected response format from assistant");
-    }
+    return response.choices[0].message.content || "";
   } catch (error) {
-    console.error("OpenAI Assistant API Error:", error);
+    console.error("OpenAI API Error:", error);
     throw new Error(
       `Failed to generate feedback: ${error instanceof Error ? error.message : "Unknown error"}`,
     );
