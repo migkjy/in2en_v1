@@ -22,57 +22,59 @@ function compressBase64Image(base64: string): string {
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 export async function extractTextFromImage(base64Image: string): Promise<{
   text: string;
+  feedback: string;
   confidence: number;
 }> {
   try {
-    // 이미지 크기 압축 (compressBase64Image 함수는 별도로 정의되어 있어야 합니다.)
     const compressedImage = compressBase64Image(base64Image);
-    const userContent = `Extract and format the text from this homework image using markdown.
-Image: data:image/jpeg;base64,${compressedImage}`;
-
     const visionResponse = await openai.chat.completions.create({
-      model: "gpt-4-vision-preview-v2",
+      model: "gpt-4-vision-preview",
       messages: [
         {
           role: "system",
-          content: `You are an expert English teacher. Extract text from the image and format it in markdown.
+          content: `You are an expert English teacher. Extract text from the image exactly as written, preserving all errors.
+Important: Do not correct any errors at this stage. Keep the text exactly as written.
+
 Format rules:
-1. Use '## Question' for textbook questions
-2. Use '**Textbook Content:**' for original text
-3. Use '*Student Answer:*' for student's writing
-4. Use proper markdown paragraphs and sections
-5. Maintain original line breaks and spacing
+1. Use '## Question' for textbook questions if present
+2. Use '**Student Writing:**' for student's text
+3. Preserve all original spelling mistakes, grammar errors, and line breaks
+4. Do not make any corrections or suggestions
+5. Use markdown formatting for structure only
 
 Return JSON in this format:
 {
-  "text": string (markdown formatted text),
-  "confidence": number (0-1)
+  'text': string (original text with errors preserved),
+  'feedback': string (brief note about text type),
+  'confidence': number (0-1)
 }`,
         },
         {
           role: "user",
-          content: userContent,
+          content: [
+            {
+              type: "text",
+              text: "Extract and format the text from this homework image using markdown.",
+            },
+            {
+              type: "image_url",
+              image_url: {
+                url: `data:image/jpeg;base64,${compressedImage}`,
+              },
+            },
+          ],
         },
       ],
-      // response_format 옵션 제거
+      response_format: { type: "json_object" },
     });
 
-    // 최신 OpenAI 라이브러리에서는 응답이 visionResponse.data 에 담겨있습니다.
-    const responseContent = visionResponse.data.choices[0].message.content;
-    let result: { text: string; confidence: number } = {
-      text: "",
-      confidence: 0,
-    };
-
-    try {
-      result = JSON.parse(responseContent || "{}");
-    } catch (parseError) {
-      console.error("JSON parse error:", parseError);
-      throw new Error("Failed to parse response JSON from vision API");
-    }
+    const result = JSON.parse(
+      visionResponse.choices[0].message.content || "{}",
+    );
 
     return {
       text: result.text || "",
+      feedback: result.feedback || "",
       confidence: Math.max(0, Math.min(1, result.confidence || 0)),
     };
   } catch (error) {
