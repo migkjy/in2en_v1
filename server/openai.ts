@@ -19,7 +19,6 @@ function compressBase64Image(base64: string): string {
   return base64Data;
 }
 
-// the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 export async function extractTextFromImage(base64Image: string): Promise<{
   text: string;
   feedback: string;
@@ -40,37 +39,28 @@ Format rules:
 2. Use '**Student Writing:**' for student's text
 3. Preserve all original spelling mistakes, grammar errors, and line breaks
 4. Do not make any corrections or suggestions
-5. Use markdown formatting for structure only
-
-Return JSON in this format:
-{
-  'text': string (original text with errors preserved),
-  'feedback': string (brief note about text type),
-  'confidence': number (0-1)
-}`,
+5. Use markdown formatting for structure only`,
         },
         {
           role: "user",
           content: [
-            {
-              type: "text",
-              text: "Extract and format the text from this homework image using markdown.",
+            { 
+              type: "text", 
+              text: "Extract and format the text from this homework image using markdown."
             },
             {
               type: "image_url",
               image_url: {
-                url: `data:image/jpeg;base64,${compressedImage}`,
-              },
-            },
+                url: `data:image/jpeg;base64,${compressedImage}`
+              }
+            }
           ],
-        },
+        }
       ],
-      response_format: { type: "json_object" },
+      response_format: { type: "json_object" }
     });
 
-    const result = JSON.parse(
-      visionResponse.choices[0].message.content || "{}",
-    );
+    const result = JSON.parse(visionResponse.choices[0].message.content || "{}");
 
     return {
       text: result.text || "",
