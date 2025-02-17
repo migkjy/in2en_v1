@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useLocation } from "wouter";
 import type { Assignment, Branch, Class } from "@shared/schema";
 import { format } from "date-fns";
@@ -35,6 +41,7 @@ import { useState } from "react";
 import { EditAssignmentDialog } from "./edit-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Eye, Pencil, Trash } from "lucide-react";
+import { apiRequest } from "@/lib/queryClient";
 
 const STATUS_OPTIONS = [
   { value: "all", label: "All Statuses" },
@@ -53,6 +60,36 @@ export default function AssignmentList() {
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null);
   const [deleteAssignment, setDeleteAssignment] = useState<Assignment | null>(null);
+
+  // Status update mutation
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: number; status: string }) => {
+      const response = await apiRequest(
+        "PATCH",
+        `/api/assignments/${id}`,
+        { status }
+      );
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText);
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/assignments"] });
+      toast({
+        title: "Success",
+        description: "Assignment status updated successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update assignment status",
+        variant: "destructive",
+      });
+    },
+  });
 
   const { data: assignments } = useQuery<Assignment[]>({
     queryKey: ["/api/assignments", selectedBranch, selectedClass, selectedStatus],
@@ -232,20 +269,42 @@ export default function AssignmentList() {
                             : "-"}
                         </TableCell>
                         <TableCell>
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium
-                            ${assignment.status === 'draft' ? 'bg-gray-100 text-gray-800' : ''}
-                            ${assignment.status === 'published' ? 'bg-green-100 text-green-800' : ''}
-                            ${assignment.status === 'completed' ? 'bg-blue-100 text-blue-800' : ''}
-                          `}>
-                            {assignment.status?.toUpperCase()}
-                          </span>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                className={`px-2 py-1 rounded-full text-xs font-medium h-auto
+                                  ${assignment.status === 'draft' ? 'bg-gray-100 text-gray-800 hover:bg-gray-200' : ''}
+                                  ${assignment.status === 'published' ? 'bg-green-100 text-green-800 hover:bg-green-200' : ''}
+                                  ${assignment.status === 'completed' ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' : ''}
+                                `}
+                              >
+                                {assignment.status?.toUpperCase()}
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                              {["draft", "published", "completed"].map((status) => (
+                                <DropdownMenuItem
+                                  key={status}
+                                  onClick={() => updateStatusMutation.mutate({ 
+                                    id: assignment.id, 
+                                    status 
+                                  })}
+                                  disabled={status === assignment.status}
+                                >
+                                  {status.toUpperCase()}
+                                </DropdownMenuItem>
+                              ))}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </TableCell>
                         <TableCell className="space-x-2">
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleViewAssignment(assignment)}
+                            onClick={() => navigate(`/assignments/${assignment.id}`)}
                           >
+                            <Eye className="h-4 w-4 mr-1" />
                             View
                           </Button>
                           <Button
@@ -253,6 +312,7 @@ export default function AssignmentList() {
                             size="sm"
                             onClick={() => setEditingAssignment(assignment)}
                           >
+                            <Pencil className="h-4 w-4 mr-1" />
                             Edit
                           </Button>
                           <Button
@@ -260,6 +320,7 @@ export default function AssignmentList() {
                             size="sm"
                             onClick={() => setDeleteAssignment(assignment)}
                           >
+                            <Trash className="h-4 w-4 mr-1" />
                             Delete
                           </Button>
                         </TableCell>
