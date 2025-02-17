@@ -2,20 +2,15 @@ import OpenAI from "openai";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-// Base64 이미지 크기 줄이기 함수
 function compressBase64Image(base64: string): string {
-  // 데이터 URL 형식에서 실제 base64 부분만 추출
   const base64Data = base64.split(";base64,").pop() || "";
-
-  // base64 문자열이 너무 길면 잘라내기
-  const maxLength = 85000; // 약 64KB 정도의 크기로 제한
+  const maxLength = 85000;
   if (base64Data.length > maxLength) {
     console.log(
       `Compressing base64 image from ${base64Data.length} to ${maxLength} chars`,
     );
     return base64Data.substring(0, maxLength);
   }
-
   return base64Data;
 }
 
@@ -32,28 +27,25 @@ export async function extractTextFromImage(base64Image: string): Promise<{
       messages: [
         {
           role: "system",
-          content: `You are an expert English teacher. Extract text from the image exactly as written, preserving all errors.
-Important: Do not correct any errors at this stage. Keep the text exactly as written.
-
-Format rules:
-1. Use '## Question' for textbook questions if present
-2. Use '**Student Writing:**' for student's text
-3. Preserve all original spelling mistakes, grammar errors, and line breaks
-4. Do not make any corrections or suggestions
-5. Use markdown formatting for structure only
-
-Response format:
+          content: `You are a text extraction expert. Extract text from the image exactly as written, preserving all errors.
+Respond in JSON format with the following structure:
 {
   "text": "extracted text with original errors",
   "confidence": 0.95
-}`
+}
+
+Important rules:
+1. Extract text exactly as written
+2. Preserve all spelling mistakes and errors
+3. Keep original line breaks
+4. Do not make any corrections`
         },
         {
           role: "user",
           content: [
             { 
               type: "text", 
-              text: "Extract and format the text from this homework image exactly as written, preserving any errors."
+              text: "Extract text from this image and respond in JSON format with the text and confidence score."
             },
             {
               type: "image_url",
