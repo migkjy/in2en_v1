@@ -446,9 +446,10 @@ export function registerRoutes(app: Express): Server {
 
   app.get("/api/assignments", async (req, res) => {
     try {
-      const { classId, branchId } = req.query;
+      const { classId, branchId, status } = req.query;
       let assignments = await storage.listAssignments(
         classId ? Number(classId) : undefined,
+        status as string | undefined
       );
 
       // If branchId is provided, filter assignments by branch

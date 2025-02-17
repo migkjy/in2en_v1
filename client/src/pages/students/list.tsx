@@ -181,7 +181,7 @@ export default function StudentList() {
                   <TableCell>{student.phone_number || "-"}</TableCell>
                   <TableCell>{getBranchName(student.branchId)}</TableCell>
                   <TableCell>
-                    <Button
+                    {/* <Button
                       variant="outline"
                       size="sm"
                       className="mr-2"
@@ -190,7 +190,7 @@ export default function StudentList() {
                       }
                     >
                       View
-                    </Button>
+                    </Button> */}
                     <Button
                       variant="outline"
                       size="sm"

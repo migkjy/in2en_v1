@@ -34,7 +34,7 @@ export interface IStorage {
   // Assignment operations
   createAssignment(data: Partial<Assignment>): Promise<Assignment>;
   getAssignment(id: number): Promise<Assignment | undefined>;
-  listAssignments(classId?: number): Promise<Assignment[]>;
+  listAssignments(classId?: number, status?: string): Promise<Assignment[]>;
   updateAssignment(id: number, data: Partial<Assignment>): Promise<Assignment | undefined>;
   deleteAssignment(id: number): Promise<void>;
 
@@ -266,11 +266,23 @@ export class DatabaseStorage implements IStorage {
     return assignment;
   }
 
-  async listAssignments(classId?: number): Promise<Assignment[]> {
+  async listAssignments(classId?: number, status?: string): Promise<Assignment[]> {
     const baseQuery = db.select().from(assignments);
 
+    // Build the where conditions
+    const conditions = [];
+
     if (classId) {
-      return await baseQuery.where(eq(assignments.classId, classId));
+      conditions.push(eq(assignments.classId, classId));
+    }
+
+    if (status) {
+      conditions.push(eq(assignments.status, status));
+    }
+
+    // Apply conditions if any exist
+    if (conditions.length > 0) {
+      return await baseQuery.where(and(...conditions));
     }
 
     return await baseQuery;

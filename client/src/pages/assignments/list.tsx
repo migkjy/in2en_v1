@@ -246,7 +246,6 @@ export default function AssignmentList() {
                             size="sm"
                             onClick={() => handleViewAssignment(assignment)}
                           >
-                            <Eye className="h-4 w-4 mr-1" />
                             View
                           </Button>
                           <Button
@@ -254,7 +253,6 @@ export default function AssignmentList() {
                             size="sm"
                             onClick={() => setEditingAssignment(assignment)}
                           >
-                            <Pencil className="h-4 w-4 mr-1" />
                             Edit
                           </Button>
                           <Button
@@ -262,7 +260,6 @@ export default function AssignmentList() {
                             size="sm"
                             onClick={() => setDeleteAssignment(assignment)}
                           >
-                            <Trash className="h-4 w-4 mr-1" />
                             Delete
                           </Button>
                         </TableCell>
