@@ -43,6 +43,7 @@ export interface IStorage {
   getSubmission(id: number): Promise<Submission | undefined>;
   listSubmissions(assignmentId: number): Promise<Submission[]>;
   updateSubmission(id: number, data: Partial<Submission>): Promise<Submission>;
+  deleteSubmission(id: number): Promise<void>;
 
   // Comment operations
   createComment(data: Partial<Comment>): Promise<Comment>;
@@ -310,7 +311,8 @@ export class DatabaseStorage implements IStorage {
       status: data.status || 'pending',
       ocrText: data.ocrText || null,
       aiFeedback: data.aiFeedback || null,
-      teacherFeedback: data.teacherFeedback || null
+      teacherFeedback: data.teacherFeedback || null,
+      isHidden: false //Adding isHidden flag default to false
     }).returning();
     return submission;
   }
@@ -321,7 +323,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async listSubmissions(assignmentId: number): Promise<Submission[]> {
-    return await db.select().from(submissions).where(eq(submissions.assignmentId, assignmentId));
+    return await db
+      .select()
+      .from(submissions)
+      .where(
+        and(
+          eq(submissions.assignmentId, assignmentId),
+          eq(submissions.isHidden, false)
+        )
+      );
   }
 
   async updateSubmission(id: number, data: Partial<Submission>): Promise<Submission> {
@@ -332,6 +342,13 @@ export class DatabaseStorage implements IStorage {
       .returning();
     if (!submission) throw new Error('Submission not found');
     return submission;
+  }
+
+  async deleteSubmission(id: number): Promise<void> {
+    await db
+      .update(submissions)
+      .set({ isHidden: true })
+      .where(eq(submissions.id, id));
   }
 
   // Comment operations

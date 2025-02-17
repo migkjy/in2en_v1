@@ -73,6 +73,7 @@ export const assignments = pgTable("assignments", {
   status: varchar("status", { length: 50 }).default("draft"),
 });
 
+// submissions 테이블 정의 부분만 수정
 export const submissions = pgTable("submissions", {
   id: serial("id").primaryKey(),
   assignmentId: integer("assignment_id").references(() => assignments.id),
@@ -82,6 +83,7 @@ export const submissions = pgTable("submissions", {
   aiFeedback: text("ai_feedback"),
   teacherFeedback: text("teacher_feedback"),
   status: varchar("status", { length: 50 }).default("uploaded"),
+  isHidden: boolean("is_hidden").notNull().default(false),
 });
 
 export const comments = pgTable("comments", {

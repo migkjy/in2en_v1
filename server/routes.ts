@@ -983,7 +983,7 @@ export function registerRoutes(app: Express): Server {
       try {
         console.log("Received update request body:", req.body);
 
-        // If password is empty string or undefined, remove it from the request body
+        //        // If password is empty string or undefined, remove it from the request body
         const updateData = { ...req.body };
         if (!updateData.password) {
           delete updateData.password;
@@ -1134,6 +1134,22 @@ export function registerRoutes(app: Express): Server {
         }
       }
     },
+  );
+
+  // submissions 삭제 라우트 추가
+  app.delete(
+    "/api/submissions/:id",
+    requireRole([UserRole.TEACHER, UserRole.ADMIN]),
+    async (req, res) => {
+      try {
+        const submissionId = Number(req.params.id);
+        await storage.deleteSubmission(submissionId);
+        res.status(204).send();
+      } catch (error) {
+        console.error("Error hiding submission:", error);
+        res.status(500).json({ message: "Failed to hide submission" });
+      }
+    }
   );
 
   const httpServer = createServer(app);
