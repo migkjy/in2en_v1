@@ -126,7 +126,17 @@ export function GrantAuthorityDialog({
 
   const filteredClasses = classes?.filter(cls => 
     selectedBranch === "all" || cls.branchId?.toString() === selectedBranch
-  );
+  ).sort((a, b) => {
+    const branchA = getBranchName(a.branchId);
+    const branchB = getBranchName(b.branchId);
+
+    // First sort by branch name
+    if (branchA < branchB) return -1;
+    if (branchA > branchB) return 1;
+
+    // If same branch, sort by class name
+    return a.name.localeCompare(b.name);
+  });
 
   const getBranchName = (branchId: number | null) => {
     if (!branchId || !branches) return "No Branch";
