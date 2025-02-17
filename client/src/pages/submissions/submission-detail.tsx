@@ -36,29 +36,17 @@ export default function SubmissionDetail() {
     return null;
   }
 
-  const {
-    data: submissionData,
-    isLoading,
-    error,
-  } = useQuery<SubmissionResponse>({
+  const { data: submissionData, isLoading, error } = useQuery<SubmissionResponse>({
     queryKey: ["/api/submissions", submissionId],
     queryFn: async () => {
-      const response = await fetch(`/api/submissions/${submissionId}`, {
-        credentials: "include",
-      });
-
+      const response = await fetch(`/api/submissions/${submissionId}`);
       if (!response.ok) {
-        const errorData = await response
-          .json()
-          .catch(() => ({ message: "Failed to fetch submission" }));
-        throw new Error(errorData.message);
+        throw new Error("Failed to fetch submission");
       }
-
       return response.json();
     },
   });
 
-  // Add reprocess mutation
   const reprocessMutation = useMutation({
     mutationFn: async () => {
       const response = await apiRequest(
@@ -73,9 +61,7 @@ export default function SubmissionDetail() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["/api/submissions", submissionId],
-      });
+      queryClient.invalidateQueries({ queryKey: ["/api/submissions", submissionId] });
       toast({
         title: "Success",
         description: "Submission is being reprocessed with AI",
@@ -99,7 +85,7 @@ export default function SubmissionDetail() {
             <Card>
               <CardContent className="p-6">
                 <div className="flex items-center justify-center min-h-[200px]">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  <Loader2 className="h-8 w-8 animate-spin" />
                   <span className="ml-2 text-lg">Loading submission details...</span>
                 </div>
               </CardContent>
@@ -118,10 +104,8 @@ export default function SubmissionDetail() {
           <div className="max-w-5xl mx-auto">
             <Card>
               <CardContent className="p-6">
-                <p className="text-center text-red-600 text-lg">
-                  {error instanceof Error
-                    ? error.message
-                    : "Could not load submission details"}
+                <p className="text-center text-red-600">
+                  {error instanceof Error ? error.message : "Failed to load submission"}
                 </p>
               </CardContent>
             </Card>
@@ -139,46 +123,44 @@ export default function SubmissionDetail() {
       <Sidebar className="w-64" />
       <main className="flex-1 p-8 overflow-auto bg-gray-50">
         <div className="max-w-5xl mx-auto space-y-6">
-          {/* Header Card */}
+          {/* Header Section */}
           <Card className="border-none shadow-md">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <div>
-                <CardTitle className="text-2xl font-bold">
-                  {assignment.title}
-                </CardTitle>
-                <p className="text-muted-foreground mt-1">
-                  Submitted by: {student.name}
-                </p>
+            <CardHeader className="pb-2">
+              <div className="flex justify-between items-center">
+                <div>
+                  <CardTitle className="text-2xl font-bold text-primary">
+                    {assignment.title}
+                  </CardTitle>
+                  <p className="text-muted-foreground mt-1">
+                    Submitted by: {student.name}
+                  </p>
+                </div>
+                {isTeacherOrAdmin && (
+                  <Button
+                    onClick={() => reprocessMutation.mutate()}
+                    disabled={reprocessMutation.isPending || submission.status === "processing"}
+                  >
+                    {reprocessMutation.isPending || submission.status === "processing" ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      "Reprocess with AI"
+                    )}
+                  </Button>
+                )}
               </div>
-              {isTeacherOrAdmin && (
-                <Button
-                  onClick={() => reprocessMutation.mutate()}
-                  disabled={
-                    reprocessMutation.isPending ||
-                    submission.status === "processing"
-                  }
-                  className="ml-4"
-                >
-                  {reprocessMutation.isPending ||
-                  submission.status === "processing" ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Processing...
-                    </>
-                  ) : (
-                    "Reprocess with AI"
-                  )}
-                </Button>
-              )}
             </CardHeader>
           </Card>
 
           {/* Content Cards */}
           <div className="grid gap-6">
+            {/* Submitted Work Section */}
             {submission.imageUrl && (
-              <Card className="border-none shadow-md">
+              <Card className="border-none shadow-md overflow-hidden">
                 <CardHeader>
-                  <CardTitle className="text-xl font-semibold text-primary">
+                  <CardTitle className="text-2xl font-semibold text-primary">
                     Submitted Work
                   </CardTitle>
                 </CardHeader>
@@ -194,10 +176,11 @@ export default function SubmissionDetail() {
               </Card>
             )}
 
+            {/* AI Feedback Section */}
             {submission.aiFeedback && (
               <Card className="border-none shadow-md">
                 <CardHeader>
-                  <CardTitle className="text-xl font-semibold text-primary">
+                  <CardTitle className="text-2xl font-semibold text-primary">
                     AI Feedback
                   </CardTitle>
                 </CardHeader>
@@ -211,10 +194,11 @@ export default function SubmissionDetail() {
               </Card>
             )}
 
+            {/* Teacher Feedback Section */}
             {submission.teacherFeedback && (
               <Card className="border-none shadow-md">
                 <CardHeader>
-                  <CardTitle className="text-xl font-semibold text-primary">
+                  <CardTitle className="text-2xl font-semibold text-primary">
                     Teacher Feedback
                   </CardTitle>
                 </CardHeader>
