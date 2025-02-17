@@ -41,6 +41,13 @@ export default function AssignmentDetail() {
   const { data: assignment, isLoading: isAssignmentLoading } =
     useQuery<Assignment>({
       queryKey: ["/api/assignments", assignmentId],
+      queryFn: async () => {
+        const response = await fetch(`/api/assignments/${assignmentId}`);
+        if (!response.ok) {
+          throw new Error("Failed to fetch assignment");
+        }
+        return response.json();
+      },
       enabled: !!assignmentId,
     });
 
@@ -111,7 +118,7 @@ export default function AssignmentDetail() {
       const response = await apiRequest(
         "POST",
         `/api/submissions/${assignmentId}/review`,
-        {},
+        {}
       );
       if (!response.ok) {
         const error = await response.text();
@@ -125,34 +132,24 @@ export default function AssignmentDetail() {
         description: "AI review process has begun. Please wait...",
       });
       // Optimistically update status to processing
-      const previousSubmissions = queryClient.getQueryData([
-        "/api/submissions",
-        assignmentId,
-      ]);
+      const previousSubmissions = queryClient.getQueryData(["/api/submissions", assignmentId]);
       queryClient.setQueryData(
         ["/api/submissions", assignmentId],
-        (old: any) =>
-          old?.map((s: any) => ({
-            ...s,
-            status:
-              s.status === "uploaded" || !s.ocrText ? "processing" : s.status,
-          })),
+        (old: any) => old?.map((s: any) => ({
+          ...s,
+          status: s.status === "uploaded" || !s.ocrText ? "processing" : s.status
+        }))
       );
       return { previousSubmissions };
     },
     onSettled: () => {
       // Always refetch to get latest status
-      queryClient.invalidateQueries({
-        queryKey: ["/api/submissions", assignmentId],
-      });
+      queryClient.invalidateQueries({ queryKey: ["/api/submissions", assignmentId] });
     },
     onError: (error, _, context) => {
       // Revert optimistic update
       if (context?.previousSubmissions) {
-        queryClient.setQueryData(
-          ["/api/submissions", assignmentId],
-          context.previousSubmissions,
-        );
+        queryClient.setQueryData(["/api/submissions", assignmentId], context.previousSubmissions);
       }
       toast({
         title: "Error",
@@ -176,9 +173,7 @@ export default function AssignmentDetail() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["/api/submissions", assignmentId],
-      });
+      queryClient.invalidateQueries({ queryKey: ["/api/submissions", assignmentId] });
       toast({
         title: "Success",
         description: "Submission deleted successfully",
@@ -293,14 +288,11 @@ export default function AssignmentDetail() {
                       </Button>
                       <Button
                         onClick={() => {
-                          const uploadedSubmissions =
-                            submissions?.filter((s) => s.status === "uploaded") ||
-                            [];
+                          const uploadedSubmissions = submissions?.filter(s => s.status === "uploaded") || [];
                           if (uploadedSubmissions.length === 0) {
                             toast({
                               title: "No submissions to review",
-                              description:
-                                "There are no uploaded assignments to review",
+                              description: "There are no uploaded assignments to review",
                               variant: "destructive",
                             });
                             return;
@@ -346,9 +338,9 @@ export default function AssignmentDetail() {
                             </TableCell>
                             <TableCell>
                               <span
-                                className={`px-2 py-1 rounded text-sm ${getStatusBadgeStyle(
-                                  submission.status,
-                                )}`}
+                                className={`px-2 py-1 rounded text-sm ${
+                                  getStatusBadgeStyle(submission.status)
+                                }`}
                               >
                                 {getStatusText(submission.status)}
                               </span>
@@ -368,20 +360,14 @@ export default function AssignmentDetail() {
                                     variant="outline"
                                     size="sm"
                                     className="mr-2"
-                                    onClick={() =>
-                                      navigate(
-                                        `/assignments/review/${submission.id}/edit`,
-                                      )
-                                    }
+                                    onClick={() => navigate(`/assignments/review/${submission.id}/edit`)}
                                   >
                                     Edit
                                   </Button>
                                   <Button
                                     variant="destructive"
                                     size="sm"
-                                    onClick={() =>
-                                      setDeleteSubmissionId(submission.id)
-                                    }
+                                    onClick={() => setDeleteSubmissionId(submission.id)}
                                   >
                                     Delete
                                   </Button>
@@ -401,25 +387,21 @@ export default function AssignmentDetail() {
       </div>
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog
-        open={!!deleteSubmissionId}
+      <AlertDialog 
+        open={!!deleteSubmissionId} 
         onOpenChange={(open) => !open && setDeleteSubmissionId(null)}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Submission</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this submission? This action cannot
-              be undone.
+              Are you sure you want to delete this submission? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() =>
-                deleteSubmissionId &&
-                deleteSubmissionMutation.mutate(deleteSubmissionId)
-              }
+            <AlertDialogAction 
+              onClick={() => deleteSubmissionId && deleteSubmissionMutation.mutate(deleteSubmissionId)}
             >
               Delete
             </AlertDialogAction>
