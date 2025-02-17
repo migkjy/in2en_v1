@@ -61,11 +61,10 @@ export default function AssignmentList() {
   const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null);
   const [deleteAssignment, setDeleteAssignment] = useState<Assignment | null>(null);
 
-  // Status update mutation inside the component
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: number; status: string }) => {
       const response = await apiRequest(
-        "PATCH",
+        "PUT",
         `/api/assignments/${id}`,
         { status }
       );
@@ -97,7 +96,6 @@ export default function AssignmentList() {
     },
   });
 
-  // useQuery hooks inside the component
   const { data: assignments } = useQuery<Assignment[]>({
     queryKey: ["/api/assignments", selectedBranch, selectedClass, selectedStatus],
     queryFn: async () => {
@@ -177,7 +175,6 @@ export default function AssignmentList() {
               </Button>
             </CardHeader>
             <CardContent>
-              {/* Filters */}
               <div className="grid grid-cols-3 gap-4 mb-6">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Branch</label>
@@ -237,7 +234,6 @@ export default function AssignmentList() {
                 </div>
               </div>
 
-              {/* Assignments Table */}
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -341,7 +337,6 @@ export default function AssignmentList() {
         </div>
       </main>
 
-      {/* Edit Dialog */}
       {editingAssignment && (
         <EditAssignmentDialog
           assignment={editingAssignment}
@@ -350,7 +345,6 @@ export default function AssignmentList() {
         />
       )}
 
-      {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!deleteAssignment} onOpenChange={(open) => !open && setDeleteAssignment(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
