@@ -21,7 +21,6 @@ function compressBase64Image(base64: string): string {
 
 export async function extractTextFromImage(base64Image: string): Promise<{
   text: string;
-  feedback: string;
   confidence: number;
 }> {
   try {
@@ -46,7 +45,6 @@ Format rules:
 Response format:
 {
   "text": "extracted text with original errors",
-  "feedback": "brief note about text type",
   "confidence": 0.95
 }`
         },
@@ -75,7 +73,6 @@ Response format:
 
     return {
       text: result.text || "",
-      feedback: result.feedback || "",
       confidence: Math.max(0, Math.min(1, result.confidence || 0)),
     };
   } catch (error) {
@@ -92,10 +89,10 @@ export async function generateFeedback(
   ageGroup: string,
 ): Promise<string> {
   try {
-    // Create a new thread
+    console.log("Creating thread for feedback generation...");
     const thread = await openai.beta.threads.create();
 
-    // Add the student's text as a message to the thread
+    console.log("Adding message to thread...");
     await openai.beta.threads.messages.create(thread.id, {
       role: "user",
       content: `Please provide feedback on the following text:
@@ -124,15 +121,15 @@ Please provide feedback in this exact format:
 (Provide encouraging feedback about strengths and areas for improvement)`
     });
 
-    // Create a run with the specific assistant
+    console.log("Creating run with assistant...");
     const run = await openai.beta.threads.runs.create(thread.id, {
       assistant_id: "asst_TaRTcp8WPBUiZCW4XqlbM4Ra"
     });
 
-    // Poll for completion
+    console.log("Waiting for run completion...");
     let completedRun = await waitForRunCompletion(thread.id, run.id);
 
-    // Get the assistant's response
+    console.log("Getting assistant's response...");
     const messages = await openai.beta.threads.messages.list(thread.id);
     const assistantMessage = messages.data.find(msg => msg.role === "assistant");
 
@@ -149,7 +146,6 @@ Please provide feedback in this exact format:
   }
 }
 
-// Helper function to wait for run completion
 async function waitForRunCompletion(threadId: string, runId: string, maxAttempts = 60) {
   for (let i = 0; i < maxAttempts; i++) {
     const run = await openai.beta.threads.runs.retrieve(threadId, runId);

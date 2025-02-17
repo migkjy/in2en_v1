@@ -490,7 +490,7 @@ export function registerRoutes(app: Express): Server {
 
         if (!assignmentId || !studentId) {
           console.error("Missing required fields:", { assignmentId, studentId });
-          return res.status(400).json({ 
+          return res.status(400).json({
             message: "Missing required fields",
             details: { assignmentId: !!assignmentId, studentId: !!studentId }
           });
@@ -877,7 +877,7 @@ export function registerRoutes(app: Express): Server {
       res.json(levels);
     } catch (error) {
       if (error instanceof Error) {
-        res.status(400).json({ message: error.message });
+        res.status(400).json({ message: error.message.message });
       } else {
         res.status(500).json({ message: "An unknown error occurred" });
       }

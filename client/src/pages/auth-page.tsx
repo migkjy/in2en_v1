@@ -62,7 +62,7 @@ export default function AuthPage() {
       <div className="w-1/2 p-8 flex items-center justify-center">
         <Card className="w-[400px]">
           <CardHeader>
-            <CardTitle>English Academy Platform</CardTitle>
+            <CardTitle>In2English Platform</CardTitle>
             <CardDescription>
               Login or register to access your homework assignments
             </CardDescription>
@@ -181,7 +181,7 @@ export default function AuthPage() {
       <div className="w-1/2 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white p-12">
         <div className="max-w-lg">
           <h1 className="text-4xl font-bold mb-6">
-            Welcome to English Academy
+            Welcome to In2English
           </h1>
           <p className="text-xl mb-8">
             A modern platform for English homework management and personalized feedback
