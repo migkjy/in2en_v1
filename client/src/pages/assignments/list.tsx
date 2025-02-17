@@ -70,8 +70,8 @@ export default function AssignmentList() {
         { status }
       );
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText);
+        const error = await response.text();
+        throw new Error(error);
       }
       return response.json();
     },
@@ -283,10 +283,14 @@ export default function AssignmentList() {
                               {["draft", "published", "completed"].map((status) => (
                                 <DropdownMenuItem
                                   key={status}
-                                  onClick={() => updateStatusMutation.mutate({ 
-                                    id: assignment.id, 
-                                    status 
-                                  })}
+                                  onClick={() => {
+                                    if (assignment.id) {
+                                      updateStatusMutation.mutate({ 
+                                        id: assignment.id, 
+                                        status 
+                                      });
+                                    }
+                                  }}
                                   disabled={status === assignment.status}
                                 >
                                   {status.toUpperCase()}
