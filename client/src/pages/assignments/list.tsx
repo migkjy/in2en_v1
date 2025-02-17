@@ -61,7 +61,7 @@ export default function AssignmentList() {
   const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null);
   const [deleteAssignment, setDeleteAssignment] = useState<Assignment | null>(null);
 
-  // Status update mutation
+  // Status update mutation inside the component
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: number; status: string }) => {
       const response = await apiRequest(
@@ -91,6 +91,7 @@ export default function AssignmentList() {
     },
   });
 
+  // useQuery hooks inside the component
   const { data: assignments } = useQuery<Assignment[]>({
     queryKey: ["/api/assignments", selectedBranch, selectedClass, selectedStatus],
     queryFn: async () => {
@@ -132,10 +133,6 @@ export default function AssignmentList() {
   const handleCreateAssignment = () => {
     const basePath = user?.role === "ADMIN" ? "/admin" : "/teacher";
     navigate(`${basePath}/assignments/create`);
-  };
-
-  const handleViewAssignment = (assignment: Assignment) => {
-    navigate(`/assignments/${assignment.id}`);
   };
 
   const handleDeleteAssignment = async () => {
