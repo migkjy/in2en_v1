@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Branch, Class } from "@shared/schema";
+import { Class } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -18,7 +18,6 @@ type GrantAuthorityDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   teacherId: number;
-  currentBranches: Branch[];
   currentClasses: Class[];
 };
 
@@ -26,26 +25,13 @@ export function GrantAuthorityDialog({
   open,
   onOpenChange,
   teacherId,
-  currentBranches,
   currentClasses,
 }: GrantAuthorityDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [selectedBranches, setSelectedBranches] = useState<number[]>(
-    currentBranches.map((b) => b.id)
-  );
   const [selectedClasses, setSelectedClasses] = useState<number[]>(
     currentClasses.map((c) => c.id)
   );
-
-  const { data: branches } = useQuery<Branch[]>({
-    queryKey: ["/api/branches"],
-    queryFn: async () => {
-      const response = await fetch("/api/branches");
-      if (!response.ok) throw new Error("Failed to fetch branches");
-      return response.json();
-    },
-  });
 
   const { data: classes } = useQuery<Class[]>({
     queryKey: ["/api/classes"],
@@ -59,19 +45,16 @@ export function GrantAuthorityDialog({
   useEffect(() => {
     if (open) {
       console.log("Setting initial selections:", {
-        branches: currentBranches.map(b => b.id),
         classes: currentClasses.map(c => c.id)
       });
-      setSelectedBranches(currentBranches.map((b) => b.id));
       setSelectedClasses(currentClasses.map((c) => c.id));
     }
-  }, [open, currentBranches, currentClasses]);
+  }, [open, currentClasses]);
 
   const updateAuthority = useMutation({
     mutationFn: async () => {
       console.log("Updating authority with:", {
         teacherId,
-        branchIds: selectedBranches,
         classIds: selectedClasses,
       });
 
@@ -81,7 +64,6 @@ export function GrantAuthorityDialog({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          branchIds: selectedBranches,
           classIds: selectedClasses,
         }),
       });
@@ -94,7 +76,6 @@ export function GrantAuthorityDialog({
       return response.json();
     },
     onSuccess: () => {
-      // Invalidate queries to refresh the data
       queryClient.invalidateQueries({ 
         predicate: (query) => {
           const queryKey = query.queryKey;
@@ -103,9 +84,7 @@ export function GrantAuthorityDialog({
             (
               queryKey[0] === "/api/teachers" ||
               (queryKey[0] === `/api/teachers/${teacherId}`) ||
-              (queryKey[1] === teacherId && 
-                (queryKey[2] === "branches" || queryKey[2] === "classes")
-              )
+              (queryKey[1] === teacherId && queryKey[2] === "classes")
             )
           );
         }
@@ -133,38 +112,11 @@ export function GrantAuthorityDialog({
         <DialogHeader>
           <DialogTitle>Grant Authority</DialogTitle>
           <DialogDescription>
-            Select branches and classes to grant access to this teacher.
+            Select classes to grant access to this teacher.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6">
-          <div>
-            <h3 className="text-lg font-semibold mb-2">Branches</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              Selecting a branch grants access to all classes within it.
-            </p>
-            <ScrollArea className="h-[200px]">
-              <div className="space-y-2">
-                {branches?.map((branch) => (
-                  <div key={branch.id} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`branch-${branch.id}`}
-                      checked={selectedBranches.includes(branch.id)}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          setSelectedBranches([...selectedBranches, branch.id]);
-                        } else {
-                          setSelectedBranches(selectedBranches.filter((id) => id !== branch.id));
-                        }
-                      }}
-                    />
-                    <Label htmlFor={`branch-${branch.id}`}>{branch.name}</Label>
-                  </div>
-                ))}
-              </div>
-            </ScrollArea>
-          </div>
-
           <div>
             <h3 className="text-lg font-semibold mb-2">Individual Classes</h3>
             <p className="text-sm text-muted-foreground mb-4">
