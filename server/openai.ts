@@ -22,52 +22,48 @@ export async function extractTextFromImage(base64Image: string): Promise<{
     const compressedImage = compressBase64Image(base64Image);
     console.log("Making API call to OpenAI Vision...");
 
-    const visionResponse = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        {
-          role: "system",
-          content: `You are an expert English teacher. Extract text from the image and format it in markdown.
-            Format rules:
-            1. Use '## Question' for textbook questions
-            2. Use '**Textbook Content:**' for original text
-            3. Use '*Student Answer:*' for student's writing
-            4. Use proper markdown paragraphs and sections
-            5. Maintain original line breaks and spacing
+    // Create thread
+    const thread = await openai.beta.threads.create();
 
-            Return JSON in this format:
-            {
-              'text': string (markdown formatted text)
-            }`,
+    // Add message with image to thread
+    await openai.beta.threads.messages.create(thread.id, {
+      role: "user",
+      content: [
+        {
+          type: "text",
+          text: "Extract and format the text from this homework image using markdown"
         },
         {
-          role: "user",
-          content: [
-            {
-              type: "text",
-              text: "Extract and format the text from this homework image using markdown",
-            },
-            {
-              type: "image_url",
-              image_url: {
-                url: `data:image/jpeg;base64,${compressedImage}`,
-              },
-            },
-          ],
-        },
-      ],
-      response_format: { type: "json_object" },
+          type: "image_url",
+          image_url: {
+            url: `data:image/jpeg;base64,${compressedImage}`
+          }
+        }
+      ]
     });
 
-    console.log("Received response from OpenAI Vision");
-    const result = JSON.parse(
-      visionResponse.choices[0].message.content || "{}",
-    );
-    console.log("Parsed result:", result);
+    // Run assistant
+    const run = await openai.beta.threads.runs.create(thread.id, {
+      assistant_id: "asst_RNQYzDhnSFJ8r25f6zcUSrER"
+    });
+
+    // Wait for completion
+    let completedRun = await waitForRunCompletion(thread.id, run.id);
+
+    // Get response
+    const messages = await openai.beta.threads.messages.list(thread.id);
+    const assistantMessage = messages.data.find(msg => msg.role === "assistant");
+
+    if (!assistantMessage || !assistantMessage.content[0]) {
+      throw new Error("No response received from assistant");
+    }
+
+    const text = assistantMessage.content[0].text.value;
+    console.log("Extracted text:", { text });
 
     return {
-      text: result.text || "",
-      confidence: Math.max(0, Math.min(1, result.confidence || 0)),
+      text: text || "",
+      confidence: 0.95 // Assistant API doesn't provide confidence score
     };
   } catch (error) {
     console.error("OpenAI API Error:", error);
