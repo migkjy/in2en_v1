@@ -10,4 +10,16 @@
   body {
     @apply font-sans antialiased bg-background text-foreground;
   }
+
+  /* Add spacing for card headers */
+  .card-header h1,
+  .card-header h2,
+  .card-header h3,
+  h1.card-title,
+  h2.card-title,
+  h3.card-title {
+    @apply leading-relaxed tracking-wide;
+    line-height: 1.75;
+    letter-spacing: 0.025em;
+  }
 }
