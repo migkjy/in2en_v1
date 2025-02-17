@@ -16,19 +16,22 @@ export default function AdminDashboard() {
   });
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen bg-gray-50/50">
       <Sidebar className="w-64" />
       <main className="flex-1 p-8 overflow-auto">
-        <div className="max-w-6xl mx-auto">
-          <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
+        <div className="max-w-6xl mx-auto space-y-8">
+          <div>
+            <h1 className="text-3xl font-semibold tracking-tight text-gray-900">Admin Dashboard</h1>
+            <p className="mt-2 text-gray-500">Manage your academy's branches, classes, and more.</p>
+          </div>
 
-          <div className="grid grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Branches Section */}
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Branches</CardTitle>
+            <Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-200">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                <CardTitle className="text-xl font-semibold">Branches</CardTitle>
                 <Link href="/admin/branches">
-                  <Button size="sm">
+                  <Button variant="outline" size="sm" className="shadow-sm">
                     <Plus className="h-4 w-4 mr-1" />
                     Add Branch
                   </Button>
@@ -36,18 +39,19 @@ export default function AdminDashboard() {
               </CardHeader>
               <CardContent>
                 {loadingBranches ? (
-                  <div>Loading branches...</div>
+                  <div className="flex items-center justify-center h-48 text-gray-400">
+                    Loading branches...
+                  </div>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {branches?.map((branch) => (
-                      <Link 
-                        key={branch.id} 
-                        href={`/admin/branches/${branch.id}`}
-                      >
-                        <div className="p-4 border rounded hover:bg-gray-50 cursor-pointer">
-                          <h3 className="font-medium">{branch.name}</h3>
+                      <Link key={branch.id} href={`/admin/branches/${branch.id}`}>
+                        <div className="p-4 rounded-lg border border-gray-100 hover:border-gray-200 hover:bg-gray-50/50 transition-colors cursor-pointer group">
+                          <h3 className="font-medium text-gray-900 group-hover:text-primary">
+                            {branch.name}
+                          </h3>
                           {branch.address && (
-                            <p className="text-sm text-gray-500">
+                            <p className="mt-1 text-sm text-gray-500">
                               {branch.address}
                             </p>
                           )}
@@ -60,11 +64,11 @@ export default function AdminDashboard() {
             </Card>
 
             {/* Classes Section */}
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Classes</CardTitle>
+            <Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-200">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                <CardTitle className="text-xl font-semibold">Classes</CardTitle>
                 <Link href="/admin/classes/new">
-                  <Button size="sm">
+                  <Button variant="outline" size="sm" className="shadow-sm">
                     <Plus className="h-4 w-4 mr-1" />
                     Add Class
                   </Button>
@@ -72,22 +76,25 @@ export default function AdminDashboard() {
               </CardHeader>
               <CardContent>
                 {loadingClasses ? (
-                  <div>Loading classes...</div>
+                  <div className="flex items-center justify-center h-48 text-gray-400">
+                    Loading classes...
+                  </div>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {classes?.map((cls) => (
-                      <Link 
-                        key={cls.id} 
-                        href={`/admin/classes/${cls.id}`}
-                      >
-                        <div className="p-4 border rounded hover:bg-gray-50 cursor-pointer">
-                          <h3 className="font-medium">{cls.name}</h3>
-                          <p className="text-sm text-gray-500">
-                            Level: {cls.englishLevel || "Not set"}
-                          </p>
-                          <p className="text-sm text-gray-500">
-                            Age Group: {cls.ageGroup || "Not set"}
-                          </p>
+                      <Link key={cls.id} href={`/admin/classes/${cls.id}`}>
+                        <div className="p-4 rounded-lg border border-gray-100 hover:border-gray-200 hover:bg-gray-50/50 transition-colors cursor-pointer group">
+                          <h3 className="font-medium text-gray-900 group-hover:text-primary">
+                            {cls.name}
+                          </h3>
+                          <div className="mt-2 flex gap-3">
+                            <p className="text-sm text-gray-500">
+                              Level: {cls.englishLevel || "Not set"}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              Age Group: {cls.ageGroup || "Not set"}
+                            </p>
+                          </div>
                         </div>
                       </Link>
                     ))}

@@ -53,20 +53,29 @@ export function Sidebar({ className }: SidebarProps) {
     : studentLinks;
 
   return (
-    <div className={cn("flex flex-col h-screen bg-sidebar", className)}>
-      <div className="flex-1 space-y-4 py-4">
+    <div className={cn(
+      "flex flex-col h-screen bg-white border-r border-gray-100 shadow-sm",
+      className
+    )}>
+      <div className="flex-1 space-y-2 py-6">
         <div className="px-3 py-2">
-          <h2 className="mb-2 px-4 text-lg font-semibold text-sidebar-foreground">
+          <h2 className="mb-6 px-4 text-xl font-semibold tracking-tight text-gray-900">
             English Academy
           </h2>
-          <div className="space-y-1">
+          <div className="space-y-1.5">
             {links.map((link) => (
               <Link key={link.href} href={link.href}>
                 <Button
                   variant={isActive(link.href) ? "secondary" : "ghost"}
-                  className="w-full justify-start"
+                  className={cn(
+                    "w-full justify-start text-sm font-medium transition-colors",
+                    "hover:bg-gray-100/80",
+                    isActive(link.href) 
+                      ? "bg-gray-100/90 text-gray-900" 
+                      : "text-gray-600 hover:text-gray-900"
+                  )}
                 >
-                  <link.icon className="mr-2 h-4 w-4" />
+                  <link.icon className="mr-3 h-4 w-4" />
                   {link.label}
                 </Button>
               </Link>
@@ -76,20 +85,23 @@ export function Sidebar({ className }: SidebarProps) {
       </div>
 
       {/* User profile and logout section */}
-      <div className="p-3 border-t border-sidebar-border mt-auto">
+      <div className="p-4 border-t border-gray-100 mt-auto bg-gray-50/50">
         <div className="space-y-2">
           <Link href="/profile">
-            <Button variant="ghost" className="w-full justify-start">
-              <User className="mr-2 h-4 w-4" />
+            <Button 
+              variant="ghost" 
+              className="w-full justify-start text-sm hover:bg-gray-100/80"
+            >
+              <User className="mr-3 h-4 w-4" />
               {user?.name}
             </Button>
           </Link>
           <Button 
             variant="ghost" 
-            className="w-full justify-start text-red-500 hover:text-red-600"
+            className="w-full justify-start text-sm text-red-600 hover:text-red-700 hover:bg-red-50"
             onClick={() => logoutMutation.mutate()}
           >
-            <LogOut className="mr-2 h-4 w-4" />
+            <LogOut className="mr-3 h-4 w-4" />
             Logout
           </Button>
         </div>
