@@ -70,7 +70,13 @@ export default function AssignmentList() {
         { status }
       );
       if (!response.ok) {
-        const error = await response.text();
+        let error = "Failed to update assignment status";
+        try {
+          const errorText = await response.text();
+          const jsonError = await response.json();
+          if(jsonError && jsonError.message) error = jsonError.message;
+          else if(errorText) error = errorText;
+        } catch(e) {}
         throw new Error(error);
       }
       return response.json();
@@ -285,9 +291,9 @@ export default function AssignmentList() {
                                   key={status}
                                   onClick={() => {
                                     if (assignment.id) {
-                                      updateStatusMutation.mutate({ 
-                                        id: assignment.id, 
-                                        status 
+                                      updateStatusMutation.mutate({
+                                        id: assignment.id,
+                                        status
                                       });
                                     }
                                   }}
