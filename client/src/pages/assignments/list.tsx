@@ -36,25 +36,36 @@ import { EditAssignmentDialog } from "./edit-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Eye, Pencil, Trash } from "lucide-react";
 
+const STATUS_OPTIONS = [
+  { value: "all", label: "All Statuses" },
+  { value: "draft", label: "Draft" },
+  { value: "published", label: "Published" },
+  { value: "completed", label: "Completed" }
+];
+
 export default function AssignmentList() {
   const [, navigate] = useLocation();
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [selectedBranch, setSelectedBranch] = useState<string>("");
-  const [selectedClass, setSelectedClass] = useState<string>("");
+  const [selectedBranch, setSelectedBranch] = useState<string>("all");
+  const [selectedClass, setSelectedClass] = useState<string>("all");
+  const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null);
   const [deleteAssignment, setDeleteAssignment] = useState<Assignment | null>(null);
 
   const { data: assignments } = useQuery<Assignment[]>({
-    queryKey: ["/api/assignments", selectedBranch, selectedClass],
+    queryKey: ["/api/assignments", selectedBranch, selectedClass, selectedStatus],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (selectedBranch && selectedBranch !== "all") {
+      if (selectedBranch !== "all") {
         params.append("branchId", selectedBranch);
       }
-      if (selectedClass && selectedClass !== "all") {
+      if (selectedClass !== "all") {
         params.append("classId", selectedClass);
+      }
+      if (selectedStatus !== "all") {
+        params.append("status", selectedStatus);
       }
 
       const response = await fetch(`/api/assignments?${params.toString()}`);
@@ -71,7 +82,7 @@ export default function AssignmentList() {
     queryKey: ["/api/classes", selectedBranch],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (selectedBranch && selectedBranch !== "all") {
+      if (selectedBranch !== "all") {
         params.append("branchId", selectedBranch);
       }
 
@@ -127,7 +138,7 @@ export default function AssignmentList() {
             </CardHeader>
             <CardContent>
               {/* Filters */}
-              <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="grid grid-cols-3 gap-4 mb-6">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Branch</label>
                   <Select
@@ -161,6 +172,24 @@ export default function AssignmentList() {
                       {classes?.map((cls) => (
                         <SelectItem key={cls.id} value={cls.id.toString()}>
                           {cls.name} - {cls.englishLevel}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Status</label>
+                  <Select
+                    value={selectedStatus}
+                    onValueChange={setSelectedStatus}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="All Statuses" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {STATUS_OPTIONS.map((status) => (
+                        <SelectItem key={status.value} value={status.value}>
+                          {status.label}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -202,22 +231,30 @@ export default function AssignmentList() {
                             ? format(new Date(assignment.dueDate), "MM/dd/yyyy")
                             : "-"}
                         </TableCell>
-                        <TableCell>{assignment.status}</TableCell>
                         <TableCell>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium
+                            ${assignment.status === 'draft' ? 'bg-gray-100 text-gray-800' : ''}
+                            ${assignment.status === 'published' ? 'bg-green-100 text-green-800' : ''}
+                            ${assignment.status === 'completed' ? 'bg-blue-100 text-blue-800' : ''}
+                          `}>
+                            {assignment.status?.toUpperCase()}
+                          </span>
+                        </TableCell>
+                        <TableCell className="space-x-2">
                           <Button
                             variant="outline"
                             size="sm"
-                            className="mr-2"
                             onClick={() => handleViewAssignment(assignment)}
                           >
+                            <Eye className="h-4 w-4 mr-1" />
                             View
                           </Button>
                           <Button
                             variant="outline"
                             size="sm"
-                            className="mr-2"
                             onClick={() => setEditingAssignment(assignment)}
                           >
+                            <Pencil className="h-4 w-4 mr-1" />
                             Edit
                           </Button>
                           <Button
@@ -225,6 +262,7 @@ export default function AssignmentList() {
                             size="sm"
                             onClick={() => setDeleteAssignment(assignment)}
                           >
+                            <Trash className="h-4 w-4 mr-1" />
                             Delete
                           </Button>
                         </TableCell>
