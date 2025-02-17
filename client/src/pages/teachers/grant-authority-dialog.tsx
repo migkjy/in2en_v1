@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Class } from "@shared/schema";
+import { Class, Branch } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -8,6 +8,13 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -32,6 +39,7 @@ export function GrantAuthorityDialog({
   const [selectedClasses, setSelectedClasses] = useState<number[]>(
     currentClasses.map((c) => c.id)
   );
+  const [selectedBranch, setSelectedBranch] = useState<string>("all");
 
   const { data: classes } = useQuery<Class[]>({
     queryKey: ["/api/classes"],
@@ -42,12 +50,22 @@ export function GrantAuthorityDialog({
     },
   });
 
+  const { data: branches } = useQuery<Branch[]>({
+    queryKey: ["/api/branches"],
+    queryFn: async () => {
+      const response = await fetch("/api/branches");
+      if (!response.ok) throw new Error("Failed to fetch branches");
+      return response.json();
+    },
+  });
+
   useEffect(() => {
     if (open) {
       console.log("Setting initial selections:", {
         classes: currentClasses.map(c => c.id)
       });
       setSelectedClasses(currentClasses.map((c) => c.id));
+      setSelectedBranch("all");
     }
   }, [open, currentClasses]);
 
@@ -106,6 +124,16 @@ export function GrantAuthorityDialog({
     },
   });
 
+  const filteredClasses = classes?.filter(cls => 
+    selectedBranch === "all" || cls.branchId?.toString() === selectedBranch
+  );
+
+  const getBranchName = (branchId: number | null) => {
+    if (!branchId || !branches) return "No Branch";
+    const branch = branches.find(b => b.id === branchId);
+    return branch ? branch.name : "Unknown Branch";
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
@@ -117,14 +145,31 @@ export function GrantAuthorityDialog({
         </DialogHeader>
 
         <div className="space-y-6">
+          <div className="flex items-center space-x-4">
+            <Label htmlFor="branch-filter">Filter by Branch:</Label>
+            <Select
+              value={selectedBranch}
+              onValueChange={setSelectedBranch}
+            >
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Select Branch" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Branches</SelectItem>
+                {branches?.map((branch) => (
+                  <SelectItem key={branch.id} value={branch.id.toString()}>
+                    {branch.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           <div>
             <h3 className="text-lg font-semibold mb-2">Individual Classes</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              Select specific classes to grant access to.
-            </p>
             <ScrollArea className="h-[200px]">
               <div className="space-y-2">
-                {classes?.map((cls) => (
+                {filteredClasses?.map((cls) => (
                   <div key={cls.id} className="flex items-center space-x-2">
                     <Checkbox
                       id={`class-${cls.id}`}
@@ -137,9 +182,14 @@ export function GrantAuthorityDialog({
                         }
                       }}
                     />
-                    <Label htmlFor={`class-${cls.id}`}>
-                      {cls.name}
-                    </Label>
+                    <div className="flex-1">
+                      <Label htmlFor={`class-${cls.id}`} className="flex items-center">
+                        <span className="text-sm text-muted-foreground mr-2">
+                          [{getBranchName(cls.branchId)}]
+                        </span>
+                        <span>{cls.name}</span>
+                      </Label>
+                    </div>
                   </div>
                 ))}
               </div>

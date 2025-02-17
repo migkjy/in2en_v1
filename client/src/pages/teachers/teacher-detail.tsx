@@ -10,7 +10,8 @@ import { GrantAuthorityDialog } from "./grant-authority-dialog";
 
 export default function TeacherDetail() {
   const { id } = useParams<{ id: string }>();
-  const [isGrantAuthorityDialogOpen, setIsGrantAuthorityDialogOpen] = useState(false);
+  const [isGrantAuthorityDialogOpen, setIsGrantAuthorityDialogOpen] =
+    useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -81,7 +82,7 @@ export default function TeacherDetail() {
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
-                <div>
+                {/* <div>
                   <h3 className="text-lg font-semibold mb-2">Full Branch Access</h3>
                   {assignedBranches?.length ? (
                     <ul className="list-disc pl-5">
@@ -92,10 +93,12 @@ export default function TeacherDetail() {
                   ) : (
                     <p className="text-muted-foreground">No branches assigned</p>
                   )}
-                </div>
+                </div> */}
 
                 <div>
-                  <h3 className="text-lg font-semibold mb-2">Individual Classes</h3>
+                  <h3 className="text-lg font-semibold mb-2">
+                    Individual Classes
+                  </h3>
                   {assignedClasses?.length ? (
                     <ul className="list-disc pl-5">
                       {assignedClasses.map((cls) => (
@@ -103,7 +106,9 @@ export default function TeacherDetail() {
                       ))}
                     </ul>
                   ) : (
-                    <p className="text-muted-foreground">No individual classes assigned</p>
+                    <p className="text-muted-foreground">
+                      No individual classes assigned
+                    </p>
                   )}
                 </div>
               </div>
