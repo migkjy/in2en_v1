@@ -47,7 +47,7 @@ const STATUS_OPTIONS = [
   { value: "all", label: "All Statuses" },
   { value: "draft", label: "Draft" },
   { value: "published", label: "Published" },
-  { value: "completed", label: "Completed" }
+  { value: "completed", label: "Completed" },
 ];
 
 export default function AssignmentList() {
