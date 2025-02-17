@@ -1,4 +1,4 @@
-import './submission-detail.css';
+import "./submission-detail.css";
 
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Sidebar } from "@/components/layout/sidebar";
@@ -10,8 +10,8 @@ import type { Submission, User, Assignment } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface SubmissionResponse extends Submission {
   assignment: Assignment;
@@ -36,15 +36,21 @@ export default function SubmissionDetail() {
     return null;
   }
 
-  const { data: submissionData, isLoading, error } = useQuery<SubmissionResponse>({
+  const {
+    data: submissionData,
+    isLoading,
+    error,
+  } = useQuery<SubmissionResponse>({
     queryKey: ["/api/submissions", submissionId],
     queryFn: async () => {
       const response = await fetch(`/api/submissions/${submissionId}`, {
-        credentials: 'include'
+        credentials: "include",
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: "Failed to fetch submission" }));
+        const errorData = await response
+          .json()
+          .catch(() => ({ message: "Failed to fetch submission" }));
         throw new Error(errorData.message);
       }
 
@@ -58,7 +64,7 @@ export default function SubmissionDetail() {
       const response = await apiRequest(
         "POST",
         `/api/submissions/${submissionId}/reprocess`,
-        {}
+        {},
       );
       if (!response.ok) {
         const error = await response.text();
@@ -67,7 +73,9 @@ export default function SubmissionDetail() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/submissions", submissionId] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/submissions", submissionId],
+      });
       toast({
         title: "Success",
         description: "Submission is being reprocessed with AI",
@@ -111,7 +119,9 @@ export default function SubmissionDetail() {
             <Card>
               <CardContent className="p-6">
                 <p className="text-center text-red-600">
-                  {error instanceof Error ? error.message : "Failed to load submission"}
+                  {error instanceof Error
+                    ? error.message
+                    : "Failed to load submission"}
                 </p>
               </CardContent>
             </Card>
@@ -150,13 +160,19 @@ export default function SubmissionDetail() {
         <div className="max-w-6xl mx-auto">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>{assignment.title} - {student.name}</CardTitle>
+              <CardTitle>
+                {assignment.title} - {student.name}
+              </CardTitle>
               {isTeacherOrAdmin && (
                 <Button
                   onClick={() => reprocessMutation.mutate()}
-                  disabled={reprocessMutation.isPending || submission.status === "processing"}
+                  disabled={
+                    reprocessMutation.isPending ||
+                    submission.status === "processing"
+                  }
                 >
-                  {reprocessMutation.isPending || submission.status === "processing" ? (
+                  {reprocessMutation.isPending ||
+                  submission.status === "processing" ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Processing...
@@ -180,7 +196,7 @@ export default function SubmissionDetail() {
                   </div>
                 )}
 
-                {submission.ocrText && (
+                {/* {submission.ocrText && (
                   <div>
                     <h3 className="text-sm font-medium mb-2">OCR Text</h3>
                     <div className="bg-gray-50 p-4 rounded prose prose-sm max-w-none">
@@ -189,15 +205,13 @@ export default function SubmissionDetail() {
                       </ReactMarkdown>
                     </div>
                   </div>
-                )}
+                )} */}
 
                 {submission.aiFeedback && (
                   <div>
                     <h3 className="text-sm font-medium mb-2">AI Feedback</h3>
                     <div className="bg-blue-50 p-4 rounded prose prose-sm max-w-none markdown-content">
-                      <ReactMarkdown 
-                        remarkPlugins={[remarkGfm]}
-                      >
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
                         {submission.aiFeedback}
                       </ReactMarkdown>
                     </div>
@@ -206,7 +220,9 @@ export default function SubmissionDetail() {
 
                 {submission.teacherFeedback && (
                   <div>
-                    <h3 className="text-sm font-medium mb-2">Teacher Feedback</h3>
+                    <h3 className="text-sm font-medium mb-2">
+                      Teacher Feedback
+                    </h3>
                     <div className="bg-green-50 p-4 rounded prose prose-sm max-w-none">
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>
                         {submission.teacherFeedback}

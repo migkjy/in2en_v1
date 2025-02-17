@@ -8,6 +8,16 @@ import { UserRole, classes } from "@shared/schema";
 import { eq } from "drizzle-orm";
 import { db } from "./db";
 
+// Extend Express Request type to include user properties
+declare global {
+  namespace Express {
+    interface User {
+      id: number;
+      role: UserRole;
+    }
+  }
+}
+
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
@@ -15,10 +25,10 @@ const upload = multer({
 
 function requireRole(roles: UserRole[]) {
   return (req: Request, res: Response, next: Function) => {
-    if (!req.isAuthenticated()) {
+    if (!req.isAuthenticated() || !req.user) {
       return res.sendStatus(401);
     }
-    if (!roles.includes(req.user.role as UserRole)) {
+    if (!roles.includes(req.user.role)) {
       return res.sendStatus(403);
     }
     next();
@@ -556,7 +566,7 @@ export function registerRoutes(app: Express): Server {
 
   // Submission routes
   app.get("/api/submissions/:id", async (req, res) => {
-    if (!req.isAuthenticated()) {
+    if (!req.isAuthenticated() || !req.user) {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
