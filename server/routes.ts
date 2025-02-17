@@ -452,6 +452,9 @@ export function registerRoutes(app: Express): Server {
         status as string | undefined
       );
 
+      // Get all classes for sorting
+      const allClasses = await storage.listClasses();
+
       // If branchId is provided, filter assignments by branch
       if (branchId && branchId !== "all") {
         const filteredAssignments = [];
@@ -472,6 +475,26 @@ export function registerRoutes(app: Express): Server {
         }
         assignments = filteredAssignments;
       }
+
+      // Sort assignments by Branch ID, Class ID, and Assignment ID
+      assignments.sort((a, b) => {
+        // Get class info for both assignments
+        const classA = allClasses.find(c => c.id === a.classId);
+        const classB = allClasses.find(c => c.id === b.classId);
+
+        // Compare branch IDs first
+        if (classA?.branchId !== classB?.branchId) {
+          return (classA?.branchId || 0) - (classB?.branchId || 0);
+        }
+
+        // If branch IDs are equal, compare class IDs
+        if (a.classId !== b.classId) {
+          return (a.classId || 0) - (b.classId || 0);
+        }
+
+        // If class IDs are equal, compare assignment IDs
+        return a.id - b.id;
+      });
 
       res.json(assignments);
     } catch (error) {
@@ -953,7 +976,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.post("/api/students", requireRole([UserRole.ADMIN]), async (req, res) => {
+  app.post("/api/students", requireRole([UserRole.ADMIN]), async (req, res) =>{
     try {
       const createData = { ...req.body };
 
