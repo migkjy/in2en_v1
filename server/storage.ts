@@ -43,6 +43,7 @@ export interface IStorage {
   getSubmission(id: number): Promise<Submission | undefined>;
   listSubmissions(assignmentId: number): Promise<Submission[]>;
   updateSubmission(id: number, data: Partial<Submission>): Promise<Submission>;
+  deleteSubmission(id: number): Promise<void>;
 
   // Comment operations
   createComment(data: Partial<Comment>): Promise<Comment>;
@@ -332,6 +333,16 @@ export class DatabaseStorage implements IStorage {
       .returning();
     if (!submission) throw new Error('Submission not found');
     return submission;
+  }
+
+  async deleteSubmission(id: number): Promise<void> {
+    await db.transaction(async (tx) => {
+      // First delete all comments associated with this submission
+      await tx.delete(comments).where(eq(comments.submissionId, id));
+
+      // Then delete the submission itself
+      await tx.delete(submissions).where(eq(submissions.id, id));
+    });
   }
 
   // Comment operations
