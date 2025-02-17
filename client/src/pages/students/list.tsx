@@ -71,7 +71,7 @@ export default function StudentList() {
     return <div>Loading...</div>;
   }
 
-  const getBranchName = (branchId?: number) => {
+  const getBranchName = (branchId: number | null | undefined) => {
     if (!branchId) return "-";
     const branch = branches?.find((b) => b.id === branchId);
     return branch?.name || "-";

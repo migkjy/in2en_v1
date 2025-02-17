@@ -26,6 +26,7 @@ type GrantAuthorityDialogProps = {
   onOpenChange: (open: boolean) => void;
   teacherId: number;
   currentClasses: Class[];
+  currentBranches: Branch[];
 };
 
 export function GrantAuthorityDialog({
@@ -33,6 +34,7 @@ export function GrantAuthorityDialog({
   onOpenChange,
   teacherId,
   currentClasses,
+  currentBranches,
 }: GrantAuthorityDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
