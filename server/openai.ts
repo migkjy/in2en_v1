@@ -42,11 +42,21 @@ export async function extractTextFromImage(base64Image: string): Promise<{
         model: "gpt-4-vision-preview",
         messages: [
           {
+            role: "system",
+            content: `You are a text extraction expert. Your task is to extract ALL text from the image completely and accurately.
+Important rules:
+1. Extract every single word and character visible in the image
+2. Maintain exact formatting and line breaks
+3. Preserve all original errors and typos
+4. Do not summarize or skip any text
+5. Include section headers, labels, and any visible text markers`
+          },
+          {
             role: "user",
             content: [
               {
                 type: "text",
-                text: "Extract text from this image exactly as written. Preserve any errors. Respond in JSON format with 'text' and 'confidence' fields."
+                text: "Extract ALL text from this image exactly as written, preserving every detail including formatting, line breaks, and any errors. Do not skip any text. Respond in this JSON format: { 'text': 'extracted_text', 'confidence': confidence_score }"
               },
               {
                 type: "image_url",
@@ -57,9 +67,10 @@ export async function extractTextFromImage(base64Image: string): Promise<{
             ]
           }
         ],
-        max_tokens: 1000,
+        max_tokens: 4000,  // Increased from 1000 to 4000
         response_format: { type: "json_object" },
-        timeout: 30000 // 30 seconds timeout
+        temperature: 0,    // Set to 0 for maximum accuracy
+        timeout: 60000    // Increased timeout to 60 seconds
       });
 
       console.log("Parsing response...");
@@ -69,6 +80,8 @@ export async function extractTextFromImage(base64Image: string): Promise<{
       }
 
       const result = JSON.parse(content);
+      console.log("Extracted text length:", result.text?.length || 0);
+
       return {
         text: result.text || "",
         confidence: Math.max(0, Math.min(1, result.confidence || 0))
@@ -146,14 +159,21 @@ Please provide feedback in this format:
   });
 }
 
-function compressBase64Image(base64: string): string {
-  const base64Data = base64.split(";base64,").pop() || "";
-  const maxLength = 85000;
-  if (base64Data.length > maxLength) {
-    console.log(
-      `Compressing base64 image from ${base64Data.length} to ${maxLength} chars`,
-    );
-    return base64Data.substring(0, maxLength);
+async function waitForRunCompletion(threadId: string, runId: string, maxAttempts = 60) {
+  for (let i = 0; i < maxAttempts; i++) {
+    const run = await openai.beta.threads.runs.retrieve(threadId, runId);
+
+    if (run.status === 'completed') {
+      return run;
+    }
+
+    if (run.status === 'failed' || run.status === 'cancelled' || run.status === 'expired') {
+      throw new Error(`Run failed with status: ${run.status}`);
+    }
+
+    // Wait for 1 second before checking again
+    await new Promise(resolve => setTimeout(resolve, 1000));
   }
-  return base64Data;
+
+  throw new Error('Timeout waiting for run completion');
 }
