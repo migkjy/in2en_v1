@@ -3,13 +3,26 @@ import OpenAI from "openai";
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 function compressBase64Image(base64: string): string {
-  // If the input already starts with "data:image", return it as is
-  if (base64.startsWith("data:image")) {
-    return base64;
-  }
+  try {
+    // 이미 data:image로 시작하는 경우 그대로 반환
+    if (base64.startsWith("data:image")) {
+      console.log("Image already in correct format");
+      return base64;
+    }
 
-  // Otherwise, construct a proper data URL
-  return `data:image/jpeg;base64,${base64}`;
+    // base64 문자열이 유효한지 확인
+    const validBase64 = /^[A-Za-z0-9+/=]+$/;
+    if (!validBase64.test(base64)) {
+      console.error("Invalid base64 string received");
+      throw new Error("Invalid base64 string");
+    }
+
+    console.log("Converting base64 to proper data URL format");
+    return `data:image/jpeg;base64,${base64}`;
+  } catch (error) {
+    console.error("Error in compressBase64Image:", error);
+    throw error;
+  }
 }
 
 export async function extractTextFromImage(base64Image: string): Promise<{
@@ -19,6 +32,9 @@ export async function extractTextFromImage(base64Image: string): Promise<{
   try {
     console.log("Creating thread for image text extraction...");
     const thread = await openai.beta.threads.create();
+
+    const processedImage = compressBase64Image(base64Image);
+    console.log("Image URL format:", processedImage.substring(0, 50) + "...");
 
     console.log("Adding user message with image to thread...");
     await openai.beta.threads.messages.create(thread.id, {
@@ -31,7 +47,7 @@ export async function extractTextFromImage(base64Image: string): Promise<{
         {
           type: "image_url",
           image_url: {
-            url: compressBase64Image(base64Image)
+            url: processedImage
           }
         }
       ]
@@ -51,6 +67,10 @@ export async function extractTextFromImage(base64Image: string): Promise<{
 
     if (!assistantMessage || !assistantMessage.content[0]) {
       throw new Error("No text extraction received from assistant");
+    }
+
+    if (typeof assistantMessage.content[0].text === 'undefined') {
+      throw new Error("Invalid response format from assistant");
     }
 
     const result = JSON.parse(assistantMessage.content[0].text.value || "{}");
