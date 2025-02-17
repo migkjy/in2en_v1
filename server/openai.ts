@@ -27,40 +27,42 @@ export async function extractTextFromImage(base64Image: string): Promise<{
       messages: [
         {
           role: "system",
-          content: `You are a text extraction expert. Extract text from the image exactly as written, preserving all errors.
-Respond in JSON format with the following structure:
-{
-  "text": "extracted text with original errors",
-  "confidence": 0.95
-}
+          content: `You are an expert English teacher. Extract text from the image and format it in markdown.
+            Format rules:
+            1. Use '## Question' for textbook questions
+            2. Use '**Textbook Content:**' for original text
+            3. Use '*Student Answer:*' for student's writing
+            4. Use proper markdown paragraphs and sections
+            5. Maintain original line breaks and spacing
 
-Important rules:
-1. Extract text exactly as written
-2. Preserve all spelling mistakes and errors
-3. Keep original line breaks
-4. Do not make any corrections`
+            Return JSON in this format:
+            {
+              'text': string (markdown formatted text)
+            }`,
         },
         {
           role: "user",
           content: [
-            { 
-              type: "text", 
-              text: "Extract text from this image and respond in JSON format with the text and confidence score."
+            {
+              type: "text",
+              text: "Extract and format the text from this homework image using markdown",
             },
             {
               type: "image_url",
               image_url: {
-                url: `data:image/jpeg;base64,${compressedImage}`
-              }
-            }
-          ]
-        }
+                url: `data:image/jpeg;base64,${compressedImage}`,
+              },
+            },
+          ],
+        },
       ],
-      response_format: { type: "json_object" }
+      response_format: { type: "json_object" },
     });
 
     console.log("Received response from OpenAI Vision");
-    const result = JSON.parse(visionResponse.choices[0].message.content || "{}");
+    const result = JSON.parse(
+      visionResponse.choices[0].message.content || "{}",
+    );
     console.log("Parsed result:", result);
 
     return {
@@ -110,12 +112,12 @@ Please provide feedback in this exact format:
 (List words that could be improved)
 
 4. Overall Feedback:
-(Provide encouraging feedback about strengths and areas for improvement)`
+(Provide encouraging feedback about strengths and areas for improvement)`,
     });
 
     console.log("Creating run with assistant...");
     const run = await openai.beta.threads.runs.create(thread.id, {
-      assistant_id: "asst_TaRTcp8WPBUiZCW4XqlbM4Ra"
+      assistant_id: "asst_TaRTcp8WPBUiZCW4XqlbM4Ra",
     });
 
     console.log("Waiting for run completion...");
@@ -123,7 +125,9 @@ Please provide feedback in this exact format:
 
     console.log("Getting assistant's response...");
     const messages = await openai.beta.threads.messages.list(thread.id);
-    const assistantMessage = messages.data.find(msg => msg.role === "assistant");
+    const assistantMessage = messages.data.find(
+      (msg) => msg.role === "assistant",
+    );
 
     if (!assistantMessage || !assistantMessage.content[0]) {
       throw new Error("No feedback received from assistant");
@@ -138,21 +142,29 @@ Please provide feedback in this exact format:
   }
 }
 
-async function waitForRunCompletion(threadId: string, runId: string, maxAttempts = 60) {
+async function waitForRunCompletion(
+  threadId: string,
+  runId: string,
+  maxAttempts = 60,
+) {
   for (let i = 0; i < maxAttempts; i++) {
     const run = await openai.beta.threads.runs.retrieve(threadId, runId);
 
-    if (run.status === 'completed') {
+    if (run.status === "completed") {
       return run;
     }
 
-    if (run.status === 'failed' || run.status === 'cancelled' || run.status === 'expired') {
+    if (
+      run.status === "failed" ||
+      run.status === "cancelled" ||
+      run.status === "expired"
+    ) {
       throw new Error(`Run failed with status: ${run.status}`);
     }
 
     // Wait for 1 second before checking again
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
   }
 
-  throw new Error('Timeout waiting for run completion');
+  throw new Error("Timeout waiting for run completion");
 }
