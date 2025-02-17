@@ -3,15 +3,13 @@ import OpenAI from "openai";
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 function compressBase64Image(base64: string): string {
-  const base64Data = base64.split(";base64,").pop() || "";
-  const maxLength = 85000;
-  if (base64Data.length > maxLength) {
-    console.log(
-      `Compressing base64 image from ${base64Data.length} to ${maxLength} chars`,
-    );
-    return base64Data.substring(0, maxLength);
+  // If the input already starts with "data:image", return it as is
+  if (base64.startsWith("data:image")) {
+    return base64;
   }
-  return base64Data;
+
+  // Otherwise, construct a proper data URL
+  return `data:image/jpeg;base64,${base64}`;
 }
 
 export async function extractTextFromImage(base64Image: string): Promise<{
@@ -19,56 +17,55 @@ export async function extractTextFromImage(base64Image: string): Promise<{
   confidence: number;
 }> {
   try {
-    const compressedImage = compressBase64Image(base64Image);
-    console.log("Making API call to OpenAI Vision...");
-
-    // Create thread
+    console.log("Creating thread for image text extraction...");
     const thread = await openai.beta.threads.create();
 
-    // Add message with image to thread
+    console.log("Adding user message with image to thread...");
     await openai.beta.threads.messages.create(thread.id, {
       role: "user",
       content: [
         {
           type: "text",
-          text: "Extract and format the text from this homework image using markdown"
+          text: "Extract text from this image exactly as written, preserving any errors."
         },
         {
           type: "image_url",
           image_url: {
-            url: `data:image/jpeg;base64,${compressedImage}`
+            url: compressBase64Image(base64Image)
           }
         }
       ]
     });
 
-    // Run assistant
+    console.log("Creating run with assistant...");
     const run = await openai.beta.threads.runs.create(thread.id, {
       assistant_id: "asst_RNQYzDhnSFJ8r25f6zcUSrER"
     });
 
-    // Wait for completion
-    let completedRun = await waitForRunCompletion(thread.id, run.id);
+    console.log("Waiting for run completion...");
+    await waitForRunCompletion(thread.id, run.id);
 
-    // Get response
+    console.log("Getting assistant's response...");
     const messages = await openai.beta.threads.messages.list(thread.id);
     const assistantMessage = messages.data.find(msg => msg.role === "assistant");
 
     if (!assistantMessage || !assistantMessage.content[0]) {
-      throw new Error("No response received from assistant");
+      throw new Error("No text extraction received from assistant");
     }
 
-    const text = assistantMessage.content[0].text.value;
-    console.log("Extracted text:", { text });
+    const result = JSON.parse(assistantMessage.content[0].text.value || "{}");
+    console.log("Parsed result:", result);
 
     return {
-      text: text || "",
-      confidence: 0.95 // Assistant API doesn't provide confidence score
+      text: result.text || "",
+      confidence: Math.max(0, Math.min(1, result.confidence || 0))
     };
   } catch (error) {
     console.error("OpenAI API Error:", error);
     throw new Error(
-      `Failed to analyze image: ${error instanceof Error ? error.message : "Unknown error"}`,
+      `Failed to extract text from image: ${
+        error instanceof Error ? error.message : "Unknown error"
+      }`
     );
   }
 }
@@ -85,7 +82,7 @@ export async function generateFeedback(
     console.log("Adding message to thread...");
     await openai.beta.threads.messages.create(thread.id, {
       role: "user",
-      content: `Please provide feedback on the following text:
+      content: `Analyze the following text and provide detailed feedback:
 Student Profile:
 - English Level: ${englishLevel}
 - Age Group: ${ageGroup}
@@ -93,37 +90,32 @@ Student Profile:
 Text to Review:
 ${text}
 
-Please provide feedback in this exact format:
+Please provide feedback in this format:
 
 1. Grammar and Spelling Corrections:
-- ~~incorrect text~~ **correction**: [suggested correction]
-(List all grammar and spelling errors with corrections)
+- List all errors with corrections
 
 2. Sentence Structure Improvements:
-- ~~original sentence~~ **improvement**: [improved version]
-(List sentences that need structural improvement)
+- Suggest better sentence structures
 
 3. Vocabulary Suggestions:
-- ~~basic word choice~~ **suggestion**: [more appropriate word]
-(List words that could be improved)
+- Recommend more appropriate words
 
 4. Overall Feedback:
-(Provide encouraging feedback about strengths and areas for improvement)`,
+- Provide encouraging feedback about strengths and areas for improvement`
     });
 
     console.log("Creating run with assistant...");
     const run = await openai.beta.threads.runs.create(thread.id, {
-      assistant_id: "asst_TaRTcp8WPBUiZCW4XqlbM4Ra",
+      assistant_id: "asst_TaRTcp8WPBUiZCW4XqlbM4Ra"
     });
 
     console.log("Waiting for run completion...");
-    let completedRun = await waitForRunCompletion(thread.id, run.id);
+    await waitForRunCompletion(thread.id, run.id);
 
     console.log("Getting assistant's response...");
     const messages = await openai.beta.threads.messages.list(thread.id);
-    const assistantMessage = messages.data.find(
-      (msg) => msg.role === "assistant",
-    );
+    const assistantMessage = messages.data.find(msg => msg.role === "assistant");
 
     if (!assistantMessage || !assistantMessage.content[0]) {
       throw new Error("No feedback received from assistant");
@@ -132,35 +124,24 @@ Please provide feedback in this exact format:
     return assistantMessage.content[0].text.value;
   } catch (error) {
     console.error("OpenAI API Error:", error);
-    throw new Error(
-      `Failed to generate feedback: ${error instanceof Error ? error.message : "Unknown error"}`,
-    );
+    throw new Error(`Failed to generate feedback: ${error instanceof Error ? error.message : "Unknown error"}`);
   }
 }
 
-async function waitForRunCompletion(
-  threadId: string,
-  runId: string,
-  maxAttempts = 60,
-) {
+async function waitForRunCompletion(threadId: string, runId: string, maxAttempts = 60) {
   for (let i = 0; i < maxAttempts; i++) {
     const run = await openai.beta.threads.runs.retrieve(threadId, runId);
 
-    if (run.status === "completed") {
+    if (run.status === 'completed') {
       return run;
     }
 
-    if (
-      run.status === "failed" ||
-      run.status === "cancelled" ||
-      run.status === "expired"
-    ) {
+    if (run.status === 'failed' || run.status === 'cancelled' || run.status === 'expired') {
       throw new Error(`Run failed with status: ${run.status}`);
     }
 
-    // Wait for 1 second before checking again
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 1000));
   }
 
-  throw new Error("Timeout waiting for run completion");
+  throw new Error('Timeout waiting for run completion');
 }
