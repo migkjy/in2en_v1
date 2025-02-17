@@ -2,178 +2,140 @@ import OpenAI from "openai";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-// Retry configuration
-const MAX_RETRIES = 3;
-const INITIAL_RETRY_DELAY = 1000;
-
-async function retryOperation<T>(
-  operation: () => Promise<T>,
-  retries = MAX_RETRIES,
-  delay = INITIAL_RETRY_DELAY
-): Promise<T> {
-  try {
-    return await operation();
-  } catch (error) {
-    if (retries === 0 || !(error instanceof Error)) {
-      throw error;
-    }
-
-    console.log(`Operation failed, retrying... (${retries} attempts remaining)`);
-    await new Promise(resolve => setTimeout(resolve, delay));
-    return retryOperation(operation, retries - 1, delay * 2);
-  }
-}
-
+// the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 export async function extractTextFromImage(base64Image: string): Promise<{
   text: string;
+  feedback: string;
   confidence: number;
 }> {
-  return retryOperation(async () => {
-    try {
-      console.log("Starting text extraction process...");
+  try {
+    const visionResponse = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: `You are an expert English teacher. Extract text from the image and format it in markdown.
+Format rules:
+1. Use '## Question' for textbook questions
+2. Use '**Textbook Content:**' for original text
+3. Use '*Student Answer:*' for student's writing
+4. Use proper markdown paragraphs and sections
+5. Maintain original line breaks and spacing
 
-      // Ensure the base64 string is properly formatted
-      const base64Data = base64Image.startsWith("data:image") 
-        ? base64Image 
-        : `data:image/jpeg;base64,${base64Image}`;
-
-      console.log("Creating chat completion with image...");
-      const response = await openai.chat.completions.create({
-        model: "gpt-4-vision-preview",
-        messages: [
-          {
-            role: "system",
-            content: `You are a text extraction expert. Your task is to extract ALL text from the image completely and accurately.
-Important rules:
-1. Extract every single word and character visible in the image
-2. Maintain exact formatting and line breaks
-3. Preserve all original errors and typos
-4. Do not summarize or skip any text
-5. Include section headers, labels, and any visible text markers`
-          },
-          {
-            role: "user",
-            content: [
-              {
-                type: "text",
-                text: "Extract ALL text from this image exactly as written, preserving every detail including formatting, line breaks, and any errors. Do not skip any text. Respond in this JSON format: { 'text': 'extracted_text', 'confidence': confidence_score }"
+Return JSON in this format:
+{
+  'text': string (markdown formatted text),
+  'feedback': string (initial observations),
+  'confidence': number (0-1)
+}`,
+        },
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: "Extract and format the text from this homework image using markdown.",
+            },
+            {
+              type: "image_url",
+              image_url: {
+                url: `data:image/jpeg;base64,${base64Image}`,
               },
-              {
-                type: "image_url",
-                image_url: {
-                  url: base64Data
-                }
-              }
-            ]
-          }
-        ],
-        max_tokens: 4000,  // Increased from 1000 to 4000
-        response_format: { type: "json_object" },
-        temperature: 0,    // Set to 0 for maximum accuracy
-        timeout: 60000    // Increased timeout to 60 seconds
-      });
+            },
+          ],
+        },
+      ],
+      response_format: { type: "json_object" },
+    });
 
-      console.log("Parsing response...");
-      const content = response.choices[0]?.message?.content;
-      if (!content) {
-        throw new Error("No response content received");
-      }
+    const result = JSON.parse(
+      visionResponse.choices[0].message.content || "{}",
+    );
 
-      const result = JSON.parse(content);
-      console.log("Extracted text length:", result.text?.length || 0);
-
-      return {
-        text: result.text || "",
-        confidence: Math.max(0, Math.min(1, result.confidence || 0))
-      };
-    } catch (error) {
-      console.error("OpenAI API Error:", error);
-      throw new Error(
-        `Failed to extract text from image: ${
-          error instanceof Error ? error.message : "Unknown error"
-        }`
-      );
-    }
-  });
+    return {
+      text: result.text || "",
+      feedback: result.feedback || "",
+      confidence: Math.max(0, Math.min(1, result.confidence || 0)),
+    };
+  } catch (error) {
+    console.error("OpenAI API Error:", error);
+    throw new Error(
+      `Failed to analyze image: ${error instanceof Error ? error.message : "Unknown error"}`,
+    );
+  }
 }
 
 export async function generateFeedback(
   text: string,
   englishLevel: string,
-  ageGroup: string
+  ageGroup: string,
 ): Promise<string> {
-  return retryOperation(async () => {
-    try {
-      console.log("Generating feedback for text...");
-      const response = await openai.chat.completions.create({
-        model: "gpt-4",
-        messages: [
-          {
-            role: "system",
-            content: "You are an expert English teacher providing detailed feedback on student writing."
-          },
-          {
-            role: "user",
-            content: `Analyze the following text and provide detailed feedback:
+  try {
+    console.log("Creating thread for feedback generation...");
+    const thread = await openai.beta.threads.create();
+
+    console.log("Adding message to thread...");
+    await openai.beta.threads.messages.create(thread.id, {
+      role: "user",
+      content: `Please provide feedback on the following text:
 Student Profile:
 - English Level: ${englishLevel}
 - Age Group: ${ageGroup}
 
 Text to Review:
-${text}
+${text}`,
+    });
 
-Please provide feedback in this format:
+    console.log("Creating run with assistant...");
+    const run = await openai.beta.threads.runs.create(thread.id, {
+      assistant_id: "asst_TaRTcp8WPBUiZCW4XqlbM4Ra",
+    });
 
-1. Grammar and Spelling Corrections:
-- List all errors with corrections
+    console.log("Waiting for run completion...");
+    let completedRun = await waitForRunCompletion(thread.id, run.id);
 
-2. Sentence Structure Improvements:
-- Suggest better sentence structures
+    console.log("Getting assistant's response...");
+    const messages = await openai.beta.threads.messages.list(thread.id);
+    const assistantMessage = messages.data.find(
+      (msg) => msg.role === "assistant",
+    );
 
-3. Vocabulary Suggestions:
-- Recommend more appropriate words
-
-4. Overall Feedback:
-- Provide encouraging feedback about strengths and areas for improvement`
-          }
-        ],
-        temperature: 0.7,
-        max_tokens: 1000,
-        timeout: 30000 // 30 seconds timeout
-      });
-
-      const feedback = response.choices[0]?.message?.content;
-      if (!feedback) {
-        throw new Error("No feedback received");
-      }
-
-      return feedback;
-    } catch (error) {
-      console.error("OpenAI API Error:", error);
-      throw new Error(
-        `Failed to generate feedback: ${
-          error instanceof Error ? error.message : "Unknown error"
-        }`
-      );
+    if (!assistantMessage || !assistantMessage.content[0]) {
+      throw new Error("No feedback received from assistant");
     }
-  });
+
+    return assistantMessage.content[0].text.value;
+  } catch (error) {
+    console.error("OpenAI API Error:", error);
+    throw new Error(
+      `Failed to generate feedback: ${error instanceof Error ? error.message : "Unknown error"}`,
+    );
+  }
 }
 
-async function waitForRunCompletion(threadId: string, runId: string, maxAttempts = 60) {
+async function waitForRunCompletion(
+  threadId: string,
+  runId: string,
+  maxAttempts = 60,
+) {
   for (let i = 0; i < maxAttempts; i++) {
     const run = await openai.beta.threads.runs.retrieve(threadId, runId);
 
-    if (run.status === 'completed') {
+    if (run.status === "completed") {
       return run;
     }
 
-    if (run.status === 'failed' || run.status === 'cancelled' || run.status === 'expired') {
+    if (
+      run.status === "failed" ||
+      run.status === "cancelled" ||
+      run.status === "expired"
+    ) {
       throw new Error(`Run failed with status: ${run.status}`);
     }
 
     // Wait for 1 second before checking again
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
   }
 
-  throw new Error('Timeout waiting for run completion');
+  throw new Error("Timeout waiting for run completion");
 }
