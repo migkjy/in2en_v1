@@ -22,7 +22,7 @@ export default function AdminDashboard() {
         <div className="max-w-6xl mx-auto space-y-8">
           <div>
             <h1 className="text-3xl font-semibold tracking-tight text-gray-900">Admin Dashboard</h1>
-            <p className="mt-2 text-gray-500">Manage your academy's branches, classes, and more.</p>
+            <p className="mt-2 text-gray-500">Manage In2English branches, classes, and more.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

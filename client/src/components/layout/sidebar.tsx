@@ -60,7 +60,7 @@ export function Sidebar({ className }: SidebarProps) {
       <div className="flex-1 space-y-2 py-6">
         <div className="px-3 py-2">
           <h2 className="mb-6 px-4 text-xl font-semibold tracking-tight text-gray-900">
-            English Academy
+            In2English
           </h2>
           <div className="space-y-1.5">
             {links.map((link) => (

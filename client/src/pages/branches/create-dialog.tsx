@@ -31,7 +31,7 @@ type CreateBranchDialogProps = {
 export function CreateBranchDialog({ open, onOpenChange, branch }: CreateBranchDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
+
   const form = useForm<z.infer<typeof insertBranchSchema>>({
     resolver: zodResolver(insertBranchSchema),
     defaultValues: {
@@ -61,18 +61,18 @@ export function CreateBranchDialog({ open, onOpenChange, branch }: CreateBranchD
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      
+
       if (!response.ok) {
         throw new Error(branch ? "Failed to update branch" : "Failed to create branch");
       }
-      
+
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/branches"] });
       toast({
         title: "Success",
-        description: "Branch created successfully",
+        description: branch ? "Branch updated successfully" : "Branch created successfully",
       });
       form.reset();
       onOpenChange(false);
@@ -80,7 +80,7 @@ export function CreateBranchDialog({ open, onOpenChange, branch }: CreateBranchD
     onError: () => {
       toast({
         title: "Error",
-        description: "Failed to create branch",
+        description: branch ? "Failed to update branch" : "Failed to create branch",
         variant: "destructive",
       });
     },
@@ -90,9 +90,9 @@ export function CreateBranchDialog({ open, onOpenChange, branch }: CreateBranchD
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create New Branch</DialogTitle>
+          <DialogTitle>{branch ? "Edit Branch" : "Create New Branch"}</DialogTitle>
         </DialogHeader>
-        
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit((data) => createBranch.mutate(data))} className="space-y-4">
             <FormField
@@ -108,7 +108,7 @@ export function CreateBranchDialog({ open, onOpenChange, branch }: CreateBranchD
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="address"
@@ -116,7 +116,7 @@ export function CreateBranchDialog({ open, onOpenChange, branch }: CreateBranchD
                 <FormItem>
                   <FormLabel>Address</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input {...field} value={field.value || ""} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -128,7 +128,9 @@ export function CreateBranchDialog({ open, onOpenChange, branch }: CreateBranchD
                 Cancel
               </Button>
               <Button type="submit" disabled={createBranch.isPending}>
-                {createBranch.isPending ? "Creating..." : "Create Branch"}
+                {createBranch.isPending 
+                  ? (branch ? "Updating..." : "Creating...") 
+                  : (branch ? "Update Branch" : "Create Branch")}
               </Button>
             </div>
           </form>
