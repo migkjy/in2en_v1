@@ -985,7 +985,7 @@ export function registerRoutes(app: Express): Server {
 
         // If password is empty string or undefined, remove it from the request body
         const updateData = { ...req.body };
-        if (!updateData.password) {
+        if(!updateData.password) {
           delete updateData.password;
         }
 
@@ -1132,6 +1132,32 @@ export function registerRoutes(app: Express): Server {
         } else {
           res.status(500).json({ message: "An unknown error occurred" });
         }
+      }
+    },
+  );
+
+  app.delete(
+    "/api/submissions/:id",
+    requireRole([UserRole.TEACHER, UserRole.ADMIN]),
+    async (req, res) => {
+      try {
+        const submissionId = Number(req.params.id);
+        if (isNaN(submissionId)) {
+          return res.status(400).json({ message: "Invalid submission ID" });
+        }
+
+        const submission = await storage.getSubmission(submissionId);
+        if (!submission) {
+          return res.status(404).json({ message: "Submission not found" });
+        }
+
+        await storage.deleteSubmission(submissionId);
+        res.json({ message: "Submission deleted successfully" });
+      } catch (error) {
+        console.error("Error deleting submission:", error);
+        res.status(500).json({
+          message: error instanceof Error ? error.message : "Failed to delete submission",
+        });
       }
     },
   );

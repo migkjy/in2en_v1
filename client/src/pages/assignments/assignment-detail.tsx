@@ -167,8 +167,8 @@ export default function AssignmentDetail() {
         `/api/submissions/${submissionId}`,
       );
       if (!response.ok) {
-        const error = await response.text();
-        throw new Error(error);
+        const errorText = await response.text();
+        throw new Error(errorText);
       }
       return response.json();
     },
