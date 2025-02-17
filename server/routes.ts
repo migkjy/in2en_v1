@@ -82,9 +82,11 @@ export async function processSubmissionWithAI(submissionId: number) {
     return submission.id;
   } catch (error) {
     console.error("Error in processSubmissionWithAI:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    const newStatus = errorMessage.includes("timeout") ? "uploaded" : "failed";
     await storage.updateSubmission(submissionId, {
-      status: "failed",
-      aiFeedback: error instanceof Error ? error.message : "Unknown error",
+      status: newStatus,
+      aiFeedback: errorMessage,
     });
     throw error;
   }

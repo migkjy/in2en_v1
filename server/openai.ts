@@ -118,6 +118,9 @@ async function waitForRunCompletion(
   runId: string,
   maxAttempts = 60,
 ) {
+  const startTime = Date.now();
+  const TIMEOUT = 60000; // 1 minute timeout
+
   for (let i = 0; i < maxAttempts; i++) {
     const run = await openai.beta.threads.runs.retrieve(threadId, runId);
 
@@ -131,6 +134,11 @@ async function waitForRunCompletion(
       run.status === "expired"
     ) {
       throw new Error(`Run failed with status: ${run.status}`);
+    }
+
+    // Check for timeout
+    if (Date.now() - startTime > TIMEOUT) {
+      throw new Error("Processing timeout");
     }
 
     // Wait for 1 second before checking again
