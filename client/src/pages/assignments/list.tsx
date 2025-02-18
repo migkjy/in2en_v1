@@ -40,7 +40,7 @@ import { format } from "date-fns";
 import { useState } from "react";
 import { EditAssignmentDialog } from "./edit-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Eye, Pencil, Trash } from "lucide-react";
+//import { Eye, Pencil, Trash } from "lucide-react"; //Removed as per instructions
 import { apiRequest } from "@/lib/queryClient";
 
 const STATUS_OPTIONS = [
@@ -301,13 +301,12 @@ export default function AssignmentList() {
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </TableCell>
-                        <TableCell className="space-x-2">
+                        <TableCell className="space-x-2 text-right">
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => navigate(`/assignments/${assignment.id}`)}
                           >
-                            <Eye className="h-4 w-4 mr-1" />
                             View
                           </Button>
                           <Button
@@ -315,7 +314,6 @@ export default function AssignmentList() {
                             size="sm"
                             onClick={() => setEditingAssignment(assignment)}
                           >
-                            <Pencil className="h-4 w-4 mr-1" />
                             Edit
                           </Button>
                           <Button
@@ -323,7 +321,6 @@ export default function AssignmentList() {
                             size="sm"
                             onClick={() => setDeleteAssignment(assignment)}
                           >
-                            <Trash className="h-4 w-4 mr-1" />
                             Delete
                           </Button>
                         </TableCell>
