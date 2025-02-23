@@ -401,7 +401,7 @@ export default function ClassDetail() {
                         <TableRow key={student.id}>
                           <TableCell>{student.name}</TableCell>
                           <TableCell>{student.email}</TableCell>
-                          <TableCell>{student.phoneNumber || "-"}</TableCell>
+                          <TableCell>{student.phone_number || "-"}</TableCell>
                           <TableCell className="text-center">
                             <Checkbox
                               checked={!!isAssigned}
