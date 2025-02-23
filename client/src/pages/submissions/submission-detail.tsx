@@ -231,7 +231,7 @@ export default function SubmissionDetail() {
                   <div className="space-y-4">
                     <div>
                       <h3 className="text-sm font-medium mb-2">AI Corrections</h3>
-                      <div className="bg-blue-50 p-4 rounded prose prose-sm max-w-none">
+                      <div className="bg-blue-50 p-4 rounded prose prose-sm max-w-none markdown-content">
                         <ReactMarkdown remarkPlugins={[remarkGfm]}>
                           {aiFeedbackData.correctedText}
                         </ReactMarkdown>
@@ -240,7 +240,7 @@ export default function SubmissionDetail() {
 
                     <div>
                       <h3 className="text-sm font-medium mb-2">AI Assessment</h3>
-                      <div className="bg-green-50 p-4 rounded prose prose-sm max-w-none">
+                      <div className="bg-green-50 p-4 rounded prose prose-sm max-w-none markdown-content">
                         <ReactMarkdown remarkPlugins={[remarkGfm]}>
                           {aiFeedbackData.overallAssessment}
                         </ReactMarkdown>

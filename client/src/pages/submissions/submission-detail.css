@@ -43,15 +43,13 @@ del, s {
   font-weight: 500;
 }
 
-/* Style for parenthetical corrections and square brackets */
-.markdown-content :matches(
-  :not(pre) > code,
-  p,
-  span
-):matches(
-  :contains(/\([^)]+\)/),
-  :contains(/\[[^\]]+\]/)
-) {
+/* Style for bold text within corrections */
+.markdown-content strong {
   color: red;
-  font-weight: 500;
+  font-weight: 600;
+}
+
+/* Style for corrections within parentheses */
+.markdown-content:matches(em, strong):has(+ em:contains("correction")) {
+  color: red;
 }
