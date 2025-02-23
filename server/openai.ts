@@ -65,23 +65,11 @@ Return JSON in this format:
   }
 }
 
-export interface FeedbackResponse {
-  overallScore: number;
-  grammarScore: number;
-  vocabularyScore: number;
-  structureScore: number;
-  comments: {
-    positive: string[];
-    improvements: string[];
-  };
-  detailedFeedback: string;
-}
-
 export async function generateFeedback(
   text: string,
   englishLevel: string,
   ageGroup: string,
-): Promise<FeedbackResponse> {
+): Promise<string> {
   try {
     console.log("Creating thread for feedback generation...");
     const thread = await openai.beta.threads.create();
@@ -95,20 +83,7 @@ Student Profile:
 - Age Group: ${ageGroup}
 
 Text to Review:
-${text}
-
-Return a JSON response with the following structure:
-{
-  "overallScore": number (0-100),
-  "grammarScore": number (0-100),
-  "vocabularyScore": number (0-100),
-  "structureScore": number (0-100),
-  "comments": {
-    "positive": string[],
-    "improvements": string[]
-  },
-  "detailedFeedback": string
-}`,
+${text}`,
     });
 
     console.log("Creating run with assistant...");
@@ -129,21 +104,7 @@ Return a JSON response with the following structure:
       throw new Error("No feedback received from assistant");
     }
 
-    // Parse the JSON response
-    const response = JSON.parse(assistantMessage.content[0].text.value);
-
-    // Ensure the response matches our interface
-    return {
-      overallScore: response.overallScore || 0,
-      grammarScore: response.grammarScore || 0,
-      vocabularyScore: response.vocabularyScore || 0,
-      structureScore: response.structureScore || 0,
-      comments: {
-        positive: response.comments?.positive || [],
-        improvements: response.comments?.improvements || [],
-      },
-      detailedFeedback: response.detailedFeedback || "",
-    };
+    return assistantMessage.content[0].text.value;
   } catch (error) {
     console.error("OpenAI API Error:", error);
     throw new Error(
