@@ -370,7 +370,6 @@ export default function ClassDetail() {
               </div>
             </DialogContent>
           </Dialog>
-
           {/* Assign Student Dialog */}
           <Dialog
             open={isAssignStudentDialogOpen}
@@ -389,6 +388,7 @@ export default function ClassDetail() {
                     <TableRow>
                       <TableHead>Name</TableHead>
                       <TableHead>Email</TableHead>
+                      <TableHead>Phone</TableHead>
                       <TableHead className="w-[80px] text-center">Assign</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -401,6 +401,7 @@ export default function ClassDetail() {
                         <TableRow key={student.id}>
                           <TableCell>{student.name}</TableCell>
                           <TableCell>{student.email}</TableCell>
+                          <TableCell>{student.phoneNumber || "-"}</TableCell>
                           <TableCell className="text-center">
                             <Checkbox
                               checked={!!isAssigned}
