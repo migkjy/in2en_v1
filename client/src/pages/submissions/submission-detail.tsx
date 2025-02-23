@@ -153,6 +153,16 @@ export default function SubmissionDetail() {
   const { assignment, student, ...submission } = submissionData;
   const isTeacherOrAdmin = user.role === "TEACHER" || user.role === "ADMIN";
 
+  // Parse AI feedback if it exists
+  let aiFeedbackData = null;
+  if (submission.aiFeedback) {
+    try {
+      aiFeedbackData = JSON.parse(submission.aiFeedback);
+    } catch (e) {
+      console.error("Failed to parse AI feedback:", e);
+    }
+  }
+
   return (
     <div className="flex h-screen">
       <Sidebar className="w-64" />
@@ -217,13 +227,24 @@ export default function SubmissionDetail() {
                   </div>
                 )}
 
-                {submission.aiFeedback && (
-                  <div>
-                    <h3 className="text-sm font-medium mb-2">AI Feedback</h3>
-                    <div className="bg-blue-50 p-4 rounded prose prose-sm max-w-none markdown-content">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {submission.aiFeedback}
-                      </ReactMarkdown>
+                {aiFeedbackData && (
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-sm font-medium mb-2">AI Corrections</h3>
+                      <div className="bg-blue-50 p-4 rounded prose prose-sm max-w-none">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {aiFeedbackData.correctedText}
+                        </ReactMarkdown>
+                      </div>
+                    </div>
+
+                    <div>
+                      <h3 className="text-sm font-medium mb-2">AI Assessment</h3>
+                      <div className="bg-green-50 p-4 rounded prose prose-sm max-w-none">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {aiFeedbackData.overallAssessment}
+                        </ReactMarkdown>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -233,7 +254,7 @@ export default function SubmissionDetail() {
                     <h3 className="text-sm font-medium mb-2">
                       Teacher Feedback
                     </h3>
-                    <div className="bg-green-50 p-4 rounded prose prose-sm max-w-none">
+                    <div className="bg-purple-50 p-4 rounded prose prose-sm max-w-none">
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>
                         {submission.teacherFeedback}
                       </ReactMarkdown>
