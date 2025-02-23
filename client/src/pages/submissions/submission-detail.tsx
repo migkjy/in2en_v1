@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { Submission, User, Assignment } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
-import { Loader2 } from "lucide-react";
+import { Loader2, ArrowLeft } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
@@ -158,6 +158,16 @@ export default function SubmissionDetail() {
       <Sidebar className="w-64" />
       <main className="flex-1 p-8 overflow-auto">
         <div className="max-w-6xl mx-auto">
+          {/* Added Back Button */}
+          <Button
+            variant="outline"
+            className="mb-4"
+            onClick={() => navigate(`/assignments/${assignment.id}`)}
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Assignment Detail
+          </Button>
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>
