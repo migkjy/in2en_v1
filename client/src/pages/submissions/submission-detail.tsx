@@ -18,6 +18,18 @@ interface SubmissionResponse extends Submission {
   student: User;
 }
 
+interface FeedbackData {
+  overallScore: number;
+  grammarScore: number;
+  vocabularyScore: number;
+  structureScore: number;
+  comments: {
+    positive: string[];
+    improvements: string[];
+  };
+  detailedFeedback: string;
+}
+
 export default function SubmissionDetail() {
   const [, params] = useRoute("/submissions/:id");
   const [, navigate] = useLocation();
@@ -220,10 +232,66 @@ export default function SubmissionDetail() {
                 {submission.aiFeedback && (
                   <div>
                     <h3 className="text-sm font-medium mb-2">AI Feedback</h3>
-                    <div className="bg-blue-50 p-4 rounded prose prose-sm max-w-none markdown-content">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {submission.aiFeedback}
-                      </ReactMarkdown>
+                    <div className="bg-blue-50 p-4 rounded prose prose-sm max-w-none">
+                      {(() => {
+                        try {
+                          const feedback: FeedbackData = JSON.parse(submission.aiFeedback);
+                          return (
+                            <div className="space-y-4">
+                              <div className="grid grid-cols-4 gap-4">
+                                <div className="bg-white p-3 rounded shadow">
+                                  <div className="font-medium">Overall</div>
+                                  <div className="text-xl">{feedback.overallScore}%</div>
+                                </div>
+                                <div className="bg-white p-3 rounded shadow">
+                                  <div className="font-medium">Grammar</div>
+                                  <div className="text-xl">{feedback.grammarScore}%</div>
+                                </div>
+                                <div className="bg-white p-3 rounded shadow">
+                                  <div className="font-medium">Vocabulary</div>
+                                  <div className="text-xl">{feedback.vocabularyScore}%</div>
+                                </div>
+                                <div className="bg-white p-3 rounded shadow">
+                                  <div className="font-medium">Structure</div>
+                                  <div className="text-xl">{feedback.structureScore}%</div>
+                                </div>
+                              </div>
+
+                              <div>
+                                <h4 className="font-medium text-green-700 mb-2">Strengths</h4>
+                                <ul className="list-disc pl-5">
+                                  {feedback.comments.positive.map((comment, idx) => (
+                                    <li key={idx}>{comment}</li>
+                                  ))}
+                                </ul>
+                              </div>
+
+                              <div>
+                                <h4 className="font-medium text-amber-700 mb-2">Areas for Improvement</h4>
+                                <ul className="list-disc pl-5">
+                                  {feedback.comments.improvements.map((comment, idx) => (
+                                    <li key={idx}>{comment}</li>
+                                  ))}
+                                </ul>
+                              </div>
+
+                              <div>
+                                <h4 className="font-medium mb-2">Detailed Feedback</h4>
+                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                  {feedback.detailedFeedback}
+                                </ReactMarkdown>
+                              </div>
+                            </div>
+                          );
+                        } catch (e) {
+                          // Fallback to original text display if JSON parsing fails
+                          return (
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                              {submission.aiFeedback}
+                            </ReactMarkdown>
+                          );
+                        }
+                      })()}
                     </div>
                   </div>
                 )}
