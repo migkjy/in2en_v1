@@ -126,6 +126,12 @@ export function GrantAuthorityDialog({
     },
   });
 
+  const getBranchName = (branchId: number | null) => {
+    if (!branchId || !branches) return "No Branch";
+    const branch = branches.find(b => b.id === branchId);
+    return branch ? branch.name : "Unknown Branch";
+  };
+
   const filteredClasses = classes?.filter(cls => 
     selectedBranch === "all" || cls.branchId?.toString() === selectedBranch
   ).sort((a, b) => {
@@ -139,12 +145,6 @@ export function GrantAuthorityDialog({
     // If same branch, sort by class name
     return a.name.localeCompare(b.name);
   });
-
-  const getBranchName = (branchId: number | null) => {
-    if (!branchId || !branches) return "No Branch";
-    const branch = branches.find(b => b.id === branchId);
-    return branch ? branch.name : "Unknown Branch";
-  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
