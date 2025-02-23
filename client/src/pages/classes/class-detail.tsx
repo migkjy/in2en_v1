@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Class, Branch, User } from "@shared/schema";
 import { Sidebar } from "@/components/layout/sidebar";
 import { useToast } from "@/hooks/use-toast";
-import { useRoute } from "wouter";
+import { useRoute, useLocation } from "wouter";
 import {
   Table,
   TableBody,
@@ -16,7 +16,7 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Check, X } from "lucide-react";
+import { Check, X, ArrowLeft } from "lucide-react";
 
 interface TeacherWithRoles extends User {
   isLead: boolean;
@@ -25,6 +25,7 @@ interface TeacherWithRoles extends User {
 
 export default function ClassDetail() {
   const [, params] = useRoute("/admin/classes/:id");
+  const [, navigate] = useLocation();
   const classId = params?.id;
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -191,6 +192,16 @@ export default function ClassDetail() {
       <Sidebar className="w-64" />
       <main className="flex-1 p-8 overflow-auto">
         <div className="max-w-6xl mx-auto">
+          {/* Added Back Button */}
+          <Button
+            variant="outline"
+            className="mb-4"
+            onClick={() => navigate("/admin/classes")}
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Classes List
+          </Button>
+
           {/* Class Info Card */}
           <Card className="mb-8">
             <CardHeader>
