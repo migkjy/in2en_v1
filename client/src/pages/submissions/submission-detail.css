@@ -42,3 +42,16 @@ del, s {
   color: red !important;
   font-weight: 500;
 }
+
+/* Style for parenthetical corrections and square brackets */
+.markdown-content :matches(
+  :not(pre) > code,
+  p,
+  span
+):matches(
+  :contains(/\([^)]+\)/),
+  :contains(/\[[^\]]+\]/)
+) {
+  color: red;
+  font-weight: 500;
+}
