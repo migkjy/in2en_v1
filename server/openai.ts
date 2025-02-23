@@ -65,11 +65,16 @@ Return JSON in this format:
   }
 }
 
+interface FeedbackResponse {
+  correctedText: string;
+  overallAssessment: string;
+}
+
 export async function generateFeedback(
   text: string,
   englishLevel: string,
   ageGroup: string,
-): Promise<string> {
+): Promise<FeedbackResponse> {
   try {
     console.log("Creating thread for feedback generation...");
     const thread = await openai.beta.threads.create();
@@ -83,12 +88,19 @@ Student Profile:
 - Age Group: ${ageGroup}
 
 Text to Review:
-${text}`,
+${text}
+
+Respond with JSON in this format:
+{
+  "correctedText": "The corrected version of the text with corrections marked using markdown",
+  "overallAssessment": "A detailed assessment of the writing in markdown format"
+}`,
     });
 
     console.log("Creating run with assistant...");
     const run = await openai.beta.threads.runs.create(thread.id, {
       assistant_id: "asst_TaRTcp8WPBUiZCW4XqlbM4Ra",
+      response_format: { type: "json_object" },
     });
 
     console.log("Waiting for run completion...");
@@ -104,7 +116,13 @@ ${text}`,
       throw new Error("No feedback received from assistant");
     }
 
-    return assistantMessage.content[0].text.value;
+    const contentText = assistantMessage.content[0].text.value;
+    const response = JSON.parse(contentText) as FeedbackResponse;
+
+    return {
+      correctedText: response.correctedText || "",
+      overallAssessment: response.overallAssessment || "",
+    };
   } catch (error) {
     console.error("OpenAI API Error:", error);
     throw new Error(
