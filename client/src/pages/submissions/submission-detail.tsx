@@ -196,7 +196,7 @@ export default function SubmissionDetail() {
                   </div>
                 )}
 
-                {/* {submission.ocrText && (
+                {submission.ocrText && (
                   <div>
                     <h3 className="text-sm font-medium mb-2">OCR Text</h3>
                     <div className="bg-gray-50 p-4 rounded prose prose-sm max-w-none">
@@ -205,7 +205,7 @@ export default function SubmissionDetail() {
                       </ReactMarkdown>
                     </div>
                   </div>
-                )} */}
+                )}
 
                 {submission.aiFeedback && (
                   <div>
