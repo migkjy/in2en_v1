@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "wouter";
+import { useParams, useLocation } from "wouter";
 import { User, Class, Branch } from "@shared/schema";
 import { Sidebar } from "@/components/layout/sidebar";
 import { useToast } from "@/hooks/use-toast";
@@ -7,9 +7,11 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { GrantAuthorityDialog } from "./grant-authority-dialog";
+import { ArrowLeft } from "lucide-react"; // Added for back button icon
 
 export default function TeacherDetail() {
   const { id } = useParams<{ id: string }>();
+  const [, navigate] = useLocation(); // Added useLocation hook for navigation
   const [isGrantAuthorityDialogOpen, setIsGrantAuthorityDialogOpen] =
     useState(false);
   const { toast } = useToast();
@@ -55,6 +57,16 @@ export default function TeacherDetail() {
       <Sidebar className="w-64" />
       <main className="flex-1 p-8 overflow-auto">
         <div className="max-w-6xl mx-auto">
+          {/* Added Back Button */}
+          <Button
+            variant="outline"
+            className="mb-4"
+            onClick={() => navigate("/admin/teachers")}
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Teachers List
+          </Button>
+
           <Card className="mb-8">
             <CardHeader>
               <CardTitle>Teacher Information</CardTitle>
@@ -82,19 +94,6 @@ export default function TeacherDetail() {
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
-                {/* <div>
-                  <h3 className="text-lg font-semibold mb-2">Full Branch Access</h3>
-                  {assignedBranches?.length ? (
-                    <ul className="list-disc pl-5">
-                      {assignedBranches.map((branch) => (
-                        <li key={branch.id}>{branch.name}</li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="text-muted-foreground">No branches assigned</p>
-                  )}
-                </div> */}
-
                 <div>
                   <h3 className="text-lg font-semibold mb-2">
                     Individual Classes
