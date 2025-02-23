@@ -150,17 +150,10 @@ export function GrantAuthorityDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <DialogTitle>Grant Authority</DialogTitle>
-              <DialogDescription>
-                Select classes to grant access to this teacher.
-              </DialogDescription>
-            </div>
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Back
-            </Button>
-          </div>
+          <DialogTitle>Grant Authority</DialogTitle>
+          <DialogDescription>
+            Select classes to grant access to this teacher.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6">
