@@ -84,7 +84,8 @@ export async function processSubmissionWithAI(submissionId: number) {
     // Update submission with results
     await storage.updateSubmission(submission.id, {
       ocrText: text,
-      aiFeedback: feedback,
+      correctedText: feedback.correctedText,
+      overallAssessment: feedback.overallAssessment,
       status: "ai-reviewed",
     });
 
@@ -96,7 +97,8 @@ export async function processSubmissionWithAI(submissionId: number) {
     const newStatus = errorMessage.includes("timeout") ? "uploaded" : "failed";
     await storage.updateSubmission(submissionId, {
       status: newStatus,
-      aiFeedback: errorMessage,
+      correctedText: null,
+      overallAssessment: errorMessage,
     });
     throw error;
   }
@@ -978,8 +980,7 @@ export function registerRoutes(app: Express): Server {
       );
       res.json(students);
     } catch (error) {
-      if (error instanceof Error) {
-        res.status(400).json({ message: error.message });
+      if (error instanceof Error) {        res.status(400).json({ message: error.message });
       } else {
         res.status(500).json({ message: "An unknown error occurred" });
       }

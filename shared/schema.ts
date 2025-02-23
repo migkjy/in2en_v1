@@ -79,7 +79,8 @@ export const submissions = pgTable("submissions", {
   studentId: integer("student_id").references(() => users.id),
   imageUrl: text("image_url").notNull(),
   ocrText: text("ocr_text"),
-  aiFeedback: text("ai_feedback"),
+  correctedText: text("corrected_text"),
+  overallAssessment: text("overall_assessment"),
   teacherFeedback: text("teacher_feedback"),
   status: varchar("status", { length: 50 }).default("uploaded"),
 });

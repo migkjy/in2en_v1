@@ -21,6 +21,7 @@ Format rules:
 3. Use '*Student Answer:*' for student's writing
 4. Use proper markdown paragraphs and sections
 5. Maintain original line breaks and spacing
+6. Do not use bold formatting (**text**). Instead, use heading levels (#, ##, ###, ####, #####) to structure and emphasize text as needed.
 
 Return JSON in this format:
 {
