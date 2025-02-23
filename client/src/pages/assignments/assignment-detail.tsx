@@ -4,7 +4,7 @@ import { useRoute, useLocation } from "wouter";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Loader2, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   Table,
@@ -191,6 +191,7 @@ export default function AssignmentDetail() {
   });
 
   const isTeacherOrAdmin = user?.role === "TEACHER" || user?.role === "ADMIN";
+  const backPath = user?.role === "ADMIN" ? "/admin/assignments" : "/teacher/assignments";
 
   if (isAssignmentLoading || isClassLoading) {
     return (
@@ -232,6 +233,16 @@ export default function AssignmentDetail() {
         <Sidebar className="w-64" />
         <main className="flex-1 p-8 overflow-auto">
           <div className="max-w-6xl mx-auto">
+            {/* Added Back Button */}
+            <Button
+              variant="outline"
+              className="mb-4"
+              onClick={() => navigate(backPath)}
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Assignments List
+            </Button>
+
             <Card>
               <CardHeader>
                 <CardTitle>{assignment.title}</CardTitle>
