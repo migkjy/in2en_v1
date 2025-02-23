@@ -17,6 +17,13 @@ import { CreateClassDialog } from "./create-dialog";
 import { ManageOptionsDialog } from "./manage-options-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Settings } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type ClassWithStats = Class & {
   branch?: Branch;
@@ -25,18 +32,32 @@ type ClassWithStats = Class & {
 };
 
 export default function ClassList() {
-  const [isCreateClassDialogOpen, setIsCreateClassDialogOpen] = useState(false);
-  const [isManageOptionsDialogOpen, setIsManageOptionsDialogOpen] = useState(false);
-  const [selectedClass, setSelectedClass] = useState<Class | null>(null);
-  const [, setLocation] = useLocation();
+  const [, navigate] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isManageOptionsOpen, setIsManageOptionsOpen] = useState(false);
+  const [selectedBranch, setSelectedBranch] = useState<string>("all");
+  const [selectedClass, setSelectedClass] = useState<Class | null>(null);
 
-  const { data: classes, isLoading: isClassesLoading } = useQuery<ClassWithStats[]>({
-    queryKey: ["/api/classes"],
-    staleTime: 0,
-    refetchInterval: 2000, // Refetch every 2 seconds
-    retry: 3,
+
+  const { data: branches } = useQuery<Branch[]>({
+    queryKey: ["/api/branches"],
+  });
+
+  const { data: classes, isLoading: isClassesLoading } = useQuery<Class[]>({
+    queryKey: ["/api/classes", selectedBranch],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (selectedBranch !== "all") {
+        params.append("branchId", selectedBranch);
+      }
+      const response = await fetch(`/api/classes?${params.toString()}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch classes");
+      }
+      return response.json();
+    },
   });
 
   const handleDeleteClass = async (classId: number) => {
@@ -50,7 +71,7 @@ export default function ClassList() {
       if (!response.ok) throw new Error("Failed to delete class");
 
       // Invalidate queries
-      queryClient.invalidateQueries({ queryKey: ["/api/classes"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/classes", selectedBranch] });
       queryClient.invalidateQueries({ queryKey: [`/api/classes/${classId}`] });
 
       toast({
@@ -75,113 +96,110 @@ export default function ClassList() {
       <Sidebar className="w-64" />
       <main className="flex-1 p-8 overflow-auto">
         <div className="max-w-6xl mx-auto">
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle>Class Management</CardTitle>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Classes Management</CardTitle>
+              <div className="flex gap-2">
+                <Button onClick={() => setIsManageOptionsOpen(true)} variant="outline">
+                  <Settings className="w-4 h-4 mr-2" />
+                  Manage Options
+                </Button>
+                <Button onClick={() => setIsCreateDialogOpen(true)}>
+                  Create New Class
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm font-medium">Total Classes</p>
-                  <p className="text-2xl">{classes?.length || 0}</p>
-                </div>
+              <div className="mb-6">
+                <label className="text-sm font-medium block mb-2">Filter by Branch</label>
+                <Select
+                  value={selectedBranch}
+                  onValueChange={setSelectedBranch}
+                >
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue placeholder="All Branches" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Branches</SelectItem>
+                    {branches?.map((branch) => (
+                      <SelectItem key={branch.id} value={branch.id.toString()}>
+                        {branch.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
+
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Branch</TableHead>
+                    <TableHead>English Level</TableHead>
+                    <TableHead>Age Group</TableHead>
+                    <TableHead>Students</TableHead>
+                    <TableHead>Teachers</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {classes?.map((cls) => (
+                    <TableRow key={cls.id}>
+                      <TableCell>{cls.name}</TableCell>
+                      <TableCell>
+                        {branches?.find((b) => b.id === cls.branchId)?.name || "-"}
+                      </TableCell>
+                      <TableCell>{cls.englishLevel || "-"}</TableCell>
+                      <TableCell>{cls.ageGroup || "-"}</TableCell>
+                      <TableCell>{cls.studentCount || 0}</TableCell>
+                      <TableCell>{cls.teacherCount || 0}</TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="mr-2"
+                          onClick={() => navigate(`/admin/classes/${cls.id}`)}
+                        >
+                          View Details
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="mr-2"
+                          onClick={() => {
+                            setSelectedClass(cls);
+                            setIsCreateDialogOpen(true);
+                          }}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDeleteClass(cls.id)}
+                        >
+                          Delete
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </CardContent>
           </Card>
-
-          <div className="flex justify-between items-center mb-6">
-            <div className="flex items-center gap-4">
-              <h2 className="text-2xl font-bold">Classes</h2>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsManageOptionsDialogOpen(true)}
-              >
-                <Settings className="h-4 w-4 mr-2" />
-                Manage Options
-              </Button>
-            </div>
-            <Button
-              onClick={() => {
-                setSelectedClass(null);
-                setIsCreateClassDialogOpen(true);
-              }}
-            >
-              Add Class
-            </Button>
-          </div>
-
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>ID</TableHead>
-                <TableHead>Class Name</TableHead>
-                <TableHead>Branch</TableHead>
-                <TableHead>English Level</TableHead>
-                <TableHead>Age Group</TableHead>
-                <TableHead>Students</TableHead>
-                <TableHead>Teachers</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {classes?.map((cls) => (
-                <TableRow key={cls.id}>
-                  <TableCell>{cls.id}</TableCell>
-                  <TableCell>{cls.name}</TableCell>
-                  <TableCell>{cls.branch?.name || "-"}</TableCell>
-                  <TableCell>{cls.englishLevel || "-"}</TableCell>
-                  <TableCell>{cls.ageGroup || "-"}</TableCell>
-                  <TableCell>{cls.studentCount}</TableCell>
-                  <TableCell>{cls.teacherCount}</TableCell>
-                  <TableCell>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="mr-2"
-                      onClick={() => setLocation(`/admin/classes/${cls.id}`)}
-                    >
-                      View
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="mr-2"
-                      onClick={() => {
-                        setSelectedClass(cls);
-                        setIsCreateClassDialogOpen(true);
-                      }}
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleDeleteClass(cls.id)}
-                    >
-                      Delete
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-
-          <CreateClassDialog
-            open={isCreateClassDialogOpen}
-            onOpenChange={(open) => {
-              setIsCreateClassDialogOpen(open);
-              if (!open) setSelectedClass(null);
-            }}
-            classToEdit={selectedClass}
-          />
-
-          <ManageOptionsDialog
-            open={isManageOptionsDialogOpen}
-            onOpenChange={setIsManageOptionsDialogOpen}
-          />
         </div>
       </main>
+
+      <CreateClassDialog
+        open={isCreateDialogOpen}
+        onOpenChange={setIsCreateDialogOpen}
+        classToEdit={selectedClass}
+      />
+
+      <ManageOptionsDialog
+        open={isManageOptionsOpen}
+        onOpenChange={setIsManageOptionsOpen}
+      />
     </div>
   );
 }
