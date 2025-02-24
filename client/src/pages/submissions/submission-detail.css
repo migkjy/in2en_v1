@@ -127,16 +127,50 @@ s {
 .ProseMirror li {
   margin-bottom: 0.25rem;
 }
-/* Override markdown editor styles */
+
+/* Markdown Editor Styles */
 .w-md-editor {
   background-color: white !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 0.5rem !important;
+}
+
+.w-md-editor-toolbar {
+  background-color: #f8fafc !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  padding: 8px !important;
+}
+
+.w-md-editor-toolbar-divider {
+  height: 20px !important;
+  margin: 0 4px !important;
+}
+
+.w-md-editor-toolbar button {
+  margin: 0 2px !important;
+  padding: 4px !important;
+  border-radius: 4px !important;
+}
+
+.w-md-editor-toolbar button:hover {
+  background-color: #e2e8f0 !important;
+}
+
+.w-md-editor-content {
+  padding: 16px !important;
+}
+
+.w-md-editor-text-pre,
+.w-md-editor-text-input {
+  font-size: 14px !important;
+  line-height: 1.6 !important;
+  padding: 0 !important;
 }
 
 .w-md-editor-text-pre > code,
 .w-md-editor-text-input {
-  font-size: 14px !important;
+  font-family: ui-monospace, monospace !important;
   color: #000 !important;
-  line-height: 1.6 !important;
 }
 
 .w-md-editor-text-pre {
@@ -162,11 +196,27 @@ s {
   color: #666 !important;
 }
 
-.w-md-editor-toolbar {
-  border-bottom: 1px solid #e2e8f0 !important;
+/* Preview styles */
+.wmde-markdown {
+  font-size: 14px !important;
+  line-height: 1.6 !important;
+  background-color: white !important;
 }
 
-.w-md-editor-text-pre,
-.w-md-editor-text-input {
-  padding: 0.5rem !important;
+.wmde-markdown h1,
+.wmde-markdown h2,
+.wmde-markdown h3,
+.wmde-markdown h4 {
+  font-weight: 600 !important;
+  margin: 1em 0 0.5em !important;
+}
+
+.wmde-markdown p {
+  margin: 0.5em 0 !important;
+}
+
+.wmde-markdown ul,
+.wmde-markdown ol {
+  padding-left: 1.5em !important;
+  margin: 0.5em 0 !important;
 }
