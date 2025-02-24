@@ -207,7 +207,7 @@ export default function SubmissionDetail() {
 
                 {submission.ocrText && (
                   <div>
-                    <h3 className="text-sm font-medium mb-2">OCR Text</h3>
+                    <h3 className="section-title mb-2">OCR Text</h3>
                     <div className="bg-gray-50 p-4 rounded prose prose-sm max-w-none">
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>
                         {submission.ocrText}
@@ -220,9 +220,7 @@ export default function SubmissionDetail() {
                   <div className="space-y-4">
                     {submission.correctedText && (
                       <div>
-                        <h3 className="text-sm font-medium mb-2">
-                          AI Corrections
-                        </h3>
+                        <h3 className="section-title mb-2">AI Corrections</h3>
                         <div className="bg-blue-50 p-4 rounded prose prose-sm max-w-none markdown-content corrections-content">
                           <ReactMarkdown remarkPlugins={[remarkGfm]}>
                             {submission.correctedText}
@@ -233,9 +231,7 @@ export default function SubmissionDetail() {
 
                     {submission.overallAssessment && (
                       <div>
-                        <h3 className="text-sm font-medium mb-2">
-                          AI Assessment
-                        </h3>
+                        <h3 className="section-title mb-2">AI Assessment</h3>
                         <div className="bg-green-50 p-4 rounded prose prose-sm max-w-none markdown-content assessment-content">
                           <ReactMarkdown remarkPlugins={[remarkGfm]}>
                             {submission.overallAssessment}
@@ -248,9 +244,7 @@ export default function SubmissionDetail() {
 
                 {submission.teacherFeedback && (
                   <div>
-                    <h3 className="text-sm font-medium mb-2">
-                      Teacher Feedback
-                    </h3>
+                    <h3 className="text-sm font-medium mb-2">Teacher Feedback</h3>
                     <div className="bg-purple-50 p-4 rounded prose prose-sm max-w-none">
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>
                         {submission.teacherFeedback}
