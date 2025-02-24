@@ -9,16 +9,74 @@ import { useToast } from "@/hooks/use-toast";
 import type { Submission, User, Assignment } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
-import { Loader2, ArrowLeft, Edit, Save } from "lucide-react";
+import { Loader2, ArrowLeft, Edit, Save, Bold, Italic, List, Heading } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Textarea } from "@/components/ui/textarea";
+import { useEditor, EditorContent } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
 import { useState } from "react";
 
 interface SubmissionResponse extends Submission {
   assignment: Assignment;
   student: User;
 }
+
+// Rich Text Editor Component
+const RichTextEditor = ({ content, onChange }: { content: string; onChange: (html: string) => void }) => {
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+    ],
+    content: content,
+    onUpdate: ({ editor }) => {
+      onChange(editor.getText());
+    },
+  });
+
+  if (!editor) {
+    return null;
+  }
+
+  return (
+    <div className="rich-text-editor">
+      <div className="editor-toolbar border-b p-2 flex gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => editor.chain().focus().toggleBold().run()}
+          className={editor.isActive('bold') ? 'bg-secondary' : ''}
+        >
+          <Bold className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => editor.chain().focus().toggleItalic().run()}
+          className={editor.isActive('italic') ? 'bg-secondary' : ''}
+        >
+          <Italic className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => editor.chain().focus().toggleBulletList().run()}
+          className={editor.isActive('bulletList') ? 'bg-secondary' : ''}
+        >
+          <List className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+          className={editor.isActive('heading') ? 'bg-secondary' : ''}
+        >
+          <Heading className="h-4 w-4" />
+        </Button>
+      </div>
+      <EditorContent editor={editor} className="prose prose-sm max-w-none p-4" />
+    </div>
+  );
+};
 
 export default function SubmissionDetail() {
   const [, params] = useRoute("/submissions/:id");
@@ -305,13 +363,11 @@ export default function SubmissionDetail() {
                           </Button>
                         )}
                       </div>
-                      <div className="bg-blue-50 p-4 rounded prose prose-sm max-w-none markdown-content corrections-content">
+                      <div className="bg-blue-50 p-4 rounded prose prose-sm max-w-none">
                         {isEditingCorrections ? (
-                          <Textarea
-                            value={editedCorrections}
-                            onChange={(e) => setEditedCorrections(e.target.value)}
-                            className="min-h-[200px] font-mono"
-                            placeholder="Enter corrections in markdown format..."
+                          <RichTextEditor
+                            content={editedCorrections}
+                            onChange={setEditedCorrections}
                           />
                         ) : (
                           <ReactMarkdown remarkPlugins={[remarkGfm]}>
@@ -348,13 +404,11 @@ export default function SubmissionDetail() {
                           </Button>
                         )}
                       </div>
-                      <div className="bg-green-50 p-4 rounded prose prose-sm max-w-none markdown-content assessment-content">
+                      <div className="bg-green-50 p-4 rounded prose prose-sm max-w-none">
                         {isEditingAssessment ? (
-                          <Textarea
-                            value={editedAssessment}
-                            onChange={(e) => setEditedAssessment(e.target.value)}
-                            className="min-h-[200px] font-mono"
-                            placeholder="Enter assessment in markdown format..."
+                          <RichTextEditor
+                            content={editedAssessment}
+                            onChange={setEditedAssessment}
                           />
                         ) : (
                           <ReactMarkdown remarkPlugins={[remarkGfm]}>
