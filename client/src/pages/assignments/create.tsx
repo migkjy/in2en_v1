@@ -28,9 +28,19 @@ export default function CreateAssignment() {
   const { toast } = useToast();
   const { user } = useAuth();
 
+  const { data: branches } = useQuery<Branch[]>({
+    queryKey: ["/api/branches"],
+  });
+
+  const [selectedBranch, setSelectedBranch] = useState<string>("all");
+
   const { data: classes, isLoading: loadingClasses } = useQuery<Class[]>({
     queryKey: ["/api/classes"],
   });
+
+  const filteredClasses = classes?.filter(
+    cls => selectedBranch === "all" || cls.branchId === parseInt(selectedBranch)
+  );
 
   const createMutation = useMutation({
     mutationFn: async (data: CreateAssignmentData) => {
@@ -90,6 +100,22 @@ export default function CreateAssignment() {
                 className="space-y-6"
               >
                 <div className="space-y-2">
+                  <label className="text-sm font-medium">Branch</label>
+                  <select
+                    value={selectedBranch}
+                    onChange={(e) => setSelectedBranch(e.target.value)}
+                    className="w-full p-2 border rounded"
+                  >
+                    <option value="all">All Branches</option>
+                    {branches?.map((branch) => (
+                      <option key={branch.id} value={branch.id.toString()}>
+                        {branch.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-2">
                   <label className="text-sm font-medium">Class</label>
                   <select
                     {...form.register("classId", { valueAsNumber: true })}
@@ -97,7 +123,7 @@ export default function CreateAssignment() {
                     disabled={loadingClasses}
                   >
                     <option value="">Select a class</option>
-                    {classes?.map((cls) => (
+                    {filteredClasses?.map((cls) => (
                       <option key={cls.id} value={cls.id}>
                         {cls.name} - Level: {cls.englishLevel}
                       </option>
