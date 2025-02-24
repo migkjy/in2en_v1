@@ -21,7 +21,7 @@ Format rules:
 3. Use '*Student Answer:*' for student's writing
 4. Use proper markdown paragraphs and sections
 5. Maintain original line breaks and spacing
-6. Do not use bold formatting (**text**). Instead, use heading levels (#, ##, ###, ####, #####) to structure and emphasize text as needed.
+6. never use bold formatting (**text**). Instead, use heading levels (#, ##, ###, ####, #####) to structure and emphasize text as needed.
 
 Return JSON in this format:
 {
@@ -100,7 +100,7 @@ Respond with JSON in this format:
 
     console.log("Creating run with assistant...");
     const run = await openai.beta.threads.runs.create(thread.id, {
-      assistant_id: "asst_TaRTcp8WPBUiZCW4XqlbM4Ra",
+      assistant_id: "asst_9N8UIiXaRZ9KngTTwg2rxAE7",
       response_format: { type: "json_object" },
     });
 
