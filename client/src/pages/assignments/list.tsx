@@ -2,6 +2,14 @@ import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { useAuth } from "@/hooks/use-auth";
 import {
   Table,
@@ -337,26 +345,33 @@ export default function AssignmentList() {
               
               {/* Pagination Controls */}
               {assignments && assignments.length > 0 && (
-                <div className="flex justify-center items-center gap-2 mt-4">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(page => Math.max(1, page - 1))}
-                    disabled={currentPage === 1}
-                  >
-                    Previous
-                  </Button>
-                  <span className="text-sm">
-                    Page {currentPage} of {Math.ceil(assignments.length / itemsPerPage)}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(page => Math.min(Math.ceil(assignments.length / itemsPerPage), page + 1))}
-                    disabled={currentPage >= Math.ceil(assignments.length / itemsPerPage)}
-                  >
-                    Next
-                  </Button>
+                <div className="mt-4">
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious 
+                          onClick={() => setCurrentPage(page => Math.max(1, page - 1))}
+                          disabled={currentPage === 1}
+                        />
+                      </PaginationItem>
+                      {Array.from({ length: Math.ceil(assignments.length / itemsPerPage) }).map((_, index) => (
+                        <PaginationItem key={index + 1}>
+                          <PaginationLink
+                            onClick={() => setCurrentPage(index + 1)}
+                            isActive={currentPage === index + 1}
+                          >
+                            {index + 1}
+                          </PaginationLink>
+                        </PaginationItem>
+                      ))}
+                      <PaginationItem>
+                        <PaginationNext
+                          onClick={() => setCurrentPage(page => Math.min(Math.ceil(assignments.length / itemsPerPage), page + 1))}
+                          disabled={currentPage >= Math.ceil(assignments.length / itemsPerPage)}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
                 </div>
               )}
             </CardContent>
