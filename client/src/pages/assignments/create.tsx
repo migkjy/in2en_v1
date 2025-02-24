@@ -10,10 +10,18 @@ import { insertAssignmentSchema } from "@shared/schema";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
-import type { Class } from "@shared/schema";
+import type { Class, Branch } from "@shared/schema";
 import { z } from "zod";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { format } from 'date-fns';
+import { useState } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const createAssignmentSchema = insertAssignmentSchema.omit({ 
   id: true
@@ -27,20 +35,24 @@ export default function CreateAssignment() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const { user } = useAuth();
+  const [selectedBranch, setSelectedBranch] = useState<string>("all");
 
   const { data: branches } = useQuery<Branch[]>({
     queryKey: ["/api/branches"],
   });
 
-  const [selectedBranch, setSelectedBranch] = useState<string>("all");
-
   const { data: classes, isLoading: loadingClasses } = useQuery<Class[]>({
-    queryKey: ["/api/classes"],
+    queryKey: ["/api/classes", selectedBranch],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (selectedBranch !== "all") {
+        params.append("branchId", selectedBranch);
+      }
+      const response = await fetch(`/api/classes?${params.toString()}`);
+      if (!response.ok) throw new Error("Failed to fetch classes");
+      return response.json();
+    },
   });
-
-  const filteredClasses = classes?.filter(
-    cls => selectedBranch === "all" || cls.branchId === parseInt(selectedBranch)
-  );
 
   const createMutation = useMutation({
     mutationFn: async (data: CreateAssignmentData) => {
@@ -95,40 +107,45 @@ export default function CreateAssignment() {
               <CardTitle>Create New Assignment</CardTitle>
             </CardHeader>
             <CardContent>
-              <form 
-                onSubmit={onSubmit}
-                className="space-y-6"
-              >
+              <form onSubmit={onSubmit} className="space-y-6">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Branch</label>
-                  <select
+                  <Select
                     value={selectedBranch}
-                    onChange={(e) => setSelectedBranch(e.target.value)}
-                    className="w-full p-2 border rounded"
+                    onValueChange={setSelectedBranch}
                   >
-                    <option value="all">All Branches</option>
-                    {branches?.map((branch) => (
-                      <option key={branch.id} value={branch.id.toString()}>
-                        {branch.name}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a branch" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Branches</SelectItem>
+                      {branches?.map((branch) => (
+                        <SelectItem key={branch.id} value={branch.id.toString()}>
+                          {branch.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Class</label>
-                  <select
-                    {...form.register("classId", { valueAsNumber: true })}
-                    className="w-full p-2 border rounded"
+                  <Select
                     disabled={loadingClasses}
+                    value={form.watch("classId")?.toString()}
+                    onValueChange={(value) => form.setValue("classId", parseInt(value))}
                   >
-                    <option value="">Select a class</option>
-                    {filteredClasses?.map((cls) => (
-                      <option key={cls.id} value={cls.id}>
-                        {cls.name} - Level: {cls.englishLevel}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a class" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {classes?.map((cls) => (
+                        <SelectItem key={cls.id} value={cls.id.toString()}>
+                          {cls.name} - Level: {cls.englishLevel}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="space-y-2">
