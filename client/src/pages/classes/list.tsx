@@ -96,6 +96,19 @@ export default function ClassList() {
       <Sidebar className="w-64" />
       <main className="flex-1 p-8 overflow-auto">
         <div className="max-w-6xl mx-auto">
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle>Class Management</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium">Total Classes</p>
+                  <p className="text-2xl">{classes?.length || 0}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Classes Management</CardTitle>
