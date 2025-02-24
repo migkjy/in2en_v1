@@ -9,9 +9,11 @@ import { useToast } from "@/hooks/use-toast";
 import type { Submission, User, Assignment } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
-import { Loader2, ArrowLeft } from "lucide-react";
+import { Loader2, ArrowLeft, Edit, Save } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { Textarea } from "@/components/ui/textarea";
+import { useState } from "react";
 
 interface SubmissionResponse extends Submission {
   assignment: Assignment;
@@ -23,6 +25,10 @@ export default function SubmissionDetail() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const { user } = useAuth();
+  const [isEditingCorrections, setIsEditingCorrections] = useState(false);
+  const [isEditingAssessment, setIsEditingAssessment] = useState(false);
+  const [editedCorrections, setEditedCorrections] = useState("");
+  const [editedAssessment, setEditedAssessment] = useState("");
 
   if (!user) {
     navigate("/auth");
@@ -55,6 +61,42 @@ export default function SubmissionDetail() {
       }
 
       return response.json();
+    },
+  });
+
+  const updateSubmissionMutation = useMutation({
+    mutationFn: async (data: {
+      correctedText?: string;
+      overallAssessment?: string;
+    }) => {
+      const response = await apiRequest(
+        "PATCH",
+        `/api/submissions/${submissionId}`,
+        data
+      );
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error);
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["/api/submissions", submissionId],
+      });
+      toast({
+        title: "Success",
+        description: "Changes saved successfully",
+      });
+      setIsEditingCorrections(false);
+      setIsEditingAssessment(false);
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to save changes",
+        variant: "destructive",
+      });
     },
   });
 
@@ -153,6 +195,24 @@ export default function SubmissionDetail() {
   const { assignment, student, ...submission } = submissionData;
   const isTeacherOrAdmin = user.role === "TEACHER" || user.role === "ADMIN";
 
+  const handleStartEdit = (type: 'corrections' | 'assessment') => {
+    if (type === 'corrections') {
+      setEditedCorrections(submission.correctedText || '');
+      setIsEditingCorrections(true);
+    } else {
+      setEditedAssessment(submission.overallAssessment || '');
+      setIsEditingAssessment(true);
+    }
+  };
+
+  const handleSave = (type: 'corrections' | 'assessment') => {
+    if (type === 'corrections') {
+      updateSubmissionMutation.mutate({ correctedText: editedCorrections });
+    } else {
+      updateSubmissionMutation.mutate({ overallAssessment: editedAssessment });
+    }
+  };
+
   return (
     <div className="flex h-screen">
       <Sidebar className="w-64" />
@@ -216,29 +276,93 @@ export default function SubmissionDetail() {
                   </div>
                 )}
 
-                {(submission.correctedText || submission.overallAssessment) && (
+                {(submission.correctedText || submission.overallAssessment || isTeacherOrAdmin) && (
                   <div className="space-y-4">
-                    {submission.correctedText && (
-                      <div>
-                        <h3 className="section-title mb-2">AI Corrections</h3>
-                        <div className="bg-blue-50 p-4 rounded prose prose-sm max-w-none markdown-content corrections-content">
-                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                            {submission.correctedText}
-                          </ReactMarkdown>
-                        </div>
+                    <div>
+                      <div className="flex justify-between items-center mb-2">
+                        <h3 className="section-title">AI Corrections</h3>
+                        {isTeacherOrAdmin && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => isEditingCorrections 
+                              ? handleSave('corrections')
+                              : handleStartEdit('corrections')
+                            }
+                            disabled={updateSubmissionMutation.isPending}
+                          >
+                            {isEditingCorrections ? (
+                              <>
+                                <Save className="w-4 h-4 mr-2" />
+                                Save
+                              </>
+                            ) : (
+                              <>
+                                <Edit className="w-4 h-4 mr-2" />
+                                Edit
+                              </>
+                            )}
+                          </Button>
+                        )}
                       </div>
-                    )}
+                      <div className="bg-blue-50 p-4 rounded prose prose-sm max-w-none markdown-content corrections-content">
+                        {isEditingCorrections ? (
+                          <Textarea
+                            value={editedCorrections}
+                            onChange={(e) => setEditedCorrections(e.target.value)}
+                            className="min-h-[200px] font-mono"
+                            placeholder="Enter corrections in markdown format..."
+                          />
+                        ) : (
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            {submission.correctedText || "No corrections yet"}
+                          </ReactMarkdown>
+                        )}
+                      </div>
+                    </div>
 
-                    {submission.overallAssessment && (
-                      <div>
-                        <h3 className="section-title mb-2">AI Assessment</h3>
-                        <div className="bg-green-50 p-4 rounded prose prose-sm max-w-none markdown-content assessment-content">
-                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                            {submission.overallAssessment}
-                          </ReactMarkdown>
-                        </div>
+                    <div>
+                      <div className="flex justify-between items-center mb-2">
+                        <h3 className="section-title">AI Assessment</h3>
+                        {isTeacherOrAdmin && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => isEditingAssessment 
+                              ? handleSave('assessment')
+                              : handleStartEdit('assessment')
+                            }
+                            disabled={updateSubmissionMutation.isPending}
+                          >
+                            {isEditingAssessment ? (
+                              <>
+                                <Save className="w-4 h-4 mr-2" />
+                                Save
+                              </>
+                            ) : (
+                              <>
+                                <Edit className="w-4 h-4 mr-2" />
+                                Edit
+                              </>
+                            )}
+                          </Button>
+                        )}
                       </div>
-                    )}
+                      <div className="bg-green-50 p-4 rounded prose prose-sm max-w-none markdown-content assessment-content">
+                        {isEditingAssessment ? (
+                          <Textarea
+                            value={editedAssessment}
+                            onChange={(e) => setEditedAssessment(e.target.value)}
+                            className="min-h-[200px] font-mono"
+                            placeholder="Enter assessment in markdown format..."
+                          />
+                        ) : (
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            {submission.overallAssessment || "No assessment yet"}
+                          </ReactMarkdown>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 )}
 
