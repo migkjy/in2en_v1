@@ -196,7 +196,7 @@ export default function SubmissionDetail() {
               <div className="space-y-6">
                 {submission.imageUrl && (
                   <div>
-                    <h3 className="text-sm font-medium mb-2">Submitted Work</h3>
+                    <h3 className="section-title mb-2">Submitted Work</h3>
                     <img
                       src={submission.imageUrl}
                       alt="Submitted homework"
