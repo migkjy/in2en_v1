@@ -738,9 +738,15 @@ export function registerRoutes(app: Express): Server {
 
   app.patch(
     "/api/submissions/:id",
-    requireRole([UserRole.TEACHER]),
+    requireRole([UserRole.TEACHER, UserRole.ADMIN]),
     async (req, res) => {
       try {
+        console.log("PATCH /api/submissions/:id - User:", {
+          id: req.user?.id,
+          role: req.user?.role,
+        });
+        console.log("Request body:", req.body);
+
         const submission = await storage.updateSubmission(
           Number(req.params.id),
           req.body,
@@ -977,8 +983,7 @@ export function registerRoutes(app: Express): Server {
         (user) =>
           user.role === UserRole.STUDENT &&
           (!branchId || user.branchId === Number(branchId)),
-      );
-      res.json(students);
+      );      res.json(students);
     } catch (error) {
       if (error instanceof Error) {        res.status(400).json({ message: error.message });
       } else {
