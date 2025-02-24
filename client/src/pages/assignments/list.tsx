@@ -40,7 +40,6 @@ import { format } from "date-fns";
 import { useState } from "react";
 import { EditAssignmentDialog } from "./edit-dialog";
 import { useToast } from "@/hooks/use-toast";
-//import { Eye, Pencil, Trash } from "lucide-react"; //Removed as per instructions
 import { apiRequest } from "@/lib/queryClient";
 
 const STATUS_OPTIONS = [
@@ -60,6 +59,8 @@ export default function AssignmentList() {
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null);
   const [deleteAssignment, setDeleteAssignment] = useState<Assignment | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: number; status: string }) => {
@@ -246,7 +247,11 @@ export default function AssignmentList() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {assignments?.map((assignment) => {
+                  {assignments?.sort((a, b) => {
+                    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+                  })
+                  .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+                  .map((assignment) => {
                     const assignmentClass = classes?.find(
                       (c) => c.id === assignment.classId
                     );
