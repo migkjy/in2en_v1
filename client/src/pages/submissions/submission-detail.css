@@ -21,6 +21,9 @@ s {
 }
 
 /* Style for strikethrough text */
+.prose s,
+.prose del,
+.prose del code,
 .markdown-content s,
 .markdown-content del,
 .markdown-content del code {
