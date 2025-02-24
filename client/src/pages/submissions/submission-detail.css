@@ -135,8 +135,22 @@ s {
 .w-md-editor-text-pre > code,
 .w-md-editor-text-input {
   font-size: 14px !important;
+  color: #000 !important;
+}
+
+.w-md-editor-text-pre {
+  -webkit-text-fill-color: transparent !important;
+}
+
+.w-md-editor-text-input {
+  -webkit-text-fill-color: #000 !important;
 }
 
 .w-md-editor-toolbar {
   border-bottom: 1px solid #e2e8f0 !important;
+}
+
+.w-md-editor-text-pre,
+.w-md-editor-text-input {
+  padding: 0.5rem !important;
 }
