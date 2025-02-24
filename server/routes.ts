@@ -478,33 +478,34 @@ export function registerRoutes(app: Express): Server {
             .from(classes)
             .where(eq(classes.id, assignment.classId));
 
-          if (
-            assignmentClass &&
-            assignmentClass.branchId === Number(branchId)
-          ) {
+          if (assignmentClass && assignmentClass.branchId === Number(branchId)) {
             filteredAssignments.push(assignment);
           }
         }
         assignments = filteredAssignments;
       }
 
-      // Sort assignments by Branch ID, Class ID, and Assignment ID
+      // Sort assignments by updatedAt (most recent first), then by other criteria
       assignments.sort((a, b) => {
-        // Get class info for both assignments
+        // First sort by updatedAt (most recent first)
+        const dateA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+        const dateB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+        if (dateA !== dateB) {
+          return dateB - dateA; // Most recent first
+        }
+
+        // If dates are equal, sort by branch and class as before
         const classA = allClasses.find(c => c.id === a.classId);
         const classB = allClasses.find(c => c.id === b.classId);
 
-        // Compare branch IDs first
         if (classA?.branchId !== classB?.branchId) {
           return (classA?.branchId || 0) - (classB?.branchId || 0);
         }
 
-        // If branch IDs are equal, compare class IDs
         if (a.classId !== b.classId) {
           return (a.classId || 0) - (b.classId || 0);
         }
 
-        // If class IDs are equal, compare assignment IDs
         return a.id - b.id;
       });
 
@@ -983,9 +984,11 @@ export function registerRoutes(app: Express): Server {
         (user) =>
           user.role === UserRole.STUDENT &&
           (!branchId || user.branchId === Number(branchId)),
-      );      res.json(students);
+      );
+      res.json(students);
     } catch (error) {
-      if (error instanceof Error) {        res.status(400).json({ message: error.message });
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
       } else {
         res.status(500).json({ message: "An unknown error occurred" });
       }
