@@ -136,6 +136,7 @@ s {
 .w-md-editor-text-input {
   font-size: 14px !important;
   color: #000 !important;
+  line-height: 1.6 !important;
 }
 
 .w-md-editor-text-pre {
@@ -144,6 +145,21 @@ s {
 
 .w-md-editor-text-input {
   -webkit-text-fill-color: #000 !important;
+}
+
+.w-md-editor-text strong,
+.w-md-editor-text-input strong {
+  color: #ff0000 !important;
+  font-weight: 600 !important;
+  -webkit-text-fill-color: #ff0000 !important;
+}
+
+.w-md-editor del,
+.w-md-editor s {
+  text-decoration: line-through !important;
+  text-decoration-color: #ff0000 !important;
+  text-decoration-thickness: 2px !important;
+  color: #666 !important;
 }
 
 .w-md-editor-toolbar {
