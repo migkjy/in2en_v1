@@ -1,3 +1,4 @@
+
 /* Styles for corrections */
 del,
 s {
@@ -46,8 +47,8 @@ s {
 
 /* Style for corrections (bold text between double asterisks) in corrected text area */
 .corrections-content strong {
-  color: red;
   font-weight: 600;
+  color: red;
 }
 
 /* Style for regular markdown bold text */
