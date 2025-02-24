@@ -39,18 +39,20 @@ s {
 }
 
 /* Style for correction spans */
-.markdown-content span[style*="color: red"] {
-  color: red !important;
+.markdown-content span[style*="color: red"],
+.prose strong {
+  color: #ff0000 !important;
   font-weight: 500;
 }
 
-/* Style for corrections (bold text between double asterisks) in corrected text area */
-.corrections-content strong {
+/* Style for corrections in corrected text area */
+.corrections-content strong,
+.prose strong {
+  color: #ff0000;
   font-weight: 600;
-  color: red;
 }
 
-/* Style for regular markdown bold text */
+/* Style for regular markdown bold text in assessment */
 .assessment-content strong {
   color: inherit;
   font-weight: 600;
