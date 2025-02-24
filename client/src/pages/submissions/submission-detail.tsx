@@ -26,7 +26,7 @@ const RichTextEditor = ({ content, onChange }: { content: string; onChange: (tex
     <MDEditor
       value={content}
       onChange={(val) => onChange(val || '')}
-      preview="edit"
+      preview="live"
       height={400}
     />
   );
