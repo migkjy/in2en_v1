@@ -334,6 +334,31 @@ export default function AssignmentList() {
                   })}
                 </TableBody>
               </Table>
+              
+              {/* Pagination Controls */}
+              {assignments && assignments.length > 0 && (
+                <div className="flex justify-center items-center gap-2 mt-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(page => Math.max(1, page - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    Previous
+                  </Button>
+                  <span className="text-sm">
+                    Page {currentPage} of {Math.ceil(assignments.length / itemsPerPage)}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(page => Math.min(Math.ceil(assignments.length / itemsPerPage), page + 1))}
+                    disabled={currentPage >= Math.ceil(assignments.length / itemsPerPage)}
+                  >
+                    Next
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
