@@ -294,27 +294,37 @@ export default function SubmissionDetail() {
                       <div className="flex justify-between items-center mb-2">
                         <h3 className="section-title">AI Corrections</h3>
                         {isTeacherOrAdmin && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => isEditingCorrections
-                              ? handleSave('corrections')
-                              : handleStartEdit('corrections')
-                            }
-                            disabled={updateSubmissionMutation.isPending}
-                          >
+                          <div className="flex gap-2">
                             {isEditingCorrections ? (
                               <>
-                                <Save className="w-4 h-4 mr-2" />
-                                Save
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleSave('corrections')}
+                                  disabled={updateSubmissionMutation.isPending}
+                                >
+                                  <Save className="w-4 h-4 mr-2" />
+                                  Save
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setIsEditingCorrections(false)}
+                                >
+                                  Cancel
+                                </Button>
                               </>
                             ) : (
-                              <>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleStartEdit('corrections')}
+                              >
                                 <Edit className="w-4 h-4 mr-2" />
                                 Edit
-                              </>
+                              </Button>
                             )}
-                          </Button>
+                          </div>
                         )}
                       </div>
                       <div className="bg-blue-50 p-4 rounded prose prose-sm max-w-none">
@@ -335,27 +345,37 @@ export default function SubmissionDetail() {
                       <div className="flex justify-between items-center mb-2">
                         <h3 className="section-title">AI Assessment</h3>
                         {isTeacherOrAdmin && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => isEditingAssessment
-                              ? handleSave('assessment')
-                              : handleStartEdit('assessment')
-                            }
-                            disabled={updateSubmissionMutation.isPending}
-                          >
+                          <div className="flex gap-2">
                             {isEditingAssessment ? (
                               <>
-                                <Save className="w-4 h-4 mr-2" />
-                                Save
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleSave('assessment')}
+                                  disabled={updateSubmissionMutation.isPending}
+                                >
+                                  <Save className="w-4 h-4 mr-2" />
+                                  Save
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setIsEditingAssessment(false)}
+                                >
+                                  Cancel
+                                </Button>
                               </>
                             ) : (
-                              <>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleStartEdit('assessment')}
+                              >
                                 <Edit className="w-4 h-4 mr-2" />
                                 Edit
-                              </>
+                              </Button>
                             )}
-                          </Button>
+                          </div>
                         )}
                       </div>
                       <div className="bg-green-50 p-4 rounded prose prose-sm max-w-none">
