@@ -12,8 +12,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Loader2, ArrowLeft, Edit, Save, Bold, Italic, List, Heading } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { useEditor, EditorContent } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
+import MDEditor from '@uiw/react-md-editor';
 import { useState } from "react";
 
 interface SubmissionResponse extends Submission {
@@ -21,60 +20,15 @@ interface SubmissionResponse extends Submission {
   student: User;
 }
 
-// Rich Text Editor Component
-const RichTextEditor = ({ content, onChange }: { content: string; onChange: (html: string) => void }) => {
-  const editor = useEditor({
-    extensions: [
-      StarterKit,
-    ],
-    content: content,
-    onUpdate: ({ editor }) => {
-      onChange(editor.getText());
-    },
-  });
-
-  if (!editor) {
-    return null;
-  }
-
+// Markdown Editor Component
+const RichTextEditor = ({ content, onChange }: { content: string; onChange: (text: string) => void }) => {
   return (
-    <div className="rich-text-editor">
-      <div className="editor-toolbar border-b p-2 flex gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => editor.chain().focus().toggleBold().run()}
-          className={editor.isActive('bold') ? 'bg-secondary' : ''}
-        >
-          <Bold className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => editor.chain().focus().toggleItalic().run()}
-          className={editor.isActive('italic') ? 'bg-secondary' : ''}
-        >
-          <Italic className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => editor.chain().focus().toggleBulletList().run()}
-          className={editor.isActive('bulletList') ? 'bg-secondary' : ''}
-        >
-          <List className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-          className={editor.isActive('heading') ? 'bg-secondary' : ''}
-        >
-          <Heading className="h-4 w-4" />
-        </Button>
-      </div>
-      <EditorContent editor={editor} className="prose prose-sm max-w-none p-4" />
-    </div>
+    <MDEditor
+      value={content}
+      onChange={(val) => onChange(val || '')}
+      preview="edit"
+      height={400}
+    />
   );
 };
 
@@ -343,7 +297,7 @@ export default function SubmissionDetail() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => isEditingCorrections 
+                            onClick={() => isEditingCorrections
                               ? handleSave('corrections')
                               : handleStartEdit('corrections')
                             }
@@ -384,7 +338,7 @@ export default function SubmissionDetail() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => isEditingAssessment 
+                            onClick={() => isEditingAssessment
                               ? handleSave('assessment')
                               : handleStartEdit('assessment')
                             }

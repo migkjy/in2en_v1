@@ -127,3 +127,16 @@ s {
 .ProseMirror li {
   margin-bottom: 0.25rem;
 }
+/* Override markdown editor styles */
+.w-md-editor {
+  background-color: white !important;
+}
+
+.w-md-editor-text-pre > code,
+.w-md-editor-text-input {
+  font-size: 14px !important;
+}
+
+.w-md-editor-toolbar {
+  border-bottom: 1px solid #e2e8f0 !important;
+}
