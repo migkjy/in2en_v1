@@ -53,9 +53,13 @@ Return JSON in this format:
       visionResponse.choices[0].message.content || "{}",
     );
 
+    // Remove bold markdown symbols
+    const cleanText = (result.text || "").replace(/\*\*/g, "");
+    const cleanFeedback = (result.feedback || "").replace(/\*\*/g, "");
+
     return {
-      text: result.text || "",
-      feedback: result.feedback || "",
+      text: cleanText,
+      feedback: cleanFeedback,
       confidence: Math.max(0, Math.min(1, result.confidence || 0)),
     };
   } catch (error) {
