@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { Submission, User, Assignment } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
-import { Loader2, ArrowLeft, Edit, Save, Bold, Italic, List, Heading } from "lucide-react";
+import { Loader2, ArrowLeft, Edit, Save, Bold, Italic, List, Heading, Strikethrough } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useEditor, EditorContent } from '@tiptap/react';
@@ -29,7 +29,8 @@ const RichTextEditor = ({ content, onChange }: { content: string; onChange: (htm
     ],
     content: content,
     onUpdate: ({ editor }) => {
-      onChange(editor.getText());
+      // Save the content as markdown instead of plain text
+      onChange(editor.getHTML());
     },
   });
 
@@ -55,6 +56,14 @@ const RichTextEditor = ({ content, onChange }: { content: string; onChange: (htm
           className={editor.isActive('italic') ? 'bg-secondary' : ''}
         >
           <Italic className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => editor.chain().focus().toggleStrike().run()}
+          className={editor.isActive('strike') ? 'bg-secondary' : ''}
+        >
+          <Strikethrough className="h-4 w-4" />
         </Button>
         <Button
           variant="outline"
@@ -343,7 +352,7 @@ export default function SubmissionDetail() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => isEditingCorrections 
+                            onClick={() => isEditingCorrections
                               ? handleSave('corrections')
                               : handleStartEdit('corrections')
                             }
@@ -384,7 +393,7 @@ export default function SubmissionDetail() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => isEditingAssessment 
+                            onClick={() => isEditingAssessment
                               ? handleSave('assessment')
                               : handleStartEdit('assessment')
                             }
