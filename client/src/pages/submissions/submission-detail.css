@@ -44,13 +44,14 @@ s {
   font-weight: 500;
 }
 
-/* Style for bold text within corrections */
-.markdown-content strong {
+/* Style for corrections (bold text between double asterisks) in corrected text area */
+.corrections-content strong {
   color: red;
   font-weight: 600;
 }
 
-/* Style for corrections within parentheses */
-.markdown-content:matches(em, strong):has(+ em:contains("correction")) {
-  color: red;
+/* Style for regular markdown bold text */
+.assessment-content strong {
+  color: inherit;
+  font-weight: 600;
 }
