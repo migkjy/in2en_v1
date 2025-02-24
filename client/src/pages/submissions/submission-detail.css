@@ -44,14 +44,14 @@ s {
   font-weight: 500;
 }
 
-/* Style for corrections (bold text between double asterisks) in corrected text area */
+/* Style for correction spans */
 .corrections-content strong {
-  color: red;
+  color: inherit;
   font-weight: 600;
 }
 
-/* Style for regular markdown bold text */
-.assessment-content strong {
-  color: inherit;
+/* Style for specific text corrections with period prefix */
+.corrections-content strong[data-correction="true"] {
+  color: red;
   font-weight: 600;
 }
