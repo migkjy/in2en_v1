@@ -28,121 +28,28 @@ function Router() {
     <Switch>
       <Route path="/auth" component={AuthPage} />
 
-      {/* Submission Detail Route - Accessible by all authenticated users */}
-      <Route path="/submissions/:id" component={SubmissionDetail} />
-
       {/* Admin Routes */}
-      <ProtectedRoute 
-        path="/admin" 
-        component={AdminDashboard} 
-        allowedRole="ADMIN"
-      />
-      <ProtectedRoute 
-        path="/admin/branches" 
-        component={BranchList} 
-        allowedRole="ADMIN"
-      />
-      <ProtectedRoute 
-        path="/admin/branches/:id"
-        component={BranchDetail}
-        allowedRole="ADMIN"
-      />
-      <ProtectedRoute 
-        path="/admin/classes"
-        component={ClassList}
-        allowedRole="ADMIN"
-      />
-      <ProtectedRoute 
-        path="/admin/classes/:id"
-        component={ClassDetail}
-        allowedRole="ADMIN"
-      />
-      <ProtectedRoute 
-        path="/admin/teachers"
-        component={TeacherList}
-        allowedRole="ADMIN"
-      />
-      <ProtectedRoute 
-        path="/admin/teachers/:id"
-        component={TeacherDetail}
-        allowedRole="ADMIN"
-      />
-      <ProtectedRoute 
-        path="/admin/students"
-        component={StudentList}
-        allowedRole="ADMIN"
-      />
-      <ProtectedRoute 
-        path="/admin/assignments"
-        component={AssignmentList}
-        allowedRole="ADMIN"
-      />
-      <ProtectedRoute 
-        path="/admin/assignments/create"
-        component={CreateAssignment}
-        allowedRole="ADMIN"
-      />
-      <ProtectedRoute 
-        path="/admin/assignments/:id"
-        component={AssignmentDetail}
-        allowedRole="ADMIN"
-      />
-      <ProtectedRoute 
-        path="/admin/assignments/review/:id"
-        component={ReviewAssignment}
-        allowedRole="ADMIN"
-      />
-      <ProtectedRoute 
-        path="/admin/assignments/review/:id/edit"
-        component={ReviewAssignment}
-        allowedRole="ADMIN"
-      />
+      <ProtectedRoute path="/admin" component={AdminDashboard} allowedRole="ADMIN" />
+      <ProtectedRoute path="/admin/assignments" component={AssignmentList} allowedRole="ADMIN" />
+      <ProtectedRoute path="/admin/assignments/create" component={CreateAssignment} allowedRole="ADMIN" />
+      <ProtectedRoute path="/admin/assignments/:id" component={AssignmentDetail} allowedRole="ADMIN" />
+      <ProtectedRoute path="/admin/assignments/review/:id" component={ReviewAssignment} allowedRole="ADMIN" />
+      <ProtectedRoute path="/admin/assignments/review/:id/edit" component={ReviewAssignment} allowedRole="ADMIN" />
 
-      {/* Teacher Routes */} 
-      <ProtectedRoute 
-        path="/teacher" 
-        component={TeacherDashboard} 
-        allowedRole="TEACHER"
-      />
-      <ProtectedRoute 
-        path="/teacher/assignments"
-        component={AssignmentList}
-        allowedRole="TEACHER"
-      />
-      <ProtectedRoute 
-        path="/teacher/assignments/create" 
-        component={CreateAssignment} 
-        allowedRole="TEACHER"
-      />
-      <ProtectedRoute 
-        path="/teacher/assignments/:id"
-        component={AssignmentDetail}
-        allowedRole="TEACHER"
-      />
-      <ProtectedRoute 
-        path="/teacher/assignments/review/:id"
-        component={ReviewAssignment}
-        allowedRole="TEACHER"
-      />
-      <ProtectedRoute 
-        path="/teacher/assignments/review/:id/edit"
-        component={ReviewAssignment}
-        allowedRole="TEACHER"
-      />
+      {/* Teacher Routes */}
+      <ProtectedRoute path="/teacher" component={TeacherDashboard} allowedRole="TEACHER" />
+      <ProtectedRoute path="/teacher/assignments" component={AssignmentList} allowedRole="TEACHER" />
+      <ProtectedRoute path="/teacher/assignments/create" component={CreateAssignment} allowedRole="TEACHER" />
+      <ProtectedRoute path="/teacher/assignments/:id" component={AssignmentDetail} allowedRole="TEACHER" />
+      <ProtectedRoute path="/teacher/assignments/review/:id" component={ReviewAssignment} allowedRole="TEACHER" />
+      <ProtectedRoute path="/teacher/assignments/review/:id/edit" component={ReviewAssignment} allowedRole="TEACHER" />
 
-      {/* Common Routes - Accessible by both Teacher and Admin */}
-      <ProtectedRoute 
-        path="/assignments/:id/upload"
-        component={UploadAssignment}
-        allowedRole={["TEACHER", "ADMIN"]}
-      />
+      {/* Common Routes - Accessible by all authenticated users */}
+      <ProtectedRoute path="/submissions/:id" component={SubmissionDetail} />
+      <ProtectedRoute path="/assignments/:id/upload" component={UploadAssignment} allowedRole={["TEACHER", "ADMIN"]} />
 
       {/* Student Routes */}
-      <ProtectedRoute 
-        path="/student" 
-        component={StudentDashboard} 
-        allowedRole="STUDENT"
-      />
+      <ProtectedRoute path="/student" component={StudentDashboard} allowedRole="STUDENT" />
 
       {/* Redirect to auth by default */}
       <Route path="/">

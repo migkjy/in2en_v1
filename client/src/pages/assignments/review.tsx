@@ -21,7 +21,7 @@ const ReviewList: FC = () => {
       if (!response.ok) throw new Error("Failed to fetch submissions");
       return response.json();
     },
-    enabled: false // Never automatically fetch data for the list view
+    enabled: false
   });
 
   // Redirect to appropriate dashboard immediately
@@ -145,8 +145,8 @@ const ReviewDetail: FC<{ id: string }> = ({ id }) => {
                       <p className="text-gray-600">{submission.ocrText}</p>
                     </div>
                     <div className="text-sm">
-                      <p className="font-medium">AI Feedback:</p>
-                      <p className="text-gray-600">{submission.aiFeedback}</p>
+                      <p className="font-medium">AI Assessment:</p>
+                      <p className="text-gray-600">{submission.overallAssessment}</p>
                     </div>
                   </div>
                 </div>
@@ -201,11 +201,12 @@ const ReviewDetail: FC<{ id: string }> = ({ id }) => {
 
 // Main component that handles routing
 const ReviewAssignment: FC = () => {
-  const [, params] = useRoute("/assignments/review/:id");
+  const [match] = useRoute("/:role/assignments/review/:id");
+  const [matchEdit] = useRoute("/:role/assignments/review/:id/edit");
 
-  // If we have an ID parameter, show the detail view
-  if (params?.id) {
-    return <ReviewDetail id={params.id} />;
+  // If we have an ID parameter from either route pattern, show the detail view
+  if (match?.params.id || matchEdit?.params.id) {
+    return <ReviewDetail id={match?.params.id || matchEdit?.params.id!} />;
   }
 
   // Otherwise show the list view which will handle the redirect
