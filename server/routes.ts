@@ -476,33 +476,34 @@ export function registerRoutes(app: Express): Server {
     },
   );
 
+  // Modify the existing GET /api/assignments route
   app.get("/api/assignments", async (req, res) => {
     try {
-      const { classId, branchId, status } = req.query;
+      const { classId, branchId, status, teacherId } = req.query;
       let assignments = await storage.listAssignments(
         classId ? Number(classId) : undefined,
         status as string | undefined
       );
 
-      // Get all classes for sorting
+      // Get all classes for filtering
       const allClasses = await storage.listClasses();
 
       // If branchId is provided, filter assignments by branch
       if (branchId && branchId !== "all") {
-        const filteredAssignments = [];
-        for (const assignment of assignments) {
-          if (!assignment.classId) continue;
+        assignments = assignments.filter(assignment => {
+          if (!assignment.classId) return false;
+          const [assignmentClass] = allClasses.filter(c => c.id === assignment.classId);
+          return assignmentClass && assignmentClass.branchId === Number(branchId);
+        });
+      }
 
-          const [assignmentClass] = await db
-            .select()
-            .from(classes)
-            .where(eq(classes.id, assignment.classId));
-
-          if (assignmentClass && assignmentClass.branchId === Number(branchId)) {
-            filteredAssignments.push(assignment);
-          }
-        }
-        assignments = filteredAssignments;
+      // If teacherId is provided, filter assignments by teacher's accessible classes
+      if (teacherId) {
+        const teacherClasses = await storage.getTeacherClasses(Number(teacherId));
+        const teacherClassIds = teacherClasses.map(c => c.id);
+        assignments = assignments.filter(assignment => 
+          assignment.classId && teacherClassIds.includes(assignment.classId)
+        );
       }
 
       // Sort assignments by id (most recent first)
@@ -963,14 +964,16 @@ export function registerRoutes(app: Express): Server {
     },
   );
 
+  // Add after the existing GET /api/classes route
   app.get(
     "/api/teachers/:id/classes",
-    requireRole([UserRole.ADMIN]),
+    requireRole([UserRole.ADMIN, UserRole.TEACHER]),
     async (req, res) => {
       try {
         const classes = await storage.getTeacherClasses(Number(req.params.id));
         res.json(classes);
       } catch (error) {
+        console.error("Error fetching teacher classes:", error);
         if (error instanceof Error) {
           res.status(400).json({ message: error.message });
         } else {
@@ -980,29 +983,6 @@ export function registerRoutes(app: Express): Server {
     },
   );
 
-  app.put(
-    "/api/teachers/:id/authority",
-    requireRole([UserRole.ADMIN]),
-    async (req, res) => {
-      try {
-        const { branchIds, classIds } = req.body;
-        await storage.updateTeacherAuthority(
-          Number(req.params.id),
-          branchIds,
-          classIds,
-        );
-        res.json({ message: "Authority updated successfully" });
-      } catch (error) {
-        if (error instanceof Error) {
-          res.status(400).json({ message: error.message });
-        } else {
-          res.status(500).json({ message: "An unknown error occurred" });
-        }
-      }
-    },
-  );
-
-  // Add these routes after the existing teacher routes
   // Update the students route to handle branch filtering
   app.get("/api/students", requireRole([UserRole.ADMIN]), async (req, res) => {
     try {

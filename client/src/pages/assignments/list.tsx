@@ -70,6 +70,62 @@ export default function AssignmentList() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
 
+  // Get teacher's accessible classes first if user is a teacher
+  const { data: teacherClasses } = useQuery<Class[]>({
+    queryKey: ["/api/teachers", user?.id, "classes"],
+    enabled: user?.role === "TEACHER",
+  });
+
+  const { data: branches } = useQuery<Branch[]>({
+    queryKey: ["/api/branches"],
+    enabled: user?.role === "ADMIN" || user?.role === "TEACHER"
+  });
+
+  const { data: classes } = useQuery<Class[]>({
+    queryKey: ["/api/classes", selectedBranch],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (selectedBranch !== "all") {
+        params.append("branchId", selectedBranch);
+      }
+      const response = await fetch(`/api/classes?${params.toString()}`);
+      if (!response.ok) throw new Error("Failed to fetch classes");
+      const allClasses = await response.json();
+
+      // If user is a teacher, filter classes to only show accessible ones
+      if (user?.role === "TEACHER" && teacherClasses) {
+        return allClasses.filter((cls: Class) => 
+          teacherClasses.some(tc => tc.id === cls.id)
+        );
+      }
+      return allClasses;
+    },
+    enabled: user?.role === "ADMIN" || (user?.role === "TEACHER" && !!teacherClasses),
+  });
+
+  const { data: assignments } = useQuery<Assignment[]>({
+    queryKey: ["/api/assignments", selectedBranch, selectedClass, selectedStatus],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (selectedBranch !== "all") {
+        params.append("branchId", selectedBranch);
+      }
+      if (selectedClass !== "all") {
+        params.append("classId", selectedClass);
+      }
+      if (selectedStatus !== "all") {
+        params.append("status", selectedStatus);
+      }
+      if (user?.role === "TEACHER") {
+        params.append("teacherId", user.id.toString());
+      }
+
+      const response = await fetch(`/api/assignments?${params.toString()}`);
+      if (!response.ok) throw new Error("Failed to fetch assignments");
+      return response.json();
+    },
+  });
+
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: number; status: string }) => {
       const response = await apiRequest(
@@ -102,45 +158,6 @@ export default function AssignmentList() {
         description: error.message || "Failed to update assignment status",
         variant: "destructive",
       });
-    },
-  });
-
-  const { data: assignments } = useQuery<Assignment[]>({
-    queryKey: ["/api/assignments", selectedBranch, selectedClass, selectedStatus],
-    queryFn: async () => {
-      const params = new URLSearchParams();
-      if (selectedBranch !== "all") {
-        params.append("branchId", selectedBranch);
-      }
-      if (selectedClass !== "all") {
-        params.append("classId", selectedClass);
-      }
-      if (selectedStatus !== "all") {
-        params.append("status", selectedStatus);
-      }
-
-      const response = await fetch(`/api/assignments?${params.toString()}`);
-      if (!response.ok) throw new Error("Failed to fetch assignments");
-      return response.json();
-    },
-  });
-
-  const { data: branches } = useQuery<Branch[]>({
-    queryKey: ["/api/branches"],
-    enabled: user?.role === "ADMIN" || user?.role === "TEACHER"
-  });
-
-  const { data: classes } = useQuery<Class[]>({
-    queryKey: ["/api/classes", selectedBranch],
-    queryFn: async () => {
-      const params = new URLSearchParams();
-      if (selectedBranch !== "all") {
-        params.append("branchId", selectedBranch);
-      }
-
-      const response = await fetch(`/api/classes?${params.toString()}`);
-      if (!response.ok) throw new Error("Failed to fetch classes");
-      return response.json();
     },
   });
 
@@ -256,91 +273,88 @@ export default function AssignmentList() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {assignments?.sort((a, b) => {
-                    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-                  })
-                  .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
-                  .map((assignment) => {
-                    const assignmentClass = classes?.find(
-                      (c) => c.id === assignment.classId
-                    );
-                    const branch = branches?.find(
-                      (b) => b.id === assignmentClass?.branchId
-                    );
+                  {assignments?.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+                    .map((assignment) => {
+                      const assignmentClass = classes?.find(
+                        (c) => c.id === assignment.classId
+                      );
+                      const branch = branches?.find(
+                        (b) => b.id === assignmentClass?.branchId
+                      );
 
-                    return (
-                      <TableRow key={assignment.id}>
-                        <TableCell>{assignment.title}</TableCell>
-                        <TableCell>{branch?.name || "-"}</TableCell>
-                        <TableCell>
-                          {assignmentClass?.name || "-"} -{" "}
-                          {assignmentClass?.englishLevel || ""}
-                        </TableCell>
-                        <TableCell>
-                          {assignment.dueDate
-                            ? format(new Date(assignment.dueDate), "MM/dd/yyyy")
-                            : "-"}
-                        </TableCell>
-                        <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                className={`px-2 py-1 rounded-full text-xs font-medium h-auto
-                                  ${assignment.status === 'draft' ? 'bg-gray-100 text-gray-800 hover:bg-gray-200' : ''}
-                                  ${assignment.status === 'published' ? 'bg-green-100 text-green-800 hover:bg-green-200' : ''}
-                                  ${assignment.status === 'completed' ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' : ''}
-                                `}
-                              >
-                                {assignment.status?.toUpperCase()}
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent>
-                              {["draft", "published", "completed"].map((status) => (
-                                <DropdownMenuItem
-                                  key={status}
-                                  onClick={() => {
-                                    if (assignment.id) {
-                                      updateStatusMutation.mutate({
-                                        id: assignment.id,
-                                        status
-                                      });
-                                    }
-                                  }}
-                                  disabled={status === assignment.status}
+                      return (
+                        <TableRow key={assignment.id}>
+                          <TableCell>{assignment.title}</TableCell>
+                          <TableCell>{branch?.name || "-"}</TableCell>
+                          <TableCell>
+                            {assignmentClass?.name || "-"} -{" "}
+                            {assignmentClass?.englishLevel || ""}
+                          </TableCell>
+                          <TableCell>
+                            {assignment.dueDate
+                              ? format(new Date(assignment.dueDate), "MM/dd/yyyy")
+                              : "-"}
+                          </TableCell>
+                          <TableCell>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  className={`px-2 py-1 rounded-full text-xs font-medium h-auto
+                                    ${assignment.status === 'draft' ? 'bg-gray-100 text-gray-800 hover:bg-gray-200' : ''}
+                                    ${assignment.status === 'published' ? 'bg-green-100 text-green-800 hover:bg-green-200' : ''}
+                                    ${assignment.status === 'completed' ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' : ''}
+                                  `}
                                 >
-                                  {status.toUpperCase()}
-                                </DropdownMenuItem>
-                              ))}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                        <TableCell className="space-x-2 text-right">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => navigate(`/assignments/${assignment.id}`)}
-                          >
-                            View
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setEditingAssignment(assignment)}
-                          >
-                            Edit
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => setDeleteAssignment(assignment)}
-                          >
-                            Delete
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
+                                  {assignment.status?.toUpperCase()}
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent>
+                                {["draft", "published", "completed"].map((status) => (
+                                  <DropdownMenuItem
+                                    key={status}
+                                    onClick={() => {
+                                      if (assignment.id) {
+                                        updateStatusMutation.mutate({
+                                          id: assignment.id,
+                                          status
+                                        });
+                                      }
+                                    }}
+                                    disabled={status === assignment.status}
+                                  >
+                                    {status.toUpperCase()}
+                                  </DropdownMenuItem>
+                                ))}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                          <TableCell className="space-x-2 text-right">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => navigate(`/assignments/${assignment.id}`)}
+                            >
+                              View
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setEditingAssignment(assignment)}
+                            >
+                              Edit
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => setDeleteAssignment(assignment)}
+                            >
+                              Delete
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                 </TableBody>
               </Table>
 
@@ -349,10 +363,14 @@ export default function AssignmentList() {
                   <Pagination>
                     <PaginationContent>
                       <PaginationItem>
-                        <PaginationPrevious 
+                        <Button
+                          variant="outline"
+                          size="sm"
                           onClick={() => setCurrentPage(page => Math.max(1, page - 1))}
                           disabled={currentPage === 1}
-                        />
+                        >
+                          Previous
+                        </Button>
                       </PaginationItem>
                       {Array.from({ length: Math.ceil(assignments.length / itemsPerPage) }).map((_, index) => (
                         <PaginationItem key={index + 1}>
@@ -365,10 +383,14 @@ export default function AssignmentList() {
                         </PaginationItem>
                       ))}
                       <PaginationItem>
-                        <PaginationNext
+                        <Button
+                          variant="outline"
+                          size="sm"
                           onClick={() => setCurrentPage(page => Math.min(Math.ceil(assignments.length / itemsPerPage), page + 1))}
                           disabled={currentPage >= Math.ceil(assignments.length / itemsPerPage)}
-                        />
+                        >
+                          Next
+                        </Button>
                       </PaginationItem>
                     </PaginationContent>
                   </Pagination>
