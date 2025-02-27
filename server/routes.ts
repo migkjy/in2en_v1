@@ -62,12 +62,12 @@ export async function processSubmissionWithAI(submissionId: number) {
     }
 
     // Get student and class info for feedback generation
-    const assignment = await storage.getAssignment(submission.assignmentId);
+    const assignment = await storage.getAssignment(submission.assignmentId!);
     if (!assignment) {
       throw new Error("Assignment not found");
     }
 
-    const classInfo = await storage.getClass(assignment.classId);
+    const classInfo = await storage.getClass(assignment.classId!);
     if (!classInfo) {
       throw new Error("Class not found");
     }
@@ -120,7 +120,11 @@ export function registerRoutes(app: Express): Server {
       const branch = await storage.createBranch(req.body);
       res.status(201).json(branch);
     } catch (error) {
-      res.status(400).json({ message: error.message });
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "An unknown error occurred" });
+      }
     }
   });
 
@@ -141,7 +145,11 @@ export function registerRoutes(app: Express): Server {
         res.json(branch);
       } catch (error) {
         console.error("Error fetching branch:", error);
-        res.status(500).json({ message: "Failed to fetch branch" });
+        if (error instanceof Error) {
+          res.status(400).json({ message: error.message });
+        } else {
+          res.status(500).json({ message: "An unknown error occurred" });
+        }
       }
     },
   );
@@ -231,7 +239,11 @@ export function registerRoutes(app: Express): Server {
         res.json(classesWithCounts);
       } catch (error) {
         console.error("Error fetching classes:", error);
-        res.status(500).json({ message: "Failed to fetch classes" });
+        if (error instanceof Error) {
+          res.status(400).json({ message: error.message });
+        } else {
+          res.status(500).json({ message: "An unknown error occurred" });
+        }
       }
     },
   );
@@ -317,7 +329,11 @@ export function registerRoutes(app: Express): Server {
         res.json(classData);
       } catch (error) {
         console.error("Error fetching class:", error);
-        res.status(500).json({ message: "Failed to fetch class" });
+        if (error instanceof Error) {
+          res.status(400).json({ message: error.message });
+        } else {
+          res.status(500).json({ message: "An unknown error occurred" });
+        }
       }
     },
   );
@@ -451,7 +467,11 @@ export function registerRoutes(app: Express): Server {
         res.status(201).json(assignment);
       } catch (error) {
         console.error("Error creating assignment:", error);
-        res.status(500).json({ message: "Failed to create assignment" });
+        if (error instanceof Error) {
+          res.status(400).json({ message: error.message });
+        } else {
+          res.status(500).json({ message: "An unknown error occurred" });
+        }
       }
     },
   );
@@ -487,32 +507,18 @@ export function registerRoutes(app: Express): Server {
 
       // Sort assignments by updatedAt (most recent first), then by other criteria
       assignments.sort((a, b) => {
-        // First sort by updatedAt (most recent first)
-        const dateA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
-        const dateB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
-        if (dateA !== dateB) {
-          return dateB - dateA; // Most recent first
-        }
-
-        // If dates are equal, sort by branch and class as before
-        const classA = allClasses.find(c => c.id === a.classId);
-        const classB = allClasses.find(c => c.id === b.classId);
-
-        if (classA?.branchId !== classB?.branchId) {
-          return (classA?.branchId || 0) - (classB?.branchId || 0);
-        }
-
-        if (a.classId !== b.classId) {
-          return (a.classId || 0) - (b.classId || 0);
-        }
-
+        // First sort by id as a fallback
         return a.id - b.id;
       });
 
       res.json(assignments);
     } catch (error) {
       console.error("Error fetching assignments:", error);
-      res.status(500).json({ message: "Failed to fetch assignments" });
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "An unknown error occurred" });
+      }
     }
   });
 
@@ -528,7 +534,11 @@ export function registerRoutes(app: Express): Server {
         res.json(assignment);
       } catch (error) {
         console.error("Error fetching assignment:", error);
-        res.status(500).json({ message: "Failed to fetch assignment" });
+        if (error instanceof Error) {
+          res.status(400).json({ message: error.message });
+        } else {
+          res.status(500).json({ message: "An unknown error occurred" });
+        }
       }
     },
   );
@@ -548,7 +558,11 @@ export function registerRoutes(app: Express): Server {
         res.json(assignment);
       } catch (error) {
         console.error("Error updating assignment:", error);
-        res.status(500).json({ message: "Failed to update assignment" });
+        if (error instanceof Error) {
+          res.status(400).json({ message: error.message });
+        } else {
+          res.status(500).json({ message: "An unknown error occurred" });
+        }
       }
     },
   );
@@ -562,7 +576,11 @@ export function registerRoutes(app: Express): Server {
         res.status(204).send();
       } catch (error) {
         console.error("Error deleting assignment:", error);
-        res.status(500).json({ message: "Failed to delete assignment" });
+        if (error instanceof Error) {
+          res.status(400).json({ message: error.message });
+        } else {
+          res.status(500).json({ message: "An unknown error occurred" });
+        }
       }
     },
   );
@@ -609,9 +627,11 @@ export function registerRoutes(app: Express): Server {
       });
     } catch (error) {
       console.error("Error fetching submission:", error);
-      res.status(500).json({
-        message: "Internal server error while fetching submission",
-      });
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "An unknown error occurred" });
+      }
     }
   });
   app.post(
@@ -693,7 +713,11 @@ export function registerRoutes(app: Express): Server {
         res.json(updatedSubmission);
       } catch (error) {
         console.error("Error in reprocessing:", error);
-        res.status(500).json({ message: "Failed to reprocess submission" });
+        if (error instanceof Error) {
+          res.status(400).json({ message: error.message });
+        } else {
+          res.status(500).json({ message: "An unknown error occurred" });
+        }
       }
     },
   );
@@ -732,7 +756,11 @@ export function registerRoutes(app: Express): Server {
         });
       } catch (error) {
         console.error("Error in AI review process:", error);
-        res.status(500).json({ message: "Failed to process AI review" });
+        if (error instanceof Error) {
+          res.status(400).json({ message: error.message });
+        } else {
+          res.status(500).json({ message: "An unknown error occurred" });
+        }
       }
     },
   );
@@ -794,9 +822,11 @@ export function registerRoutes(app: Express): Server {
       });
     } catch (error) {
       console.error("Error fetching submissions:", error);
-      res.status(500).json({
-        message: "Internal server error while fetching submissions",
-      });
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "An unknown error occurred" });
+      }
     }
   });
 
@@ -1198,9 +1228,11 @@ export function registerRoutes(app: Express): Server {
         res.json({ message: "Submission deleted successfully" });
       } catch (error) {
         console.error("Error deleting submission:", error);
-        res.status(500).json({
-          message: error instanceof Error ? error.message : "Failed to delete submission",
-        });
+        if (error instanceof Error) {
+          res.status(400).json({ message: error.message });
+        } else {
+          res.status(500).json({ message: "An unknown error occurred" });
+        }
       }
     },
   );
