@@ -283,84 +283,92 @@ export default function AssignmentList() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {!loadingAssignments && assignments?.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
-                    .map((assignment) => {
-                      const assignmentClass = assignmentClasses.data?.[assignment.classId!];
-                      const branch = branches?.find(b => b.id === assignmentClass?.branchId);
+                  {!loadingAssignments && assignments?.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                        No assignments found
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    assignments?.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+                      .map((assignment) => {
+                        const assignmentClass = assignmentClasses.data?.[assignment.classId!];
+                        const branch = branches?.find(b => b.id === assignmentClass?.branchId);
 
-                      return (
-                        <TableRow key={assignment.id}>
-                          <TableCell>{assignment.title}</TableCell>
-                          <TableCell>{branch?.name || "-"}</TableCell>
-                          <TableCell>
-                            {assignmentClass?.name || "-"} -{" "}
-                            {assignmentClass?.englishLevel || ""}
-                          </TableCell>
-                          <TableCell>
-                            {assignment.dueDate
-                              ? format(new Date(assignment.dueDate), "MM/dd/yyyy")
-                              : "-"}
-                          </TableCell>
-                          <TableCell>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  className={`px-2 py-1 rounded-full text-xs font-medium h-auto
-                                    ${assignment.status === 'draft' ? 'bg-gray-100 text-gray-800 hover:bg-gray-200' : ''}
-                                    ${assignment.status === 'published' ? 'bg-green-100 text-green-800 hover:bg-green-200' : ''}
-                                    ${assignment.status === 'completed' ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' : ''}
-                                  `}
-                                >
-                                  {assignment.status?.toUpperCase()}
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent>
-                                {["draft", "published", "completed"].map((status) => (
-                                  <DropdownMenuItem
-                                    key={status}
-                                    onClick={() => {
-                                      if (assignment.id) {
-                                        updateStatusMutation.mutate({
-                                          id: assignment.id,
-                                          status
-                                        });
-                                      }
-                                    }}
-                                    disabled={status === assignment.status}
+                        return (
+                          <TableRow key={assignment.id}>
+                            <TableCell>{assignment.title}</TableCell>
+                            <TableCell>{branch?.name || "-"}</TableCell>
+                            <TableCell>
+                              {assignmentClass?.name || "-"} -{" "}
+                              {assignmentClass?.englishLevel || ""}
+                            </TableCell>
+                            <TableCell>
+                              {assignment.dueDate
+                                ? format(new Date(assignment.dueDate), "MM/dd/yyyy")
+                                : "-"}
+                            </TableCell>
+                            <TableCell>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    className={`px-2 py-1 rounded-full text-xs font-medium h-auto
+                                      ${assignment.status === 'draft' ? 'bg-gray-100 text-gray-800 hover:bg-gray-200' : ''}
+                                      ${assignment.status === 'published' ? 'bg-green-100 text-green-800 hover:bg-green-200' : ''}
+                                      ${assignment.status === 'completed' ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' : ''}
+                                    `}
                                   >
-                                    {status.toUpperCase()}
-                                  </DropdownMenuItem>
-                                ))}
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                          <TableCell className="space-x-2 text-right">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => navigate(`/assignments/${assignment.id}`)}
-                            >
-                              View
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setEditingAssignment(assignment)}
-                            >
-                              Edit
-                            </Button>
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => setDeleteAssignment(assignment)}
-                            >
-                              Delete
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
+                                    {assignment.status?.toUpperCase()}
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent>
+                                  {["draft", "published", "completed"].map((status) => (
+                                    <DropdownMenuItem
+                                      key={status}
+                                      onClick={() => {
+                                        if (assignment.id) {
+                                          updateStatusMutation.mutate({
+                                            id: assignment.id,
+                                            status
+                                          });
+                                        }
+                                      }}
+                                      disabled={status === assignment.status}
+                                    >
+                                      {status.toUpperCase()}
+                                    </DropdownMenuItem>
+                                  ))}
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                            <TableCell className="space-x-2 text-right">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => navigate(`/assignments/${assignment.id}`)}
+                              >
+                                View
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setEditingAssignment(assignment)}
+                              >
+                                Edit
+                              </Button>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => setDeleteAssignment(assignment)}
+                              >
+                                Delete
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
+                  )}
                 </TableBody>
               </Table>
 
