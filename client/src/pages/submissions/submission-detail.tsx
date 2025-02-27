@@ -335,7 +335,7 @@ export default function SubmissionDetail() {
                           />
                         ) : (
                           <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                            {fixMarkdownFormatting(submissionData.correctedText) || "No corrections yet"}
+                            {submissionData.correctedText || "No corrections yet"}
                           </ReactMarkdown>
                         )}
                       </div>
