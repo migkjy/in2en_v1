@@ -18,6 +18,7 @@ import { format } from "date-fns";
 import { useAuth } from "@/hooks/use-auth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useState } from "react";
+import {AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction} from "@/components/ui/alert-dialog";
 
 export default function AssignmentDetail() {
   const [, params] = useRoute("/:role/assignments/:id");
@@ -187,6 +188,11 @@ export default function AssignmentDetail() {
     navigate(`/submissions/${submissionId}`);
   };
 
+  const handleEditSubmission = (submissionId: number) => {
+    const basePath = user?.role === "ADMIN" ? "/admin" : "/teacher";
+    navigate(`${basePath}/assignments/review/${submissionId}/edit`);
+  };
+
   return (
     <>
       <div className="flex h-screen">
@@ -338,7 +344,7 @@ export default function AssignmentDetail() {
                                       variant="outline"
                                       size="sm"
                                       className="mr-2"
-                                      onClick={() => navigate(`${basePath}/review/${submission.id}/edit`)}
+                                      onClick={() => handleEditSubmission(submission.id)}
                                     >
                                       Edit
                                     </Button>

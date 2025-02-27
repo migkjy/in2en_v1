@@ -4,42 +4,46 @@ import { Redirect, Route } from "wouter";
 
 type Role = "ADMIN" | "TEACHER" | "STUDENT";
 
+interface ProtectedRouteProps {
+  path: string;
+  component: React.ComponentType<any>;
+  allowedRole?: Role | Role[];
+}
+
 export function ProtectedRoute({
   path,
   component: Component,
   allowedRole,
-}: {
-  path: string;
-  component: () => React.JSX.Element;
-  allowedRole?: Role | Role[];
-}) {
+}: ProtectedRouteProps) {
   const { user, isLoading } = useAuth();
 
   return (
     <Route path={path}>
-      {isLoading ? (
-        <div className="flex items-center justify-center min-h-screen">
-          <Loader2 className="h-8 w-8 animate-spin text-border" />
-        </div>
-      ) : !user ? (
-        <Redirect to="/auth" />
-      ) : allowedRole ? (
-        Array.isArray(allowedRole) ? (
-          allowedRole.includes(user.role as Role) ? (
-            <Component />
-          ) : (
-            <Redirect to="/" />
-          )
-        ) : (
-          user.role === allowedRole ? (
-            <Component />
-          ) : (
-            <Redirect to="/" />
-          )
-        )
-      ) : (
-        <Component />
-      )}
+      {() => {
+        if (isLoading) {
+          return (
+            <div className="flex items-center justify-center min-h-screen">
+              <Loader2 className="h-8 w-8 animate-spin text-border" />
+            </div>
+          );
+        }
+
+        if (!user) {
+          return <Redirect to="/auth" />;
+        }
+
+        if (allowedRole) {
+          if (Array.isArray(allowedRole)) {
+            if (!allowedRole.includes(user.role as Role)) {
+              return <Redirect to="/" />;
+            }
+          } else if (user.role !== allowedRole) {
+            return <Redirect to="/" />;
+          }
+        }
+
+        return <Component />;
+      }}
     </Route>
   );
 }

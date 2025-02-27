@@ -9,10 +9,9 @@ import { useToast } from "@/hooks/use-toast";
 import type { Submission } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
-import { FC } from "react";
 
 // List component for /assignments/review
-const ReviewList: FC = () => {
+const ReviewList = () => {
   const [, navigate] = useLocation();
   const { data: submissions } = useQuery<Submission[]>({
     queryKey: ["/api/submissions", "pending"],
@@ -37,7 +36,7 @@ const ReviewList: FC = () => {
 };
 
 // Detail component for /assignments/review/:id
-const ReviewDetail: FC<{ id: string }> = ({ id }) => {
+const ReviewDetail = ({ id }: { id: string }) => {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const { user } = useAuth();
@@ -58,17 +57,11 @@ const ReviewDetail: FC<{ id: string }> = ({ id }) => {
   const { data: submission, isLoading, error } = useQuery<Submission>({
     queryKey: ["/api/submissions", submissionId],
     queryFn: async () => {
-      try {
-        const response = await fetch(`/api/submissions/${submissionId}`);
-        if (!response.ok) {
-          throw new Error("Failed to fetch submission");
-        }
-        return response.json();
-      } catch (error) {
-        const dashboardPath = user.role === "ADMIN" ? "/admin/assignments" : "/teacher/assignments";
-        navigate(dashboardPath);
-        return null;
+      const response = await fetch(`/api/submissions/${submissionId}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch submission");
       }
+      return response.json();
     },
     retry: false,
     enabled: !isNaN(submissionId),
@@ -128,6 +121,7 @@ const ReviewDetail: FC<{ id: string }> = ({ id }) => {
       <main className="flex-1 p-8 overflow-auto">
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-2 gap-8">
+            {/* Submission Details Card */}
             <Card>
               <CardHeader>
                 <CardTitle>Submission Details</CardTitle>
@@ -153,6 +147,7 @@ const ReviewDetail: FC<{ id: string }> = ({ id }) => {
               </CardContent>
             </Card>
 
+            {/* Teacher Feedback Card */}
             <Card>
               <CardHeader>
                 <CardTitle>Teacher Feedback</CardTitle>
@@ -200,13 +195,13 @@ const ReviewDetail: FC<{ id: string }> = ({ id }) => {
 };
 
 // Main component that handles routing
-const ReviewAssignment: FC = () => {
-  const [match] = useRoute("/:role/assignments/review/:id");
-  const [matchEdit] = useRoute("/:role/assignments/review/:id/edit");
+const ReviewAssignment = () => {
+  const [, params] = useRoute("/:role/assignments/review/:id");
+  const [isEditMode] = useRoute("/:role/assignments/review/:id/edit");
 
   // If we have an ID parameter from either route pattern, show the detail view
-  if (match?.params.id || matchEdit?.params.id) {
-    return <ReviewDetail id={match?.params.id || matchEdit?.params.id!} />;
+  if (params?.id) {
+    return <ReviewDetail id={params.id} />;
   }
 
   // Otherwise show the list view which will handle the redirect

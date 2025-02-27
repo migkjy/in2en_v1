@@ -10,17 +10,10 @@ import AdminDashboard from "@/pages/dashboard/admin";
 import TeacherDashboard from "@/pages/dashboard/teacher";
 import StudentDashboard from "@/pages/dashboard/student";
 import CreateAssignment from "@/pages/assignments/create";
-import UploadAssignment from "@/pages/assignments/upload";
 import ReviewAssignment from "@/pages/assignments/review";
 import AssignmentList from "@/pages/assignments/list";
 import AssignmentDetail from "@/pages/assignments/assignment-detail";
-import BranchList from "@/pages/branches/list";
-import BranchDetail from "@/pages/branches/branch-detail";
-import ClassList from "@/pages/classes/list";
-import ClassDetail from "@/pages/classes/class-detail";
-import TeacherList from "@/pages/teachers/list";
-import TeacherDetail from "@/pages/teachers/teacher-detail";
-import StudentList from "@/pages/students/list";
+import UploadAssignment from "@/pages/assignments/upload";
 import SubmissionDetail from "@/pages/submissions/submission-detail";
 
 function Router() {
@@ -33,16 +26,16 @@ function Router() {
       <ProtectedRoute path="/admin/assignments" component={AssignmentList} allowedRole="ADMIN" />
       <ProtectedRoute path="/admin/assignments/create" component={CreateAssignment} allowedRole="ADMIN" />
       <ProtectedRoute path="/admin/assignments/:id" component={AssignmentDetail} allowedRole="ADMIN" />
-      <ProtectedRoute path="/admin/assignments/review/:id" component={ReviewAssignment} allowedRole="ADMIN" />
       <ProtectedRoute path="/admin/assignments/review/:id/edit" component={ReviewAssignment} allowedRole="ADMIN" />
+      <ProtectedRoute path="/admin/assignments/review/:id" component={ReviewAssignment} allowedRole="ADMIN" />
 
       {/* Teacher Routes */}
       <ProtectedRoute path="/teacher" component={TeacherDashboard} allowedRole="TEACHER" />
       <ProtectedRoute path="/teacher/assignments" component={AssignmentList} allowedRole="TEACHER" />
       <ProtectedRoute path="/teacher/assignments/create" component={CreateAssignment} allowedRole="TEACHER" />
       <ProtectedRoute path="/teacher/assignments/:id" component={AssignmentDetail} allowedRole="TEACHER" />
-      <ProtectedRoute path="/teacher/assignments/review/:id" component={ReviewAssignment} allowedRole="TEACHER" />
       <ProtectedRoute path="/teacher/assignments/review/:id/edit" component={ReviewAssignment} allowedRole="TEACHER" />
+      <ProtectedRoute path="/teacher/assignments/review/:id" component={ReviewAssignment} allowedRole="TEACHER" />
 
       {/* Common Routes - Accessible by all authenticated users */}
       <ProtectedRoute path="/submissions/:id" component={SubmissionDetail} />
@@ -55,7 +48,7 @@ function Router() {
       <Route path="/">
         {() => {
           const role = localStorage.getItem("userRole");
-          if (!role) return <AuthPage />;
+          if (!role) return <Redirect to="/auth" />;
 
           switch (role) {
             case "ADMIN":
@@ -65,7 +58,7 @@ function Router() {
             case "STUDENT":
               return <Redirect to="/student" />;
             default:
-              return <AuthPage />;
+              return <Redirect to="/auth" />;
           }
         }}
       </Route>
