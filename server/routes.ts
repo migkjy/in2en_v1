@@ -517,14 +517,35 @@ export function registerRoutes(app: Express): Server {
 
   app.get(
     "/api/assignments/:id",
-    requireRole([UserRole.ADMIN, UserRole.TEACHER]),
     async (req, res) => {
+      if (!req.isAuthenticated() || !req.user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
       try {
         const assignment = await storage.getAssignment(Number(req.params.id));
         if (!assignment) {
           return res.status(404).json({ message: "Assignment not found" });
         }
-        res.json(assignment);
+
+        // Check if user has permission to view this assignment
+        if (req.user.role === UserRole.TEACHER) {
+          const teacherClasses = await storage.getTeacherClasses(req.user.id);
+          const hasAccess = teacherClasses.some(cls => cls.id === assignment.classId);
+          if (!hasAccess) {
+            return res.status(403).json({ message: "You don't have permission to view this assignment" });
+          }
+        }
+
+        // Get related data
+        const classInfo = await storage.getClass(assignment.classId!);
+        const teacher = await storage.getUser(assignment.userId!);
+
+        res.json({
+          ...assignment,
+          class: classInfo,
+          teacher,
+        });
       } catch (error) {
         console.error("Error fetching assignment:", error);
         if (error instanceof Error) {

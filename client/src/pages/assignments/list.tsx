@@ -340,7 +340,7 @@ export default function AssignmentList() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => navigate(`/assignments/${assignment.id}`)}
+                                onClick={() => navigate(`/teacher/assignments/${assignment.id}`)}
                               >
                                 View
                               </Button>
