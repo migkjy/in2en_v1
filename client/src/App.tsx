@@ -87,6 +87,16 @@ function Router() {
         component={AssignmentDetail}
         allowedRole="ADMIN"
       />
+      <ProtectedRoute 
+        path="/admin/assignments/review/:id"
+        component={ReviewAssignment}
+        allowedRole="ADMIN"
+      />
+      <ProtectedRoute 
+        path="/admin/assignments/review/:id/edit"
+        component={ReviewAssignment}
+        allowedRole="ADMIN"
+      />
 
       {/* Teacher Routes */} 
       <ProtectedRoute 
@@ -109,6 +119,16 @@ function Router() {
         component={AssignmentDetail}
         allowedRole="TEACHER"
       />
+      <ProtectedRoute 
+        path="/teacher/assignments/review/:id"
+        component={ReviewAssignment}
+        allowedRole="TEACHER"
+      />
+      <ProtectedRoute 
+        path="/teacher/assignments/review/:id/edit"
+        component={ReviewAssignment}
+        allowedRole="TEACHER"
+      />
 
       {/* Common Routes - Accessible by both Teacher and Admin */}
       <ProtectedRoute 
@@ -116,8 +136,6 @@ function Router() {
         component={UploadAssignment}
         allowedRole={["TEACHER", "ADMIN"]}
       />
-      <Route path="/assignments/review/:id" component={ReviewAssignment} />
-      <Route path="/assignments/review" component={ReviewAssignment} />
 
       {/* Student Routes */}
       <ProtectedRoute 
