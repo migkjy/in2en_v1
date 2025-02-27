@@ -34,22 +34,7 @@ const RichTextEditor = ({ content, onChange }: { content: string; onChange: (tex
 
 const fixMarkdownFormatting = (text: string) => {
   if (!text) return "";
-
-  // Handle cases with apostrophes and possessives
-  let formatted = text
-    // First handle possessives with 's
-    .replace(/(\w+)(\*\*'s\*\*)/g, '$1 $2')
-    // Handle words immediately followed by bold text
-    .replace(/(\w+)(\*\*)/g, '$1 $2')
-    // Handle bold text immediately followed by words
-    .replace(/(\*\*)(\w+)/g, '$1 $2')
-    // Handle special cases with punctuation
-    .replace(/([.,!?'])(\*\*)/g, '$1 $2')
-    .replace(/(\*\*)([.,!?'])/g, '$1 $2')
-    // Clean up any double spaces that might have been created
-    .replace(/\s+/g, ' ');
-
-  return formatted.trim();
+  return text.replace(/(\w+|\S)(\*\*)/g, '$1 $2').replace(/(\*\*)(\w+|\S)/g, '$1 $2');
 };
 
 export default function SubmissionDetail() {
