@@ -123,7 +123,7 @@ export default function AssignmentList() {
     queryFn: async () => {
       if (!assignments) return {};
 
-      const uniqueClassIds = [...new Set(assignments.map(a => a.classId).filter(Boolean))];
+      const uniqueClassIds = Array.from(new Set(assignments.map(a => a.classId).filter(Boolean)));
       const classData: Record<number, Class> = {};
 
       for (const classId of uniqueClassIds) {
@@ -159,7 +159,6 @@ export default function AssignmentList() {
       return response.json();
     },
     onSuccess: () => {
-      // queryClient.invalidateQueries({ queryKey: ["/api/assignments"] }); // Removed as it's already handled by the useQuery hook
       toast({
         title: "Success",
         description: "Assignment status updated successfully",
@@ -189,7 +188,6 @@ export default function AssignmentList() {
 
       if (!response.ok) throw new Error("Failed to delete assignment");
 
-      // queryClient.invalidateQueries({ queryKey: ["/api/assignments"] }); // Removed as it's already handled by the useQuery hook
       toast({ title: "Success", description: "Assignment deleted successfully" });
     } catch (error) {
       toast({
@@ -368,42 +366,36 @@ export default function AssignmentList() {
                 </TableBody>
               </Table>
 
-              {assignments && assignments.length > 0 && (
-                <div className="mt-4">
-                  <Pagination>
-                    <PaginationContent>
-                      <PaginationItem>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setCurrentPage(page => Math.max(1, page - 1))}
-                          disabled={currentPage === 1}
-                        >
-                          Previous
-                        </Button>
-                      </PaginationItem>
-                      {Array.from({ length: Math.ceil(assignments.length / itemsPerPage) }).map((_, index) => (
-                        <PaginationItem key={index + 1}>
-                          <PaginationLink
-                            onClick={() => setCurrentPage(index + 1)}
-                            isActive={currentPage === index + 1}
-                          >
-                            {index + 1}
-                          </PaginationLink>
-                        </PaginationItem>
-                      ))}
-                      <PaginationItem>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setCurrentPage(page => Math.min(Math.ceil(assignments.length / itemsPerPage), page + 1))}
-                          disabled={currentPage >= Math.ceil(assignments.length / itemsPerPage)}
-                        >
-                          Next
-                        </Button>
-                      </PaginationItem>
-                    </PaginationContent>
-                  </Pagination>
+              {assignments && assignments.length > itemsPerPage && (
+                <div className="mt-4 flex justify-between items-center">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(page => Math.max(1, page - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    Previous
+                  </Button>
+                  <div className="flex gap-2">
+                    {Array.from({ length: Math.ceil(assignments.length / itemsPerPage) }).map((_, index) => (
+                      <Button
+                        key={index + 1}
+                        variant={currentPage === index + 1 ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setCurrentPage(index + 1)}
+                      >
+                        {index + 1}
+                      </Button>
+                    ))}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(page => Math.min(Math.ceil(assignments.length / itemsPerPage), page + 1))}
+                    disabled={currentPage >= Math.ceil(assignments.length / itemsPerPage)}
+                  >
+                    Next
+                  </Button>
                 </div>
               )}
             </CardContent>
