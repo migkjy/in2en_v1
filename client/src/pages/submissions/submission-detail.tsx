@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { Submission, User, Assignment } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
-import { Loader2, ArrowLeft } from "lucide-react";
+import { Loader2, ArrowLeft, Edit2 as Edit, Save } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import MDEditor from '@uiw/react-md-editor';
