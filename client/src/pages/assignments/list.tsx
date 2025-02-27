@@ -1,4 +1,4 @@
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -53,6 +53,7 @@ export default function AssignmentList() {
   const [, navigate] = useLocation();
   const { user } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [selectedBranch, setSelectedBranch] = useState<string>("all");
   const [selectedClass, setSelectedClass] = useState<string>("all");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
@@ -72,7 +73,7 @@ export default function AssignmentList() {
     enabled: user?.role === "ADMIN" || user?.role === "TEACHER"
   });
 
-  const { data: classes, isLoading: loadingClasses } = useQuery<Class[]>({
+  const { data: classes } = useQuery<Class[]>({
     queryKey: ["/api/classes", selectedBranch],
     queryFn: async () => {
       const params = new URLSearchParams();
@@ -145,18 +146,12 @@ export default function AssignmentList() {
         { status }
       );
       if (!response.ok) {
-        let error = "Failed to update assignment status";
-        try {
-          const errorText = await response.text();
-          const jsonError = await response.json();
-          if(jsonError && jsonError.message) error = jsonError.message;
-          else if(errorText) error = errorText;
-        } catch(e) {}
-        throw new Error(error);
+        throw new Error("Failed to update assignment status");
       }
       return response.json();
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/assignments"] });
       toast({
         title: "Success",
         description: "Assignment status updated successfully",
@@ -186,15 +181,15 @@ export default function AssignmentList() {
 
       if (!response.ok) throw new Error("Failed to delete assignment");
 
+      queryClient.invalidateQueries({ queryKey: ["/api/assignments"] });
       toast({ title: "Success", description: "Assignment deleted successfully" });
+      setDeleteAssignment(null);
     } catch (error) {
       toast({
         title: "Error",
         description: "Failed to delete assignment",
         variant: "destructive",
       });
-    } finally {
-      setDeleteAssignment(null);
     }
   };
 
@@ -236,7 +231,6 @@ export default function AssignmentList() {
                   <Select
                     value={selectedClass}
                     onValueChange={setSelectedClass}
-                    disabled={loadingClasses}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="All Classes" />
