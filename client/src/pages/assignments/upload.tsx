@@ -97,7 +97,7 @@ export default function UploadAssignment() {
         title: "Success",
         description: "Homework files uploaded successfully",
       });
-      navigate(`/assignments/${assignmentId}`);
+      navigate(`${basePath}/${assignmentId}`);
     },
     onError: (error) => {
       toast({
