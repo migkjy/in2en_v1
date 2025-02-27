@@ -32,6 +32,11 @@ const RichTextEditor = ({ content, onChange }: { content: string; onChange: (tex
   );
 };
 
+const fixMarkdownFormatting = (text: string) => {
+  if (!text) return "";
+  return text.replace(/(\w+|\S)(\*\*)/g, '$1 $2').replace(/(\*\*)(\w+|\S)/g, '$1 $2');
+};
+
 export default function SubmissionDetail() {
   const [, params] = useRoute("/submissions/:id");
   const [, navigate] = useLocation();
@@ -313,7 +318,7 @@ export default function SubmissionDetail() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => navigate(`${basePath}/review/${submissionData.id}/edit`)}
+                                onClick={() => handleStartEdit('corrections')}
                               >
                                 <Edit className="w-4 h-4 mr-2" />
                                 Edit
@@ -364,7 +369,7 @@ export default function SubmissionDetail() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => navigate(`${basePath}/review/${submissionData.id}/edit`)}
+                                onClick={() => handleStartEdit('assessment')}
                               >
                                 <Edit className="w-4 h-4 mr-2" />
                                 Edit
@@ -381,7 +386,7 @@ export default function SubmissionDetail() {
                           />
                         ) : (
                           <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                            {submissionData.overallAssessment || "No assessment yet"}
+                            {fixMarkdownFormatting(submissionData.overallAssessment) || "No assessment yet"}
                           </ReactMarkdown>
                         )}
                       </div>
