@@ -505,11 +505,8 @@ export function registerRoutes(app: Express): Server {
         assignments = filteredAssignments;
       }
 
-      // Sort assignments by updatedAt (most recent first), then by other criteria
-      assignments.sort((a, b) => {
-        // First sort by id as a fallback
-        return a.id - b.id;
-      });
+      // Sort assignments by id (most recent first)
+      assignments.sort((a, b) => b.id - a.id);
 
       res.json(assignments);
     } catch (error) {
@@ -926,6 +923,7 @@ export function registerRoutes(app: Express): Server {
   );
 
   // Add these routes after the existing teacher routes
+  // Update the students route to handle branch filtering
   app.get(
     "/api/teachers/:id",
     requireRole([UserRole.ADMIN]),
@@ -978,8 +976,8 @@ export function registerRoutes(app: Express): Server {
         } else {
           res.status(500).json({ message: "An unknown error occurred" });
         }
-      }
-    },
+            }
+    }
   );
 
   app.put(
