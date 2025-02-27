@@ -213,30 +213,25 @@ export function registerRoutes(app: Express): Server {
     async (req, res) => {
       const { branchId } = req.query;
       try {
-        const classes = await storage.listClasses(
-          branchId ? Number(branchId) : undefined,
-        );
+        let classes;
+
+        if (branchId && branchId !== "all") {
+          classes = await storage.listClasses(Number(branchId));
+        } else {
+          classes = await storage.listClasses();
+        }
 
         // Filter out hidden classes
         const visibleClasses = classes.filter((cls) => !cls.isHidden);
 
-        // Get counts for each class
-        const classesWithCounts = await Promise.all(
-          visibleClasses.map(async (cls) => {
-            const [students, teachers] = await Promise.all([
-              storage.getClassStudents(cls.id),
-              storage.getClassTeachers(cls.id),
-            ]);
+        // If user is a teacher, filter classes to only show accessible ones
+        if (req.user?.role === UserRole.TEACHER) {
+          const teacherClasses = await storage.getTeacherClasses(req.user.id);
+          const accessibleClassIds = teacherClasses.map(tc => tc.id);
+          return res.json(visibleClasses.filter(cls => accessibleClassIds.includes(cls.id)));
+        }
 
-            return {
-              ...cls,
-              studentCount: students.length,
-              teacherCount: teachers.filter((t) => t.hasAccess).length,
-            };
-          }),
-        );
-
-        res.json(classesWithCounts);
+        res.json(visibleClasses);
       } catch (error) {
         console.error("Error fetching classes:", error);
         if (error instanceof Error) {
@@ -966,8 +961,7 @@ export function registerRoutes(app: Express): Server {
 
   // Add after the existing GET /api/classes route
   app.get(
-    "/api/teachers/:id/classes",
-    requireRole([UserRole.ADMIN, UserRole.TEACHER]),
+    "/api/teachers/:id/classes",    requireRole([UserRole.ADMIN, UserRole.TEACHER]),
     async (req, res) => {
       try {
         const classes = await storage.getTeacherClasses(Number(req.params.id));

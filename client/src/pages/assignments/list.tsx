@@ -36,7 +36,7 @@ import {
 import { useLocation } from "wouter";
 import type { Assignment, Branch, Class } from "@shared/schema";
 import { format } from "date-fns";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { EditAssignmentDialog } from "./edit-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -81,18 +81,15 @@ export default function AssignmentList() {
       }
       const response = await fetch(`/api/classes?${params.toString()}`);
       if (!response.ok) throw new Error("Failed to fetch classes");
-      const allClasses = await response.json();
-
-      // If user is a teacher, filter classes to only show accessible ones
-      if (user?.role === "TEACHER" && teacherClasses) {
-        return allClasses.filter((cls: Class) => 
-          teacherClasses.some(tc => tc.id === cls.id)
-        );
-      }
-      return allClasses;
+      return response.json();
     },
-    enabled: user?.role === "ADMIN" || (user?.role === "TEACHER" && !!teacherClasses),
+    enabled: Boolean(selectedBranch),
   });
+
+  // Reset selectedClass when branch changes
+  useEffect(() => {
+    setSelectedClass("all");
+  }, [selectedBranch]);
 
   const { data: assignments, isLoading: loadingAssignments } = useQuery<Assignment[]>({
     queryKey: ["/api/assignments", selectedBranch, selectedClass, selectedStatus],
@@ -115,6 +112,7 @@ export default function AssignmentList() {
       if (!response.ok) throw new Error("Failed to fetch assignments");
       return response.json();
     },
+    enabled: Boolean(selectedBranch),
   });
 
   // Get accessible classes for each assignment
