@@ -310,24 +310,14 @@ export default function SubmissionDetail() {
                                 </Button>
                               </>
                             ) : (
-                              <>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleStartEdit('corrections')}
-                                >
-                                  <Edit className="w-4 h-4 mr-2" />
-                                  Edit
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="mr-2"
-                                  onClick={() => navigate(`${basePath}/review/${submissionData.id}/edit`)}
-                                >
-                                  Edit
-                                </Button>
-                              </>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => navigate(`${basePath}/review/${submissionData.id}/edit`)}
+                              >
+                                <Edit className="w-4 h-4 mr-2" />
+                                Edit
+                              </Button>
                             )}
                           </div>
                         )}
@@ -371,24 +361,14 @@ export default function SubmissionDetail() {
                                 </Button>
                               </>
                             ) : (
-                              <>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleStartEdit('assessment')}
-                                >
-                                  <Edit className="w-4 h-4 mr-2" />
-                                  Edit
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="mr-2"
-                                  onClick={() => navigate(`${basePath}/review/${submissionData.id}/edit`)}
-                                >
-                                  Edit
-                                </Button>
-                              </>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => navigate(`${basePath}/review/${submissionData.id}/edit`)}
+                              >
+                                <Edit className="w-4 h-4 mr-2" />
+                                Edit
+                              </Button>
                             )}
                           </div>
                         )}
