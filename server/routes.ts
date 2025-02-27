@@ -1215,40 +1215,6 @@ export function registerRoutes(app: Express): Server {
     },
   );
 
-  app.put(
-    "/api/teachers/:id/authority",
-    requireRole([UserRole.ADMIN]),
-    async (req, res) => {
-      try {
-        const { classIds } = req.body;
-        const teacherId = Number(req.params.id);
-
-        // Remove all existing class assignments
-        const existingClasses = await storage.getTeacherClasses(teacherId);
-        for (const cls of existingClasses) {
-          await storage.removeTeacherFromClass(cls.id, teacherId);
-        }
-
-        // Add new class assignments
-        for (const classId of classIds) {
-          await storage.updateTeacherClassRole(classId, teacherId, {
-            hasAccess: true,
-            isLead: false
-          });
-        }
-
-        res.json({ message: "Authority updated successfully" });
-      } catch (error) {
-        console.error("Error updating teacher authority:", error);
-        if (error instanceof Error) {
-          res.status(400).json({ message: error.message });
-        } else {
-          res.status(500).json({ message: "An unknown error occurred" });
-        }
-      }
-    },
-  );
-
   const httpServer = createServer(app);
   return httpServer;
 }
