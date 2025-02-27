@@ -538,13 +538,20 @@ export function registerRoutes(app: Express): Server {
         }
 
         // Get related data
-        const classInfo = await storage.getClass(assignment.classId!);
-        const teacher = await storage.getUser(assignment.userId!);
+        let classInfo = null;
+        let branch = null;
+
+        if (assignment.classId) {
+          classInfo = await storage.getClass(assignment.classId);
+          if (classInfo?.branchId) {
+            branch = await storage.getBranch(classInfo.branchId);
+          }
+        }
 
         res.json({
           ...assignment,
           class: classInfo,
-          teacher,
+          branch: branch
         });
       } catch (error) {
         console.error("Error fetching assignment:", error);

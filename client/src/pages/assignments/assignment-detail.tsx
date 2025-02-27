@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export default function AssignmentDetail() {
-  const [, params] = useRoute("/assignments/:id");
+  const [, params] = useRoute("/teacher/assignments/:id");
   const [, navigate] = useLocation();
   const assignmentId = params?.id;
   const { user } = useAuth();
@@ -39,7 +39,7 @@ export default function AssignmentDetail() {
 
   // Get assignment details
   const { data: assignment, isLoading: isAssignmentLoading } =
-    useQuery<Assignment>({
+    useQuery<Assignment & { class?: Class; branch?: Branch }>({
       queryKey: ["/api/assignments", assignmentId],
       queryFn: async () => {
         const response = await fetch(`/api/assignments/${assignmentId}`);
@@ -50,35 +50,6 @@ export default function AssignmentDetail() {
       },
       enabled: !!assignmentId,
     });
-
-  // Get class details including branch info
-  const { data: classData, isLoading: isClassLoading } = useQuery<{
-    class: Class;
-    branch: Branch;
-  }>({
-    queryKey: ["/api/classes", assignment?.classId],
-    queryFn: async () => {
-      if (!assignment?.classId) throw new Error("Class ID is required");
-
-      const classResponse = await fetch(`/api/classes/${assignment.classId}`);
-      if (!classResponse.ok) {
-        throw new Error("Failed to fetch class");
-      }
-      const classData = await classResponse.json();
-
-      const branchResponse = await fetch(`/api/branches/${classData.branchId}`);
-      if (!branchResponse.ok) {
-        throw new Error("Failed to fetch branch");
-      }
-      const branchData = await branchResponse.json();
-
-      return {
-        class: classData,
-        branch: branchData,
-      };
-    },
-    enabled: !!assignment?.classId,
-  });
 
   // Get students list
   const { data: students } = useQuery<User[]>({
@@ -131,7 +102,6 @@ export default function AssignmentDetail() {
         title: "Starting AI Review",
         description: "AI review process has begun. Please wait...",
       });
-      // Optimistically update status to processing
       const previousSubmissions = queryClient.getQueryData(["/api/submissions", assignmentId]);
       queryClient.setQueryData(
         ["/api/submissions", assignmentId],
@@ -143,11 +113,9 @@ export default function AssignmentDetail() {
       return { previousSubmissions };
     },
     onSettled: () => {
-      // Always refetch to get latest status
       queryClient.invalidateQueries({ queryKey: ["/api/submissions", assignmentId] });
     },
     onError: (error, _, context) => {
-      // Revert optimistic update
       if (context?.previousSubmissions) {
         queryClient.setQueryData(["/api/submissions", assignmentId], context.previousSubmissions);
       }
@@ -193,7 +161,7 @@ export default function AssignmentDetail() {
   const isTeacherOrAdmin = user?.role === "TEACHER" || user?.role === "ADMIN";
   const backPath = user?.role === "ADMIN" ? "/admin/assignments" : "/teacher/assignments";
 
-  if (isAssignmentLoading || isClassLoading) {
+  if (isAssignmentLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-border" />
@@ -201,8 +169,8 @@ export default function AssignmentDetail() {
     );
   }
 
-  if (!assignment || !classData) {
-    return <div>Assignment or class data not found</div>;
+  if (!assignment) {
+    return <div>Assignment not found</div>;
   }
 
   const getStatusBadgeStyle = (status: string | null) => {
@@ -253,11 +221,11 @@ export default function AssignmentDetail() {
                   <div className="flex justify-between text-sm text-gray-600">
                     <div>
                       <span className="font-medium">Branch:</span>{" "}
-                      {classData.branch.name}
+                      {assignment.branch?.name || "-"}
                     </div>
                     <div>
                       <span className="font-medium">Class:</span>{" "}
-                      {classData.class.name} - {classData.class.englishLevel}
+                      {assignment.class?.name || "-"} - {assignment.class?.englishLevel || "-"}
                     </div>
                     <div>
                       <span className="font-medium">Due:</span>{" "}
@@ -338,55 +306,63 @@ export default function AssignmentDetail() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {submissions?.map((submission) => (
-                          <TableRow key={submission.id}>
-                            <TableCell>
-                              {
-                                students?.find(
-                                  (s) => s.id === submission.studentId,
-                                )?.name
-                              }
-                            </TableCell>
-                            <TableCell>
-                              <span
-                                className={`px-2 py-1 rounded text-sm ${
-                                  getStatusBadgeStyle(submission.status)
-                                }`}
-                              >
-                                {getStatusText(submission.status)}
-                              </span>
-                            </TableCell>
-                            <TableCell>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="mr-2"
-                                onClick={() => handleViewSubmission(submission.id)}
-                              >
-                                View
-                              </Button>
-                              {isTeacherOrAdmin && (
-                                <>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="mr-2"
-                                    onClick={() => navigate(`/assignments/review/${submission.id}/edit`)}
-                                  >
-                                    Edit
-                                  </Button>
-                                  <Button
-                                    variant="destructive"
-                                    size="sm"
-                                    onClick={() => setDeleteSubmissionId(submission.id)}
-                                  >
-                                    Delete
-                                  </Button>
-                                </>
-                              )}
+                        {submissions?.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={3} className="text-center py-4">
+                              No submissions yet
                             </TableCell>
                           </TableRow>
-                        ))}
+                        ) : (
+                          submissions?.map((submission) => (
+                            <TableRow key={submission.id}>
+                              <TableCell>
+                                {
+                                  students?.find(
+                                    (s) => s.id === submission.studentId,
+                                  )?.name
+                                }
+                              </TableCell>
+                              <TableCell>
+                                <span
+                                  className={`px-2 py-1 rounded text-sm ${
+                                    getStatusBadgeStyle(submission.status)
+                                  }`}
+                                >
+                                  {getStatusText(submission.status)}
+                                </span>
+                              </TableCell>
+                              <TableCell>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="mr-2"
+                                  onClick={() => handleViewSubmission(submission.id)}
+                                >
+                                  View
+                                </Button>
+                                {isTeacherOrAdmin && (
+                                  <>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="mr-2"
+                                      onClick={() => navigate(`/assignments/review/${submission.id}/edit`)}
+                                    >
+                                      Edit
+                                    </Button>
+                                    <Button
+                                      variant="destructive"
+                                      size="sm"
+                                      onClick={() => setDeleteSubmissionId(submission.id)}
+                                    >
+                                      Delete
+                                    </Button>
+                                  </>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        )}
                       </TableBody>
                     </Table>
                   </div>
