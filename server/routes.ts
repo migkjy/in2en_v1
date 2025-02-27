@@ -108,7 +108,7 @@ export function registerRoutes(app: Express): Server {
   setupAuth(app);
 
   // Branch routes
-  app.get("/api/branches", requireRole([UserRole.ADMIN]), async (req, res) => {
+  app.get("/api/branches", requireRole([UserRole.ADMIN, UserRole.TEACHER]), async (req, res) => {
     const branches = await storage.listBranches();
     // Filter out hidden branches
     const visibleBranches = branches.filter((branch) => !branch.isHidden);
@@ -976,8 +976,8 @@ export function registerRoutes(app: Express): Server {
         } else {
           res.status(500).json({ message: "An unknown error occurred" });
         }
-            }
-    }
+      }
+    },
   );
 
   app.put(

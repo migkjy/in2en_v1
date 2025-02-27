@@ -127,6 +127,7 @@ export default function AssignmentList() {
 
   const { data: branches } = useQuery<Branch[]>({
     queryKey: ["/api/branches"],
+    enabled: user?.role === "ADMIN" || user?.role === "TEACHER"
   });
 
   const { data: classes } = useQuery<Class[]>({
@@ -342,8 +343,7 @@ export default function AssignmentList() {
                   })}
                 </TableBody>
               </Table>
-              
-              {/* Pagination Controls */}
+
               {assignments && assignments.length > 0 && (
                 <div className="mt-4">
                   <Pagination>
