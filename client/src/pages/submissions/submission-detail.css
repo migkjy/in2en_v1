@@ -97,6 +97,21 @@ s {
 }
 
 .ProseMirror {
+
+/* Fix for bold markdown when there's no space between asterisks and other characters */
+.prose strong,
+.markdown-content strong {
+  color: #ff0000;
+  font-weight: 600;
+  display: inline-block;
+}
+
+/* Style specifically for bold text in corrections */
+.corrections-content .markdown-preview strong {
+  color: #ff0000;
+  font-weight: 600;
+}
+
   min-height: 200px;
   padding: 1rem;
   outline: none;
