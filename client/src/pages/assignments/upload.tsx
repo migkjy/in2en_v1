@@ -24,6 +24,8 @@ export default function UploadAssignment() {
   const [files, setFiles] = useState<UploadFile[]>([]);
   const { user } = useAuth();
 
+  const basePath = user?.role === "ADMIN" ? "/admin/assignments" : "/teacher/assignments";
+
   const { data: assignment } = useQuery<Assignment>({
     queryKey: ["/api/assignments", assignmentId],
     queryFn: async () => {
@@ -55,7 +57,6 @@ export default function UploadAssignment() {
       if (files.length === 0) throw new Error("No files selected");
       if (files.some(f => !f.studentId)) throw new Error("Please assign all files to students");
 
-      // Upload each file individually
       const results = await Promise.all(
         files.map(async (file) => {
           const formData = new FormData();
@@ -74,7 +75,6 @@ export default function UploadAssignment() {
           const res = await apiRequest("POST", "/api/submissions/upload", formData, {
             credentials: 'include',
             headers: {
-              // Remove Content-Type header to let the browser set it with the boundary
               'Accept': 'application/json',
             },
           });
@@ -225,7 +225,7 @@ export default function UploadAssignment() {
                 <div className="flex justify-end gap-4">
                   <Button
                     variant="outline"
-                    onClick={() => navigate(`/assignments/${assignmentId}`)}
+                    onClick={() => navigate(`${basePath}/${assignmentId}`)}
                   >
                     Cancel
                   </Button>
