@@ -1,16 +1,7 @@
-import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
-import { useAuth } from "@/hooks/use-auth";
 import {
   Table,
   TableBody,
@@ -49,6 +40,7 @@ import { useState } from "react";
 import { EditAssignmentDialog } from "./edit-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/hooks/use-auth";
 
 const STATUS_OPTIONS = [
   { value: "all", label: "All Statuses" },
@@ -61,7 +53,6 @@ export default function AssignmentList() {
   const [, navigate] = useLocation();
   const { user } = useAuth();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   const [selectedBranch, setSelectedBranch] = useState<string>("all");
   const [selectedClass, setSelectedClass] = useState<string>("all");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
@@ -81,7 +72,7 @@ export default function AssignmentList() {
     enabled: user?.role === "ADMIN" || user?.role === "TEACHER"
   });
 
-  const { data: classes } = useQuery<Class[]>({
+  const { data: classes, isLoading: loadingClasses } = useQuery<Class[]>({
     queryKey: ["/api/classes", selectedBranch],
     queryFn: async () => {
       const params = new URLSearchParams();
@@ -103,7 +94,7 @@ export default function AssignmentList() {
     enabled: user?.role === "ADMIN" || (user?.role === "TEACHER" && !!teacherClasses),
   });
 
-  const { data: assignments } = useQuery<Assignment[]>({
+  const { data: assignments, isLoading: loadingAssignments } = useQuery<Assignment[]>({
     queryKey: ["/api/assignments", selectedBranch, selectedClass, selectedStatus],
     queryFn: async () => {
       const params = new URLSearchParams();
@@ -126,6 +117,28 @@ export default function AssignmentList() {
     },
   });
 
+  // Get accessible classes for each assignment
+  const assignmentClasses = useQuery<Record<number, Class>>({
+    queryKey: ["/api/assignments/classes", assignments?.map(a => a.classId)],
+    queryFn: async () => {
+      if (!assignments) return {};
+
+      const uniqueClassIds = [...new Set(assignments.map(a => a.classId).filter(Boolean))];
+      const classData: Record<number, Class> = {};
+
+      for (const classId of uniqueClassIds) {
+        const response = await fetch(`/api/classes/${classId}`);
+        if (response.ok) {
+          const classInfo = await response.json();
+          classData[classId] = classInfo;
+        }
+      }
+
+      return classData;
+    },
+    enabled: !!assignments && assignments.length > 0,
+  });
+
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: number; status: string }) => {
       const response = await apiRequest(
@@ -146,7 +159,7 @@ export default function AssignmentList() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/assignments"] });
+      // queryClient.invalidateQueries({ queryKey: ["/api/assignments"] }); // Removed as it's already handled by the useQuery hook
       toast({
         title: "Success",
         description: "Assignment status updated successfully",
@@ -176,7 +189,7 @@ export default function AssignmentList() {
 
       if (!response.ok) throw new Error("Failed to delete assignment");
 
-      await queryClient.invalidateQueries({ queryKey: ["/api/assignments"] });
+      // queryClient.invalidateQueries({ queryKey: ["/api/assignments"] }); // Removed as it's already handled by the useQuery hook
       toast({ title: "Success", description: "Assignment deleted successfully" });
     } catch (error) {
       toast({
@@ -227,6 +240,7 @@ export default function AssignmentList() {
                   <Select
                     value={selectedClass}
                     onValueChange={setSelectedClass}
+                    disabled={loadingClasses}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="All Classes" />
@@ -273,14 +287,10 @@ export default function AssignmentList() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {assignments?.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+                  {!loadingAssignments && assignments?.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
                     .map((assignment) => {
-                      const assignmentClass = classes?.find(
-                        (c) => c.id === assignment.classId
-                      );
-                      const branch = branches?.find(
-                        (b) => b.id === assignmentClass?.branchId
-                      );
+                      const assignmentClass = assignmentClasses.data?.[assignment.classId!];
+                      const branch = branches?.find(b => b.id === assignmentClass?.branchId);
 
                       return (
                         <TableRow key={assignment.id}>
