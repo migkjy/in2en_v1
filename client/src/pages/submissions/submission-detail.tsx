@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { Submission, User, Assignment } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
-import { Loader2, ArrowLeft, Edit, Save } from "lucide-react";
+import { Loader2, ArrowLeft } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import MDEditor from '@uiw/react-md-editor';
@@ -93,9 +93,7 @@ export default function SubmissionDetail() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["/api/submissions", submissionId],
-      });
+      queryClient.invalidateQueries({ queryKey: ["/api/submissions", submissionId] });
       toast({
         title: "Success",
         description: "Changes saved successfully",
@@ -173,9 +171,7 @@ export default function SubmissionDetail() {
             <Card>
               <CardContent className="p-6">
                 <p className="text-center text-red-600">
-                  {error instanceof Error
-                    ? error.message
-                    : "Failed to load submission"}
+                  {error instanceof Error ? error.message : "Failed to load submission"}
                 </p>
               </CardContent>
             </Card>
@@ -193,9 +189,7 @@ export default function SubmissionDetail() {
           <div className="max-w-2xl mx-auto">
             <Card>
               <CardContent className="p-6">
-                <p className="text-center text-red-600">
-                  Could not load submission details
-                </p>
+                <p className="text-center text-red-600">Could not load submission details</p>
               </CardContent>
             </Card>
           </div>
@@ -204,15 +198,16 @@ export default function SubmissionDetail() {
     );
   }
 
-  const { assignment, student, ...submission } = submissionData;
+  const { assignment, student } = submissionData;
   const isTeacherOrAdmin = user.role === "TEACHER" || user.role === "ADMIN";
+  const basePath = user.role === "ADMIN" ? "/admin/assignments" : "/teacher/assignments";
 
   const handleStartEdit = (type: 'corrections' | 'assessment') => {
     if (type === 'corrections') {
-      setEditedCorrections(submission.correctedText || '');
+      setEditedCorrections(submissionData.correctedText || '');
       setIsEditingCorrections(true);
     } else {
-      setEditedAssessment(submission.overallAssessment || '');
+      setEditedAssessment(submissionData.overallAssessment || '');
       setIsEditingAssessment(true);
     }
   };
@@ -233,7 +228,7 @@ export default function SubmissionDetail() {
           <Button
             variant="outline"
             className="mb-4"
-            onClick={() => navigate(`/assignments/${assignment.id}`)}
+            onClick={() => navigate(`${basePath}/${assignment.id}`)}
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Assignment Detail
@@ -249,11 +244,11 @@ export default function SubmissionDetail() {
                   onClick={() => reprocessMutation.mutate()}
                   disabled={
                     reprocessMutation.isPending ||
-                    submission.status === "processing"
+                    submissionData.status === "processing"
                   }
                 >
                   {reprocessMutation.isPending ||
-                  submission.status === "processing" ? (
+                  submissionData.status === "processing" ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Processing...
@@ -266,29 +261,29 @@ export default function SubmissionDetail() {
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
-                {submission.imageUrl && (
+                {submissionData.imageUrl && (
                   <div>
                     <h3 className="section-title mb-2">Submitted Work</h3>
                     <img
-                      src={submission.imageUrl}
+                      src={submissionData.imageUrl}
                       alt="Submitted homework"
                       className="w-full max-w-2xl mx-auto rounded-lg shadow-md"
                     />
                   </div>
                 )}
 
-                {submission.ocrText && (
+                {submissionData.ocrText && (
                   <div>
                     <h3 className="section-title mb-2">OCR Text</h3>
                     <div className="bg-gray-50 p-4 rounded prose prose-sm max-w-none">
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {submission.ocrText}
+                        {submissionData.ocrText}
                       </ReactMarkdown>
                     </div>
                   </div>
                 )}
 
-                {(submission.correctedText || submission.overallAssessment || isTeacherOrAdmin) && (
+                {(submissionData.correctedText || submissionData.overallAssessment || isTeacherOrAdmin) && (
                   <div className="space-y-4">
                     <div>
                       <div className="flex justify-between items-center mb-2">
@@ -335,7 +330,7 @@ export default function SubmissionDetail() {
                           />
                         ) : (
                           <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                            {submission.correctedText || "No corrections yet"}
+                            {submissionData.correctedText || "No corrections yet"}
                           </ReactMarkdown>
                         )}
                       </div>
@@ -386,7 +381,7 @@ export default function SubmissionDetail() {
                           />
                         ) : (
                           <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                            {submission.overallAssessment || "No assessment yet"}
+                            {submissionData.overallAssessment || "No assessment yet"}
                           </ReactMarkdown>
                         )}
                       </div>
@@ -394,12 +389,12 @@ export default function SubmissionDetail() {
                   </div>
                 )}
 
-                {submission.teacherFeedback && (
+                {submissionData.teacherFeedback && (
                   <div>
                     <h3 className="text-sm font-medium mb-2">Teacher Feedback</h3>
                     <div className="bg-purple-50 p-4 rounded prose prose-sm max-w-none">
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {submission.teacherFeedback}
+                        {submissionData.teacherFeedback}
                       </ReactMarkdown>
                     </div>
                   </div>
