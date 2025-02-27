@@ -385,13 +385,8 @@ export default function SubmissionDetail() {
                             onChange={setEditedAssessment}
                           />
                         ) : (
-                          <ReactMarkdown 
-                            remarkPlugins={[remarkGfm]}
-                            components={{
-                              strong: ({node, ...props}) => <span className="correction" {...props} />
-                            }}
-                          >
-                            {submissionData.overallAssessment || "No assessment yet"}
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            {fixMarkdownFormatting(submissionData.overallAssessment) || "No assessment yet"}
                           </ReactMarkdown>
                         )}
                       </div>
