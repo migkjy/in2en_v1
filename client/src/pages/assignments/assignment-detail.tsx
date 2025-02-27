@@ -188,10 +188,11 @@ export default function AssignmentDetail() {
     navigate(`/submissions/${submissionId}`);
   };
 
-  const handleEditSubmission = (submissionId: number) => {
-    const basePath = user?.role === "ADMIN" ? "/admin" : "/teacher";
-    navigate(`${basePath}/assignments/review/${submissionId}/edit`);
-  };
+  //const handleEditSubmission = (submissionId: number) => {  Removed
+  //  const basePath = user?.role === "ADMIN" ? "/admin" : "/teacher";
+  //  navigate(`${basePath}/assignments/review/${submissionId}/edit`);
+  //}; Removed
+
 
   return (
     <>
@@ -340,14 +341,6 @@ export default function AssignmentDetail() {
                                 </Button>
                                 {isTeacherOrAdmin && (
                                   <>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      className="mr-2"
-                                      onClick={() => handleEditSubmission(submission.id)}
-                                    >
-                                      Edit
-                                    </Button>
                                     <Button
                                       variant="destructive"
                                       size="sm"
