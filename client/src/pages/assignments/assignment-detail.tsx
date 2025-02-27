@@ -18,19 +18,9 @@ import { format } from "date-fns";
 import { useAuth } from "@/hooks/use-auth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useState } from "react";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 
 export default function AssignmentDetail() {
-  const [, params] = useRoute("/teacher/assignments/:id");
+  const [, params] = useRoute("/:role/assignments/:id");
   const [, navigate] = useLocation();
   const assignmentId = params?.id;
   const { user } = useAuth();
@@ -159,6 +149,8 @@ export default function AssignmentDetail() {
   });
 
   const isTeacherOrAdmin = user?.role === "TEACHER" || user?.role === "ADMIN";
+  const basePath = user?.role === "ADMIN" ? "/admin/assignments" : "/teacher/assignments";
+
   const backPath = user?.role === "ADMIN" ? "/admin/assignments" : "/teacher/assignments";
 
   if (isAssignmentLoading) {
@@ -346,7 +338,7 @@ export default function AssignmentDetail() {
                                       variant="outline"
                                       size="sm"
                                       className="mr-2"
-                                      onClick={() => navigate(`/assignments/review/${submission.id}/edit`)}
+                                      onClick={() => navigate(`${basePath}/review/${submission.id}/edit`)}
                                     >
                                       Edit
                                     </Button>
