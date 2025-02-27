@@ -34,7 +34,19 @@ const RichTextEditor = ({ content, onChange }: { content: string; onChange: (tex
 
 const fixMarkdownFormatting = (text: string) => {
   if (!text) return "";
-  return text.replace(/(\w+|\S)(\*\*)/g, '$1 $2').replace(/(\*\*)(\w+|\S)/g, '$1 $2');
+
+  // First, handle cases where ** is between word characters
+  let formatted = text.replace(/(\w+)(\*\*)(\w+)/g, '$1 $2 $3');
+
+  // Then handle cases where ** is at the end or beginning of words
+  formatted = formatted
+    .replace(/(\w+|\S)(\*\*)/g, '$1 $2')
+    .replace(/(\*\*)(\w+|\S)/g, '$1 $2')
+    // Handle special cases with punctuation
+    .replace(/([.,!?'])(\*\*)/g, '$1 $2')
+    .replace(/(\*\*)([.,!?'])/g, '$1 $2');
+
+  return formatted;
 };
 
 export default function SubmissionDetail() {
