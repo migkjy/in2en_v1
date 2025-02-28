@@ -24,12 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-type ClassWithStats = Class & {
-  branch?: Branch;
-  studentCount: number;
-  teacherCount: number;
-};
+import { useAuth } from "@/hooks/use-auth";
 
 export default function ClassList() {
   const [, navigate] = useLocation();
@@ -40,10 +35,9 @@ export default function ClassList() {
   const [selectedBranch, setSelectedBranch] = useState<string>("all");
   const [selectedClass, setSelectedClass] = useState<Class | null>(null);
 
-  const { data: user } = useQuery({
-    queryKey: ["/api/user"],
-  });
-
+  const { user } = useAuth();
+  const role = user?.role || "TEACHER";
+  const basePath = role === "ADMIN" ? "/admin" : "/teacher";
 
   const { data: branches } = useQuery<Branch[]>({
     queryKey: ["/api/branches"],
@@ -117,7 +111,7 @@ export default function ClassList() {
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Classes Management</CardTitle>
               <div className="flex gap-2">
-                {user?.role === "ADMIN" && (
+                {role === "ADMIN" && (
                   <>
                     <Button onClick={() => setIsManageOptionsOpen(true)} variant="outline">
                       <Settings className="w-4 h-4 mr-2" />
@@ -179,11 +173,11 @@ export default function ClassList() {
                           variant="outline"
                           size="sm"
                           className="mr-2"
-                          onClick={() => navigate(`/admin/classes/${cls.id}`)}
+                          onClick={() => navigate(`${basePath}/classes/${cls.id}`)}
                         >
                           View Details
                         </Button>
-                        {user?.role === "ADMIN" && (
+                        {role === "ADMIN" && (
                           <>
                             <Button
                               variant="outline"
