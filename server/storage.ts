@@ -215,10 +215,12 @@ export class DatabaseStorage implements IStorage {
       branchId: classes.branchId,
       englishLevel: classes.englishLevel,
       ageGroup: classes.ageGroup,
+      isHidden: classes.isHidden,
       branch: {
         id: branches.id,
         name: branches.name,
         address: branches.address,
+        isHidden: branches.isHidden,
       },
     })
       .from(classes)
@@ -322,7 +324,8 @@ export class DatabaseStorage implements IStorage {
       studentId: data.studentId || null,
       status: data.status || 'pending',
       ocrText: data.ocrText || null,
-      aiFeedback: data.aiFeedback || null,
+      correctedText: data.correctedText || null,
+      overallAssessment: data.overallAssessment || null,
       teacherFeedback: data.teacherFeedback || null
     }).returning();
     return submission;
@@ -395,6 +398,7 @@ export class DatabaseStorage implements IStorage {
         id: branches.id,
         name: branches.name,
         address: branches.address,
+        isHidden: branches.isHidden,
       })
       .from(branches)
       .innerJoin(
@@ -423,6 +427,7 @@ export class DatabaseStorage implements IStorage {
         branchId: classes.branchId,
         englishLevel: classes.englishLevel,
         ageGroup: classes.ageGroup,
+        isHidden: classes.isHidden,
       })
       .from(classes)
       .innerJoin(

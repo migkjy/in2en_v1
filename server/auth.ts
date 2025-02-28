@@ -8,9 +8,15 @@ import { storage } from "./storage";
 import { UserRole } from "@shared/schema";
 import type { User } from "@shared/schema";
 
+// Define a base type for the user to avoid circular reference
+type AuthUser = {
+  id: number;
+  role: UserRole;
+};
+
 declare global {
   namespace Express {
-    interface User extends User {}
+    interface User extends AuthUser {}
   }
 }
 
@@ -61,7 +67,8 @@ export function setupAuth(app: Express) {
           if (!user || !(await comparePasswords(password, user.password))) {
             return done(null, false, { message: "Invalid credentials" });
           }
-          return done(null, user);
+          // Only pass the necessary authentication fields
+          return done(null, { id: user.id, role: user.role });
         } catch (error) {
           return done(error);
         }
@@ -76,7 +83,11 @@ export function setupAuth(app: Express) {
   passport.deserializeUser(async (id: number, done) => {
     try {
       const user = await storage.getUser(id);
-      done(null, user);
+      if (!user) {
+        return done(new Error("User not found"));
+      }
+      // Only pass the necessary authentication fields
+      done(null, { id: user.id, role: user.role });
     } catch (error) {
       done(error);
     }
@@ -99,7 +110,7 @@ export function setupAuth(app: Express) {
         role: role as UserRole
       });
 
-      req.login(user, (err) => {
+      req.login({ id: user.id, role: user.role }, (err) => {
         if (err) return next(err);
         // Remove password from response
         const { password, ...userWithoutPassword } = user;
@@ -111,15 +122,14 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/login", (req, res, next) => {
-    passport.authenticate("local", (err, user, info) => {
+    passport.authenticate("local", (err: unknown, user: AuthUser | false, info: { message?: string } | undefined) => {
       if (err) return next(err);
       if (!user) {
         return res.status(401).json({ message: info?.message || "Invalid credentials" });
       }
       req.login(user, (err) => {
         if (err) return next(err);
-        const { password, ...userWithoutPassword } = user;
-        res.json(userWithoutPassword);
+        res.json(user);
       });
     })(req, res, next);
   });
@@ -135,7 +145,6 @@ export function setupAuth(app: Express) {
     if (!req.isAuthenticated()) {
       return res.sendStatus(401);
     }
-    const { password, ...userWithoutPassword } = req.user;
-    res.json(userWithoutPassword);
+    res.json(req.user);
   });
 }
