@@ -39,7 +39,7 @@ export default function ClassList() {
   const [isManageOptionsOpen, setIsManageOptionsOpen] = useState(false);
   const [selectedBranch, setSelectedBranch] = useState<string>("all");
   const [selectedClass, setSelectedClass] = useState<Class | null>(null);
-  
+
   const { data: user } = useQuery({
     queryKey: ["/api/user"],
   });
@@ -118,14 +118,16 @@ export default function ClassList() {
               <CardTitle>Classes Management</CardTitle>
               <div className="flex gap-2">
                 {user?.role === "ADMIN" && (
-                  <Button onClick={() => setIsManageOptionsOpen(true)} variant="outline">
-                    <Settings className="w-4 h-4 mr-2" />
-                    Manage Options
-                  </Button>
+                  <>
+                    <Button onClick={() => setIsManageOptionsOpen(true)} variant="outline">
+                      <Settings className="w-4 h-4 mr-2" />
+                      Manage Options
+                    </Button>
+                    <Button onClick={() => setIsCreateDialogOpen(true)}>
+                      Create New Class
+                    </Button>
+                  </>
                 )}
-                <Button onClick={() => setIsCreateDialogOpen(true)}>
-                  Create New Class
-                </Button>
               </div>
             </CardHeader>
             <CardContent>
@@ -181,24 +183,28 @@ export default function ClassList() {
                         >
                           View Details
                         </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="mr-2"
-                          onClick={() => {
-                            setSelectedClass(cls);
-                            setIsCreateDialogOpen(true);
-                          }}
-                        >
-                          Edit
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => handleDeleteClass(cls.id)}
-                        >
-                          Delete
-                        </Button>
+                        {user?.role === "ADMIN" && (
+                          <>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="mr-2"
+                              onClick={() => {
+                                setSelectedClass(cls);
+                                setIsCreateDialogOpen(true);
+                              }}
+                            >
+                              Edit
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleDeleteClass(cls.id)}
+                            >
+                              Delete
+                            </Button>
+                          </>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
