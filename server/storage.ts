@@ -454,37 +454,19 @@ export class DatabaseStorage implements IStorage {
       throw new Error("Teacher not found");
     }
 
-    try {
-      // Handle class access first
-      await db.delete(teacherClassAccess)
-        .where(eq(teacherClassAccess.teacherId, teacherId));
+    // Delete existing class access records
+    await db.delete(teacherClassAccess)
+      .where(eq(teacherClassAccess.teacherId, teacherId));
 
-      if (classIds.length > 0) {
-        await db.insert(teacherClassAccess)
-          .values(
-            classIds.map(classId => ({
-              teacherId,
-              classId,
-            }))
-          );
-      }
-
-      // Handle branch access if needed
-      await db.delete(teacherBranchAccess)
-        .where(eq(teacherBranchAccess.teacherId, teacherId));
-
-      if (branchIds.length > 0) {
-        await db.insert(teacherBranchAccess)
-          .values(
-            branchIds.map(branchId => ({
-              teacherId,
-              branchId,
-            }))
-          );
-      }
-    } catch (error) {
-      console.error("Error in updateTeacherAuthority:", error);
-      throw new Error("Failed to update teacher authority");
+    // Insert new class access records if any exist
+    if (classIds.length > 0) {
+      await db.insert(teacherClassAccess)
+        .values(
+          classIds.map(classId => ({
+            teacherId,
+            classId,
+          }))
+        );
     }
   }
 

@@ -67,7 +67,7 @@ export function GrantAuthorityDialog({
         },
         body: JSON.stringify({
           classIds: selectedClasses,
-          branchIds: [],
+          branchIds: []
         }),
       });
 
@@ -81,7 +81,6 @@ export function GrantAuthorityDialog({
       queryClient.invalidateQueries({ queryKey: ["/api/teachers"] });
       queryClient.invalidateQueries({ queryKey: [`/api/teachers/${teacherId}`] });
       queryClient.invalidateQueries({ queryKey: ["/api/teachers", teacherId, "classes"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/teachers", teacherId, "branches"] });
 
       toast({
         title: "Success",
