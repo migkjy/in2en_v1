@@ -84,14 +84,14 @@ export function GrantAuthorityDialog({
 
       toast({
         title: "Success",
-        description: "Authority updated successfully",
+        description: "Teacher's class access updated successfully",
       });
       onOpenChange(false);
     },
     onError: () => {
       toast({
         title: "Error",
-        description: "Failed to update teacher authority. Please try again.",
+        description: "Could not update teacher's class access. Please try again.",
         variant: "destructive",
       });
     },

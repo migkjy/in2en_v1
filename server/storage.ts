@@ -454,20 +454,23 @@ export class DatabaseStorage implements IStorage {
       throw new Error("Teacher not found");
     }
 
-    // Delete existing class access records
-    await db.delete(teacherClassAccess)
-      .where(eq(teacherClassAccess.teacherId, teacherId));
+    // Use a transaction to ensure data consistency
+    await db.transaction(async (tx) => {
+      // First remove existing access
+      await tx.delete(teacherClassAccess)
+        .where(eq(teacherClassAccess.teacherId, teacherId));
 
-    // Insert new class access records if any exist
-    if (classIds.length > 0) {
-      await db.insert(teacherClassAccess)
-        .values(
-          classIds.map(classId => ({
-            teacherId,
-            classId,
-          }))
-        );
-    }
+      // Then add new access if any classes are selected
+      if (classIds.length > 0) {
+        await tx.insert(teacherClassAccess)
+          .values(
+            classIds.map(classId => ({
+              teacherId,
+              classId
+            }))
+          );
+      }
+    });
   }
 
   // Lead Teacher operations
