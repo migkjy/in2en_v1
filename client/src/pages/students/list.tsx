@@ -31,6 +31,8 @@ export default function StudentList() {
   const [nameFilter, setNameFilter] = useState("");
   const [emailFilter, setEmailFilter] = useState("");
   const [branchFilter, setBranchFilter] = useState<string>("all");
+  const [sortField, setSortField] = useState<string>("id"); // Added state for sorting field
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc"); // Added state for sorting direction
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
@@ -89,7 +91,33 @@ export default function StudentList() {
       student.branchId === (branchFilter ? parseInt(branchFilter) : undefined);
 
     return matchesName && matchesEmail && matchesBranch;
+  })
+  .sort((a, b) => {
+    const multiplier = sortDirection === "asc" ? 1 : -1;
+
+    if (sortField === "id") {
+      return (a.id - b.id) * multiplier;
+    } else if (sortField === "name") {
+      return a.name.localeCompare(b.name) * multiplier;
+    } else if (sortField === "email") {
+      return a.email.localeCompare(b.email) * multiplier;
+    } else if (sortField === "phone_number") {
+      const phoneA = a.phone_number || "";
+      const phoneB = b.phone_number || "";
+      return phoneA.localeCompare(phoneB) * multiplier;
+    } else if (sortField === "branch") {
+      const branchA = getBranchName(a.branchId) || "";
+      const branchB = getBranchName(b.branchId) || "";
+      return branchA.localeCompare(branchB) * multiplier;
+    }
+
+    return 0;
   });
+
+  const handleSort = (field: string) => {
+    setSortField(field);
+    setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+  };
 
   return (
     <div className="flex h-screen">
@@ -164,11 +192,13 @@ export default function StudentList() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>ID</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Phone Number</TableHead>
-                <TableHead>Branch</TableHead>
+                <TableHead onClick={() => handleSort("id")}>ID</TableHead>
+                <TableHead onClick={() => handleSort("name")}>Name</TableHead>
+                <TableHead onClick={() => handleSort("email")}>Email</TableHead>
+                <TableHead onClick={() => handleSort("phone_number")}>
+                  Phone Number
+                </TableHead>
+                <TableHead onClick={() => handleSort("branch")}>Branch</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
