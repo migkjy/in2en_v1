@@ -33,6 +33,8 @@ export default function StudentList() {
   const [branchFilter, setBranchFilter] = useState<string>("all");
   const [sortField, setSortField] = useState<string>("id"); // Added state for sorting field
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc"); // Added state for sorting direction
+  const [currentPage, setCurrentPage] = useState(1); // Added state for current page
+  const itemsPerPage = 10; // Number of items per page
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
@@ -119,6 +121,19 @@ export default function StudentList() {
     setSortDirection(sortDirection === "asc" ? "desc" : "asc");
   };
 
+  const handleFilterChange = (type: string, value: string) => {
+    // Reset to first page when changing filters
+    setCurrentPage(1);
+
+    if (type === "name") {
+      setNameFilter(value);
+    } else if (type === "email") {
+      setEmailFilter(value);
+    } else if (type === "branch") {
+      setBranchFilter(value);
+    }
+  };
+
   return (
     <div className="flex h-screen">
       <Sidebar className="w-64" />
@@ -156,7 +171,7 @@ export default function StudentList() {
               <label className="text-sm font-medium">Branch</label>
               <Select
                 value={branchFilter}
-                onValueChange={(value) => setBranchFilter(value)}
+                onValueChange={(value) => handleFilterChange("branch", value)} // Use handleFilterChange
               >
                 <SelectTrigger>
                   <SelectValue placeholder="All Branches" />
@@ -176,7 +191,7 @@ export default function StudentList() {
               <Input
                 placeholder="Search by name..."
                 value={nameFilter}
-                onChange={(e) => setNameFilter(e.target.value)}
+                onChange={(e) => handleFilterChange("name", e.target.value)} // Use handleFilterChange
               />
             </div>
             <div className="space-y-2">
@@ -184,7 +199,7 @@ export default function StudentList() {
               <Input
                 placeholder="Search by email..."
                 value={emailFilter}
-                onChange={(e) => setEmailFilter(e.target.value)}
+                onChange={(e) => handleFilterChange("email", e.target.value)} // Use handleFilterChange
               />
             </div>
           </div>
@@ -203,15 +218,17 @@ export default function StudentList() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredStudents?.map((student) => (
-                <TableRow key={student.id}>
-                  <TableCell>{student.id}</TableCell>
-                  <TableCell>{student.name}</TableCell>
-                  <TableCell>{student.email}</TableCell>
-                  <TableCell>{student.phone_number || "-"}</TableCell>
-                  <TableCell>{getBranchName(student.branchId)}</TableCell>
-                  <TableCell>
-                    {/* <Button
+              {filteredStudents
+                .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+                .map((student) => (
+                  <TableRow key={student.id}>
+                    <TableCell>{student.id}</TableCell>
+                    <TableCell>{student.name}</TableCell>
+                    <TableCell>{student.email}</TableCell>
+                    <TableCell>{student.phone_number || "-"}</TableCell>
+                    <TableCell>{getBranchName(student.branchId)}</TableCell>
+                    <TableCell>
+                      {/* <Button
                       variant="outline"
                       size="sm"
                       className="mr-2"
@@ -221,30 +238,73 @@ export default function StudentList() {
                     >
                       View
                     </Button> */}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="mr-2"
-                      onClick={() => {
-                        setSelectedStudent(student);
-                        setIsCreateStudentDialogOpen(true);
-                      }}
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleDeleteStudent(student.id)}
-                    >
-                      Delete
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="mr-2"
+                        onClick={() => {
+                          setSelectedStudent(student);
+                          setIsCreateStudentDialogOpen(true);
+                        }}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handleDeleteStudent(student.id)}
+                      >
+                        Delete
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
             </TableBody>
           </Table>
 
+          {filteredStudents.length > itemsPerPage && (
+            <div className="mt-4 flex justify-between items-center">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </Button>
+              <div className="flex gap-2">
+                {Array.from({
+                  length: Math.ceil(filteredStudents.length / itemsPerPage),
+                }).map((_, index) => (
+                  <Button
+                    key={index + 1}
+                    variant={currentPage === index + 1 ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setCurrentPage(index + 1)}
+                  >
+                    {index + 1}
+                  </Button>
+                ))}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setCurrentPage((page) =>
+                    Math.min(
+                      Math.ceil(filteredStudents.length / itemsPerPage),
+                      page + 1
+                    )
+                  )
+                }
+                disabled={
+                  currentPage >= Math.ceil(filteredStudents.length / itemsPerPage)
+                }
+              >
+                Next
+              </Button>
+            </div>
+          )}
           <CreateStudentDialog
             open={isCreateStudentDialogOpen}
             onOpenChange={setIsCreateStudentDialogOpen}
