@@ -444,6 +444,7 @@ export class DatabaseStorage implements IStorage {
     branchIds: number[],
     classIds: number[]
   ): Promise<void> {
+    // Verify teacher exists and is a teacher
     const [user] = await db
       .select()
       .from(users)
@@ -453,42 +454,38 @@ export class DatabaseStorage implements IStorage {
       throw new Error("Teacher not found");
     }
 
-    await db.transaction(async (tx) => {
-      // Delete existing access records
-      await tx
-        .delete(teacherBranchAccess)
-        .where(eq(teacherBranchAccess.teacherId, teacherId));
-
-      await tx
-        .delete(teacherClassAccess)
+    try {
+      // Handle class access first
+      await db.delete(teacherClassAccess)
         .where(eq(teacherClassAccess.teacherId, teacherId));
 
-      // Insert new class access records if any exist
-      if (classIds && classIds.length > 0) {
-        await tx
-          .insert(teacherClassAccess)
+      if (classIds.length > 0) {
+        await db.insert(teacherClassAccess)
           .values(
             classIds.map(classId => ({
               teacherId,
               classId,
             }))
-          )
-          .onConflictDoNothing();
+          );
       }
 
-      // Only insert branch access records if any exist
-      if (branchIds && branchIds.length > 0) {
-        await tx
-          .insert(teacherBranchAccess)
+      // Handle branch access if needed
+      await db.delete(teacherBranchAccess)
+        .where(eq(teacherBranchAccess.teacherId, teacherId));
+
+      if (branchIds.length > 0) {
+        await db.insert(teacherBranchAccess)
           .values(
             branchIds.map(branchId => ({
               teacherId,
               branchId,
             }))
-          )
-          .onConflictDoNothing();
+          );
       }
-    });
+    } catch (error) {
+      console.error("Error in updateTeacherAuthority:", error);
+      throw new Error("Failed to update teacher authority");
+    }
   }
 
   // Lead Teacher operations

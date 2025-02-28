@@ -71,12 +71,11 @@ export function GrantAuthorityDialog({
         }),
       });
 
-      const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.message || "Failed to update authority");
+        throw new Error("Failed to update teacher authority");
       }
 
-      return data;
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/teachers"] });
@@ -90,10 +89,10 @@ export function GrantAuthorityDialog({
       });
       onOpenChange(false);
     },
-    onError: (error) => {
+    onError: () => {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to update authority",
+        description: "Failed to update teacher authority. Please try again.",
         variant: "destructive",
       });
     },
