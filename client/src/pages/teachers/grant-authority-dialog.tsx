@@ -67,21 +67,15 @@ export function GrantAuthorityDialog({
         },
         body: JSON.stringify({
           classIds: selectedClasses,
+          branchIds: [], // Always send an empty array for branchIds
         }),
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        try {
-          const errorData = JSON.parse(errorText);
-          throw new Error(errorData.message || "Failed to update authority");
-        } catch (e) {
-          throw new Error(errorText || "Failed to update authority");
-        }
+        throw new Error("Failed to update authority");
       }
 
-      const data = await response.json();
-      return data;
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/teachers"] });
