@@ -1,12 +1,12 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth } from "./auth";
-import { extractTextFromImage, generateFeedback } from "./openai";
+import { setupAuth, comparePasswords, hashPassword } from "./auth";
 import multer from "multer";
 import { UserRole, classes } from "@shared/schema";
 import { eq } from "drizzle-orm";
 import { db } from "./db";
+import { extractTextFromImage, generateFeedback } from "./openai";
 
 // Extend Express Request type to include user properties
 declare global {
@@ -968,7 +968,7 @@ export function registerRoutes(app: Express): Server {
   });
 
   app.post("/api/teachers", requireRole([UserRole.ADMIN]), async (req, res) => {
-    try {
+    try{
       const teacher = await storage.createUser({        ...req.body,
         role: UserRole.TEACHER,
       });
@@ -1419,18 +1419,18 @@ export function registerRoutes(app: Express): Server {
 
       // Validate input
       if (!currentPassword || !newPassword) {
-        return res.status(400).json({ message: "Both current and new passwords are required" });
+        return res.status(400).json({ message: "현재 비밀번호와 새 비밀번호를 모두 입력해주세요." });
       }
 
       const user = await storage.getUser(userId);
       if (!user) {
-        return res.status(404).json({ message: "User not found" });
+        return res.status(404).json({ message: "사용자를 찾을 수 없습니다." });
       }
 
       // Verify current password
       const isPasswordValid = await comparePasswords(currentPassword, user.password);
       if (!isPasswordValid) {
-        return res.status(400).json({ message: "Current password is incorrect" });
+        return res.status(400).json({ message: "현재 비밀번호가 일치하지 않습니다." });
       }
 
       // Hash new password
@@ -1441,10 +1441,14 @@ export function registerRoutes(app: Express): Server {
         password: hashedPassword,
       });
 
-      res.json({ message: "Password updated successfully" });
+      if (!updatedUser) {
+        return res.status(500).json({ message: "비밀번호 업데이트에 실패했습니다." });
+      }
+
+      res.json({ message: "비밀번호가 성공적으로 변경되었습니다." });
     } catch (error) {
       console.error("Error updating password:", error);
-      res.status(500).json({ message: "Failed to update password" });
+      res.status(500).json({ message: "비밀번호 변경 중 오류가 발생했습니다." });
     }
   });
 
