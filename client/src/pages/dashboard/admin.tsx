@@ -30,12 +30,7 @@ export default function AdminDashboard() {
             <Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-200">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
                 <CardTitle className="text-xl font-semibold">Branches</CardTitle>
-                <Link href="/admin/branches">
-                  <Button variant="outline" size="sm" className="shadow-sm">
-                    <Plus className="h-4 w-4 mr-1" />
-                    Add Branch
-                  </Button>
-                </Link>
+                {/*Removed Add Branch Button*/}
               </CardHeader>
               <CardContent>
                 {loadingBranches ? (
@@ -67,12 +62,7 @@ export default function AdminDashboard() {
             <Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-200">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
                 <CardTitle className="text-xl font-semibold">Classes</CardTitle>
-                <Link href="/admin/classes/new">
-                  <Button variant="outline" size="sm" className="shadow-sm">
-                    <Plus className="h-4 w-4 mr-1" />
-                    Add Class
-                  </Button>
-                </Link>
+                {/*Removed Add Class Button*/}
               </CardHeader>
               <CardContent>
                 {loadingClasses ? (
