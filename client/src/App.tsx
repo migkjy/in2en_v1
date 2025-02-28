@@ -15,6 +15,7 @@ import AssignmentList from "@/pages/assignments/list";
 import AssignmentDetail from "@/pages/assignments/assignment-detail";
 import UploadAssignment from "@/pages/assignments/upload";
 import SubmissionDetail from "@/pages/submissions/submission-detail";
+import ClassList from "@/pages/classes/list";
 
 function Router() {
   return (
@@ -28,6 +29,7 @@ function Router() {
       <ProtectedRoute path="/admin/assignments/:id" component={AssignmentDetail} allowedRole="ADMIN" />
       <ProtectedRoute path="/admin/assignments/review/:id/edit" component={ReviewAssignment} allowedRole="ADMIN" />
       <ProtectedRoute path="/admin/assignments/review/:id" component={ReviewAssignment} allowedRole="ADMIN" />
+      <ProtectedRoute path="/admin/classes" component={ClassList} allowedRole="ADMIN" />
 
       {/* Teacher Routes */}
       <ProtectedRoute path="/teacher" component={TeacherDashboard} allowedRole="TEACHER" />
@@ -36,6 +38,7 @@ function Router() {
       <ProtectedRoute path="/teacher/assignments/:id" component={AssignmentDetail} allowedRole="TEACHER" />
       <ProtectedRoute path="/teacher/assignments/review/:id/edit" component={ReviewAssignment} allowedRole="TEACHER" />
       <ProtectedRoute path="/teacher/assignments/review/:id" component={ReviewAssignment} allowedRole="TEACHER" />
+      <ProtectedRoute path="/teacher/classes" component={ClassList} allowedRole="TEACHER" />
 
       {/* Common Routes - Accessible by all authenticated users */}
       <ProtectedRoute path="/submissions/:id" component={SubmissionDetail} />
