@@ -9,6 +9,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Lock, User, Loader2 } from "lucide-react";
 
+const PASSWORD_PATTERN = /^[A-Za-z0-9!@#$%^&*()_+\-=\[\]{};:'",.<>/?]+$/;
+
 export default function ProfilePage() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -159,6 +161,16 @@ export default function ProfilePage() {
       return;
     }
 
+    // Validate password pattern
+    if (!PASSWORD_PATTERN.test(formData.newPassword)) {
+      toast({
+        title: "오류",
+        description: "비밀번호는 영문, 숫자, 특수문자만 사용 가능합니다.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (formData.newPassword !== formData.confirmPassword) {
       toast({
         title: "오류",
@@ -295,6 +307,8 @@ export default function ProfilePage() {
                         currentPassword: e.target.value,
                       })
                     }
+                    pattern={PASSWORD_PATTERN.source}
+                    title="영문, 숫자, 특수문자만 입력 가능합니다."
                   />
                 </div>
                 <div className="space-y-2">
@@ -305,6 +319,8 @@ export default function ProfilePage() {
                     onChange={(e) =>
                       setFormData({ ...formData, newPassword: e.target.value })
                     }
+                    pattern={PASSWORD_PATTERN.source}
+                    title="영문, 숫자, 특수문자만 입력 가능합니다."
                   />
                 </div>
                 <div className="space-y-2">
@@ -318,6 +334,8 @@ export default function ProfilePage() {
                         confirmPassword: e.target.value,
                       })
                     }
+                    pattern={PASSWORD_PATTERN.source}
+                    title="영문, 숫자, 특수문자만 입력 가능합니다."
                   />
                 </div>
                 <div className="flex justify-end">
