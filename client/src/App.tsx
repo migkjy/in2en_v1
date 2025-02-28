@@ -22,6 +22,7 @@ import BranchDetail from "@/pages/branches/branch-detail";
 import TeacherList from "@/pages/teachers/list";
 import TeacherDetail from "@/pages/teachers/teacher-detail";
 import StudentList from "@/pages/students/list";
+import Profile from "@/pages/profile";
 
 function Router() {
   return (
@@ -30,6 +31,7 @@ function Router() {
 
       {/* Admin Routes */}
       <ProtectedRoute path="/admin" component={AdminDashboard} allowedRole="ADMIN" />
+      <ProtectedRoute path="/admin/profile" component={Profile} allowedRole="ADMIN" />
       <ProtectedRoute path="/admin/assignments" component={AssignmentList} allowedRole="ADMIN" />
       <ProtectedRoute path="/admin/assignments/create" component={CreateAssignment} allowedRole="ADMIN" />
       <ProtectedRoute path="/admin/assignments/:id" component={AssignmentDetail} allowedRole="ADMIN" />
@@ -45,6 +47,7 @@ function Router() {
 
       {/* Teacher Routes */}
       <ProtectedRoute path="/teacher" component={TeacherDashboard} allowedRole="TEACHER" />
+      <ProtectedRoute path="/teacher/profile" component={Profile} allowedRole="TEACHER" />
       <ProtectedRoute path="/teacher/assignments" component={AssignmentList} allowedRole="TEACHER" />
       <ProtectedRoute path="/teacher/assignments/create" component={CreateAssignment} allowedRole="TEACHER" />
       <ProtectedRoute path="/teacher/assignments/:id" component={AssignmentDetail} allowedRole="TEACHER" />
@@ -53,12 +56,13 @@ function Router() {
       <ProtectedRoute path="/teacher/classes" component={ClassList} allowedRole="TEACHER" />
       <ProtectedRoute path="/teacher/classes/:id" component={ClassDetail} allowedRole="TEACHER" />
 
+      {/* Student Routes */}
+      <ProtectedRoute path="/student" component={StudentDashboard} allowedRole="STUDENT" />
+      <ProtectedRoute path="/student/profile" component={Profile} allowedRole="STUDENT" />
+
       {/* Common Routes - Accessible by all authenticated users */}
       <ProtectedRoute path="/submissions/:id" component={SubmissionDetail} />
       <ProtectedRoute path="/assignments/:id/upload" component={UploadAssignment} allowedRole={["TEACHER", "ADMIN"]} />
-
-      {/* Student Routes */}
-      <ProtectedRoute path="/student" component={StudentDashboard} allowedRole="STUDENT" />
 
       {/* Redirect to auth by default */}
       <Route path="/">

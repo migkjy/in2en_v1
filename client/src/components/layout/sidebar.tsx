@@ -35,7 +35,7 @@ export function Sidebar({ className }: SidebarProps) {
 
   const teacherLinks = [
     { href: "/teacher", icon: LayoutDashboard, label: "Dashboard" },
-    { href: "/teacher/classes", icon: GraduationCap, label: "My Classes" }, // Added Classes link
+    { href: "/teacher/classes", icon: GraduationCap, label: "My Classes" },
     { href: "/teacher/assignments", icon: BookCheck, label: "Assignments" },
     { href: "/teacher/assignments/create", icon: BookOpen, label: "Create Assignment" },
     { href: "/teacher/assignments/upload", icon: Upload, label: "Upload Homework" },
@@ -52,6 +52,8 @@ export function Sidebar({ className }: SidebarProps) {
     : user?.role === "TEACHER"
     ? teacherLinks
     : studentLinks;
+
+  const baseRoute = user?.role?.toLowerCase() || '';
 
   return (
     <div className={cn(
@@ -91,13 +93,13 @@ export function Sidebar({ className }: SidebarProps) {
       {/* User profile and logout section */}
       <div className="p-4 border-t border-gray-100 mt-auto bg-gray-50/50">
         <div className="space-y-2">
-          <Link href="/profile">
+          <Link href={`/${baseRoute}/profile`}>
             <Button
               variant="ghost"
               className="w-full justify-start text-sm hover:bg-gray-100/80"
             >
               <User className="mr-3 h-4 w-4" />
-              {user?.name}
+              {user?.name || '사용자'}
             </Button>
           </Link>
           <Button
