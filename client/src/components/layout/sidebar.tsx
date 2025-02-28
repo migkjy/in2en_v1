@@ -37,7 +37,7 @@ export function Sidebar({ className }: SidebarProps) {
     { href: "/teacher", icon: LayoutDashboard, label: "Dashboard" },
     { href: "/teacher/assignments", icon: BookCheck, label: "Assignments" },
     { href: "/teacher/assignments/create", icon: BookOpen, label: "Create Assignment" },
-    { href: "/teacher/assignments/upload", icon: Upload, label: "Upload Homework" },
+    { href: "/teacher/assignments/upload", icon: Upload, label: "Upload Homework" }, //This line remains,  hiding is handled below.
     { href: "/teacher/assignments/review", icon: ClipboardList, label: "Review" },
   ];
 
@@ -46,10 +46,10 @@ export function Sidebar({ className }: SidebarProps) {
     { href: "/student/assignments", icon: BookOpen, label: "My Assignments" },
   ];
 
-  const links = user?.role === "ADMIN" 
-    ? adminLinks 
-    : user?.role === "TEACHER" 
-    ? teacherLinks 
+  const links = user?.role === "ADMIN"
+    ? adminLinks
+    : user?.role === "TEACHER"
+    ? teacherLinks
     : studentLinks;
 
   return (
@@ -64,21 +64,24 @@ export function Sidebar({ className }: SidebarProps) {
           </h2>
           <div className="space-y-1.5">
             {links.map((link) => (
-              <Link key={link.href} href={link.href}>
-                <Button
-                  variant={isActive(link.href) ? "secondary" : "ghost"}
-                  className={cn(
-                    "w-full justify-start text-sm font-medium transition-colors",
-                    "hover:bg-gray-100/80",
-                    isActive(link.href) 
-                      ? "bg-gray-100/90 text-gray-900" 
-                      : "text-gray-600 hover:text-gray-900"
-                  )}
-                >
-                  <link.icon className="mr-3 h-4 w-4" />
-                  {link.label}
-                </Button>
-              </Link>
+              // Conditional rendering to hide "Upload Homework"
+              link.label !== "Upload Homework" && ( //Added condition here.
+                <Link key={link.href} href={link.href}>
+                  <Button
+                    variant={isActive(link.href) ? "secondary" : "ghost"}
+                    className={cn(
+                      "w-full justify-start text-sm font-medium transition-colors",
+                      "hover:bg-gray-100/80",
+                      isActive(link.href)
+                        ? "bg-gray-100/90 text-gray-900"
+                        : "text-gray-600 hover:text-gray-900"
+                    )}
+                  >
+                    <link.icon className="mr-3 h-4 w-4" />
+                    {link.label}
+                  </Button>
+                </Link>
+              )
             ))}
           </div>
         </div>
@@ -88,16 +91,16 @@ export function Sidebar({ className }: SidebarProps) {
       <div className="p-4 border-t border-gray-100 mt-auto bg-gray-50/50">
         <div className="space-y-2">
           <Link href="/profile">
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               className="w-full justify-start text-sm hover:bg-gray-100/80"
             >
               <User className="mr-3 h-4 w-4" />
               {user?.name}
             </Button>
           </Link>
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             className="w-full justify-start text-sm text-red-600 hover:text-red-700 hover:bg-red-50"
             onClick={() => logoutMutation.mutate()}
           >
