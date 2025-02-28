@@ -464,20 +464,8 @@ export class DatabaseStorage implements IStorage {
           .delete(teacherClassAccess)
           .where(eq(teacherClassAccess.teacherId, teacherId));
 
-        // Insert new branch access records
-        if (branchIds.length > 0) {
-          await tx
-            .insert(teacherBranchAccess)
-            .values(
-              branchIds.map(branchId => ({
-                teacherId,
-                branchId,
-              }))
-            );
-        }
-
-        // Insert new class access records
-        if (classIds.length > 0) {
+        // Insert new class access records if any exist
+        if (classIds && classIds.length > 0) {
           await tx
             .insert(teacherClassAccess)
             .values(
@@ -487,9 +475,21 @@ export class DatabaseStorage implements IStorage {
               }))
             );
         }
+
+        // Only insert branch access records if any exist
+        if (branchIds && branchIds.length > 0) {
+          await tx
+            .insert(teacherBranchAccess)
+            .values(
+              branchIds.map(branchId => ({
+                teacherId,
+                branchId,
+              }))
+            );
+        }
       } catch (error) {
         console.error("Error in updateTeacherAuthority transaction:", error);
-        throw error;
+        throw new Error("Failed to update teacher authority");
       }
     });
   }
