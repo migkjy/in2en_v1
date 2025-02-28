@@ -441,30 +441,32 @@ export default function ClassDetail() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {students.map((student) => {
-                        const isAssigned = assignedStudents.find(
-                          (as) => as.id === student.id
-                        );
-                        return (
-                          <TableRow key={student.id}>
-                            <TableCell>{student.name}</TableCell>
-                            <TableCell>{student.email}</TableCell>
-                            <TableCell>{student.phone_number || "-"}</TableCell>
-                            <TableCell className="text-center">
-                              <Checkbox
-                                checked={!!isAssigned}
-                                onCheckedChange={(checked) => {
-                                  if (checked) {
-                                    handleAssignStudent(student.id);
-                                  } else {
-                                    handleRemoveStudent(student.id);
-                                  }
-                                }}
-                              />
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
+                      {[...students]
+                        .sort((a, b) => a.name.localeCompare(b.name))
+                        .map((student) => {
+                          const isAssigned = assignedStudents.find(
+                            (as) => as.id === student.id
+                          );
+                          return (
+                            <TableRow key={student.id}>
+                              <TableCell>{student.name}</TableCell>
+                              <TableCell>{student.email}</TableCell>
+                              <TableCell>{student.phone_number || "-"}</TableCell>
+                              <TableCell className="text-center">
+                                <Checkbox
+                                  checked={!!isAssigned}
+                                  onCheckedChange={(checked) => {
+                                    if (checked) {
+                                      handleAssignStudent(student.id);
+                                    } else {
+                                      handleRemoveStudent(student.id);
+                                    }
+                                  }}
+                                />
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
                     </TableBody>
                   </Table>
                 </div>
