@@ -93,7 +93,8 @@ export async function processSubmissionWithAI(submissionId: number) {
     return submission.id;
   } catch (error) {
     console.error("Error in processSubmissionWithAI:", error);
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
     const newStatus = errorMessage.includes("timeout") ? "uploaded" : "failed";
     await storage.updateSubmission(submissionId, {
       status: newStatus,
@@ -108,12 +109,16 @@ export function registerRoutes(app: Express): Server {
   setupAuth(app);
 
   // Branch routes
-  app.get("/api/branches", requireRole([UserRole.ADMIN, UserRole.TEACHER]), async (req, res) => {
-    const branches = await storage.listBranches();
-    // Filter out hidden branches
-    const visibleBranches = branches.filter((branch) => !branch.isHidden);
-    res.json(visibleBranches);
-  });
+  app.get(
+    "/api/branches",
+    requireRole([UserRole.ADMIN, UserRole.TEACHER]),
+    async (req, res) => {
+      const branches = await storage.listBranches();
+      // Filter out hidden branches
+      const visibleBranches = branches.filter((branch) => !branch.isHidden);
+      res.json(visibleBranches);
+    },
+  );
 
   app.post("/api/branches", requireRole([UserRole.ADMIN]), async (req, res) => {
     try {
@@ -229,20 +234,26 @@ export function registerRoutes(app: Express): Server {
           visibleClasses.map(async (cls) => {
             const students = await storage.getClassStudents(cls.id);
             const teachers = await storage.getClassTeachers(cls.id);
-            const accessibleTeachers = teachers.filter(teacher => teacher.hasAccess);
+            const accessibleTeachers = teachers.filter(
+              (teacher) => teacher.hasAccess,
+            );
             return {
               ...cls,
               studentCount: students.length,
               teacherCount: accessibleTeachers.length,
             };
-          })
+          }),
         );
 
         // If user is a teacher, filter classes to only show accessible ones
         if (req.user?.role === UserRole.TEACHER) {
           const teacherClasses = await storage.getTeacherClasses(req.user.id);
-          const accessibleClassIds = teacherClasses.map(tc => tc.id);
-          return res.json(classesWithStats.filter(cls => accessibleClassIds.includes(cls.id)));
+          const accessibleClassIds = teacherClasses.map((tc) => tc.id);
+          return res.json(
+            classesWithStats.filter((cls) =>
+              accessibleClassIds.includes(cls.id),
+            ),
+          );
         }
 
         res.json(classesWithStats);
@@ -392,9 +403,15 @@ export function registerRoutes(app: Express): Server {
         // Check if the teacher has access to this class
         if (req.user?.role === UserRole.TEACHER) {
           const teacherClasses = await storage.getTeacherClasses(req.user.id);
-          const hasAccess = teacherClasses.some(cls => cls.id === Number(req.params.id));
+          const hasAccess = teacherClasses.some(
+            (cls) => cls.id === Number(req.params.id),
+          );
           if (!hasAccess) {
-            return res.status(403).json({ message: "You don't have permission to modify this class" });
+            return res
+              .status(403)
+              .json({
+                message: "You don't have permission to modify this class",
+              });
           }
         }
 
@@ -422,9 +439,15 @@ export function registerRoutes(app: Express): Server {
         // Check if the teacher has access to this class
         if (req.user?.role === UserRole.TEACHER) {
           const teacherClasses = await storage.getTeacherClasses(req.user.id);
-          const hasAccess = teacherClasses.some(cls => cls.id === Number(req.params.id));
+          const hasAccess = teacherClasses.some(
+            (cls) => cls.id === Number(req.params.id),
+          );
           if (!hasAccess) {
-            return res.status(403).json({ message: "You don't have permission to modify this class" });
+            return res
+              .status(403)
+              .json({
+                message: "You don't have permission to modify this class",
+              });
           }
         }
 
@@ -517,7 +540,7 @@ export function registerRoutes(app: Express): Server {
       const { classId, branchId, status, teacherId } = req.query;
       let assignments = await storage.listAssignments(
         classId ? Number(classId) : undefined,
-        status as string | undefined
+        status as string | undefined,
       );
 
       // Get all classes for filtering
@@ -525,19 +548,26 @@ export function registerRoutes(app: Express): Server {
 
       // If branchId is provided, filter assignments by branch
       if (branchId && branchId !== "all") {
-        assignments = assignments.filter(assignment => {
+        assignments = assignments.filter((assignment) => {
           if (!assignment.classId) return false;
-          const [assignmentClass] = allClasses.filter(c => c.id === assignment.classId);
-          return assignmentClass && assignmentClass.branchId === Number(branchId);
+          const [assignmentClass] = allClasses.filter(
+            (c) => c.id === assignment.classId,
+          );
+          return (
+            assignmentClass && assignmentClass.branchId === Number(branchId)
+          );
         });
       }
 
       // If teacherId is provided, filter assignments by teacher's accessible classes
       if (teacherId) {
-        const teacherClasses = await storage.getTeacherClasses(Number(teacherId));
-        const teacherClassIds = teacherClasses.map(c => c.id);
-        assignments = assignments.filter(assignment =>
-          assignment.classId && teacherClassIds.includes(assignment.classId)
+        const teacherClasses = await storage.getTeacherClasses(
+          Number(teacherId),
+        );
+        const teacherClassIds = teacherClasses.map((c) => c.id);
+        assignments = assignments.filter(
+          (assignment) =>
+            assignment.classId && teacherClassIds.includes(assignment.classId),
         );
       }
 
@@ -555,54 +585,57 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.get(
-    "/api/assignments/:id",
-    async (req, res) => {
-      if (!req.isAuthenticated() || !req.user) {
-        return res.status(401).json({ message: "Unauthorized" });
+  app.get("/api/assignments/:id", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    try {
+      const assignment = await storage.getAssignment(Number(req.params.id));
+      if (!assignment) {
+        return res.status(404).json({ message: "Assignment not found" });
       }
 
-      try {
-        const assignment = await storage.getAssignment(Number(req.params.id));
-        if (!assignment) {
-          return res.status(404).json({ message: "Assignment not found" });
-        }
-
-        // Check if user has permission to view this assignment
-        if (req.user.role === UserRole.TEACHER) {
-          const teacherClasses = await storage.getTeacherClasses(req.user.id);
-          const hasAccess = teacherClasses.some(cls => cls.id === assignment.classId);
-          if (!hasAccess) {
-            return res.status(403).json({ message: "You don't have permission to view this assignment" });
-          }
-        }
-
-        // Get related data
-        let classInfo = null;
-        let branch = null;
-
-        if (assignment.classId) {
-          classInfo = await storage.getClass(assignment.classId);
-          if (classInfo?.branchId) {
-            branch = await storage.getBranch(classInfo.branchId);
-          }
-        }
-
-        res.json({
-          ...assignment,
-          class: classInfo,
-          branch: branch
-        });
-      } catch (error) {
-        console.error("Error fetching assignment:", error);
-        if (error instanceof Error) {
-          res.status(400).json({ message: error.message });
-        } else {
-          res.status(500).json({ message: "An unknown error occurred" });
+      // Check if user has permission to view this assignment
+      if (req.user.role === UserRole.TEACHER) {
+        const teacherClasses = await storage.getTeacherClasses(req.user.id);
+        const hasAccess = teacherClasses.some(
+          (cls) => cls.id === assignment.classId,
+        );
+        if (!hasAccess) {
+          return res
+            .status(403)
+            .json({
+              message: "You don't have permission to view this assignment",
+            });
         }
       }
-    },
-  );
+
+      // Get related data
+      let classInfo = null;
+      let branch = null;
+
+      if (assignment.classId) {
+        classInfo = await storage.getClass(assignment.classId);
+        if (classInfo?.branchId) {
+          branch = await storage.getBranch(classInfo.branchId);
+        }
+      }
+
+      res.json({
+        ...assignment,
+        class: classInfo,
+        branch: branch,
+      });
+    } catch (error) {
+      console.error("Error fetching assignment:", error);
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "An unknown error occurred" });
+      }
+    }
+  });
 
   app.put(
     "/api/assignments/:id",
@@ -678,8 +711,12 @@ export function registerRoutes(app: Express): Server {
       }
 
       // Include related data
-      const assignment = submission.assignmentId ? await storage.getAssignment(submission.assignmentId!) : null;
-      const student = submission.studentId ? await storage.getUser(submission.studentId) : null;
+      const assignment = submission.assignmentId
+        ? await storage.getAssignment(submission.assignmentId!)
+        : null;
+      const student = submission.studentId
+        ? await storage.getUser(submission.studentId)
+        : null;
 
       res.json({
         ...submission,
@@ -1046,6 +1083,28 @@ export function registerRoutes(app: Express): Server {
     },
   );
 
+  app.put(
+    "/api/teachers/:id/authority",
+    requireRole([UserRole.ADMIN]),
+    async (req, res) => {
+      try {
+        const { branchIds, classIds } = req.body;
+        await storage.updateTeacherAuthority(
+          Number(req.params.id),
+          branchIds,
+          classIds,
+        );
+        res.json({ message: "Authority updated successfully" });
+      } catch (error) {
+        if (error instanceof Error) {
+          res.status(400).json({ message: error.message });
+        } else {
+          res.status(500).json({ message: "An unknown error occurred" });
+        }
+      }
+    },
+  );
+
   // Update the students route to handle branch filtering
   app.get(
     "/api/students",
@@ -1054,11 +1113,15 @@ export function registerRoutes(app: Express): Server {
       try {
         const { branchId } = req.query;
         const students = await storage.listUsers();
-        const filteredStudents = students.filter((user) => user.role === UserRole.STUDENT);
+        const filteredStudents = students.filter(
+          (user) => user.role === UserRole.STUDENT,
+        );
 
         // If branchId is provided, filter students by branch
         if (branchId && branchId !== "all") {
-          const branchStudents = await storage.getBranchStudents(Number(branchId));
+          const branchStudents = await storage.getBranchStudents(
+            Number(branchId),
+          );
           return res.json(branchStudents);
         }
 
@@ -1071,10 +1134,10 @@ export function registerRoutes(app: Express): Server {
           res.status(500).json({ message: "An unknown error occurred" });
         }
       }
-    }
+    },
   );
 
-  app.post("/api/students", requireRole([UserRole.ADMIN]), async (req, res) =>{
+  app.post("/api/students", requireRole([UserRole.ADMIN]), async (req, res) => {
     try {
       const createData = { ...req.body };
 
@@ -1107,7 +1170,7 @@ export function registerRoutes(app: Express): Server {
 
         // If password is empty string or undefined, remove it from the request body
         const updateData = { ...req.body };
-        if(!updateData.password) {
+        if (!updateData.password) {
           delete updateData.password;
         }
 
