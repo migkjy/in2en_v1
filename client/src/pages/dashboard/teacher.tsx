@@ -34,7 +34,7 @@ export default function TeacherDashboard() {
 
           {/* Quick Actions */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Link href="/assignments/new">
+            <Link href="/teacher/assignments/create">
               <Card className="border-0 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group">
                 <CardContent className="p-6 flex flex-col items-center">
                   <div className="p-3 rounded-full bg-blue-50 group-hover:bg-blue-100 transition-colors mb-4">
@@ -48,7 +48,7 @@ export default function TeacherDashboard() {
               </Card>
             </Link>
 
-            <Link href="/assignments/upload">
+            <Link href="/teacher/assignments/upload">
               <Card className="border-0 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group">
                 <CardContent className="p-6 flex flex-col items-center">
                   <div className="p-3 rounded-full bg-green-50 group-hover:bg-green-100 transition-colors mb-4">
