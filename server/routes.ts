@@ -961,7 +961,7 @@ export function registerRoutes(app: Express): Server {
       } catch (error) {
         if (error instanceof Error) {
           res.status(400).json({ message: error.message });
-        } else {
+        }else {
           res.status(500).json({ message: "An unknown error occurred" });
         }
       }
@@ -989,7 +989,8 @@ export function registerRoutes(app: Express): Server {
 
   // Add after the existing GET /api/classes route
   app.get(
-    "/api/teachers/:id/classes",    requireRole([UserRole.ADMIN, UserRole.TEACHER]),
+    "/api/teachers/:id/classes",
+    requireRole([UserRole.ADMIN, UserRole.TEACHER]),
     async (req, res) => {
       try {
         const classes = await storage.getTeacherClasses(Number(req.params.id));
@@ -1006,24 +1007,32 @@ export function registerRoutes(app: Express): Server {
   );
 
   // Update the students route to handle branch filtering
-  app.get("/api/students", requireRole([UserRole.ADMIN]), async (req, res) => {
-    try {
-      const { branchId } = req.query;
-      const users = await storage.listUsers();
-      const students = users.filter(
-        (user) =>
-          user.role === UserRole.STUDENT &&
-          (!branchId || user.branchId === Number(branchId)),
-      );
-      res.json(students);
-    } catch (error) {
-      if (error instanceof Error) {
-        res.status(400).json({ message: error.message });
-      } else {
-        res.status(500).json({ message: "An unknown error occurred" });
+  app.get(
+    "/api/students",
+    requireRole([UserRole.ADMIN, UserRole.TEACHER]),
+    async (req, res) => {
+      try {
+        const { branchId } = req.query;
+        const students = await storage.listUsers();
+        const filteredStudents = students.filter((user) => user.role === UserRole.STUDENT);
+
+        // If branchId is provided, filter students by branch
+        if (branchId && branchId !== "all") {
+          const branchStudents = await storage.getBranchStudents(Number(branchId));
+          return res.json(branchStudents);
+        }
+
+        res.json(filteredStudents);
+      } catch (error) {
+        console.error("Error fetching students:", error);
+        if (error instanceof Error) {
+          res.status(400).json({ message: error.message });
+        } else {
+          res.status(500).json({ message: "An unknown error occurred" });
+        }
       }
     }
-  });
+  );
 
   app.post("/api/students", requireRole([UserRole.ADMIN]), async (req, res) =>{
     try {
