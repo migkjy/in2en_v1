@@ -28,6 +28,7 @@ export default function ClassDetail() {
   const { user } = useAuth();
   const role = user?.role || "TEACHER";
   const basePath = role === "ADMIN" ? "/admin" : "/teacher";
+  const canManageStudents = role === "ADMIN" || role === "TEACHER";
 
   // Match both admin and teacher routes
   const [, adminParams] = useRoute("/admin/classes/:id");
@@ -81,7 +82,7 @@ export default function ClassDetail() {
 
   const { data: students = [] } = useQuery<User[]>({
     queryKey: ["/api/students", classData?.branchId],
-    enabled: !!classData?.branchId && role === "ADMIN",
+    enabled: !!classData?.branchId && canManageStudents, // Allow both ADMIN and TEACHER to fetch students
   });
 
   const { data: assignedStudents = [] } = useQuery<User[]>({
@@ -168,7 +169,7 @@ export default function ClassDetail() {
   };
 
   const handleAssignStudent = async (studentId: number) => {
-    if (role !== "ADMIN") return;
+    if (!canManageStudents) return;
 
     try {
       const response = await fetch(`/api/classes/${classId}/students/${studentId}`, {
@@ -195,7 +196,7 @@ export default function ClassDetail() {
   };
 
   const handleRemoveStudent = async (studentId: number) => {
-    if (role !== "ADMIN") return;
+    if (!canManageStudents) return;
 
     if (!confirm("Are you sure you want to remove this student from the class?")) return;
 
@@ -316,7 +317,7 @@ export default function ClassDetail() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Students</CardTitle>
-              {role === "ADMIN" && (
+              {canManageStudents && (
                 <Button onClick={() => setIsAssignStudentDialogOpen(true)}>
                   Assign Students
                 </Button>
@@ -332,7 +333,7 @@ export default function ClassDetail() {
                         className="inline-flex items-center gap-2 px-3 py-1 bg-secondary rounded-full"
                       >
                         <span>{student.name}</span>
-                        {role === "ADMIN" && (
+                        {canManageStudents && (
                           <button
                             onClick={() => handleRemoveStudent(student.id)}
                             className="text-muted-foreground hover:text-destructive"
@@ -416,8 +417,8 @@ export default function ClassDetail() {
             </Dialog>
           )}
 
-          {/* Assign Student Dialog - Only for Admin */}
-          {role === "ADMIN" && (
+          {/* Assign Student Dialog - For both Admin and Teacher */}
+          {canManageStudents && (
             <Dialog
               open={isAssignStudentDialogOpen}
               onOpenChange={setIsAssignStudentDialogOpen}
