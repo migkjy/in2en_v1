@@ -38,34 +38,21 @@ export function GrantAuthorityDialog({
 }: GrantAuthorityDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [selectedClasses, setSelectedClasses] = useState<number[]>(
-    currentClasses.map((c) => c.id)
-  );
+  const [selectedClasses, setSelectedClasses] = useState<number[]>([]);
   const [selectedBranch, setSelectedBranch] = useState<string>("all");
 
   const { data: classes } = useQuery<Class[]>({
     queryKey: ["/api/classes"],
-    queryFn: async () => {
-      const response = await fetch("/api/classes");
-      if (!response.ok) throw new Error("Failed to fetch classes");
-      return response.json();
-    },
+    enabled: open,
   });
 
   const { data: branches } = useQuery<Branch[]>({
     queryKey: ["/api/branches"],
-    queryFn: async () => {
-      const response = await fetch("/api/branches");
-      if (!response.ok) throw new Error("Failed to fetch branches");
-      return response.json();
-    },
+    enabled: open,
   });
 
   useEffect(() => {
-    if (open) {
-      console.log("Setting initial selections:", {
-        classes: currentClasses.map(c => c.id)
-      });
+    if (open && currentClasses) {
       setSelectedClasses(currentClasses.map((c) => c.id));
       setSelectedBranch("all");
     }
@@ -73,11 +60,6 @@ export function GrantAuthorityDialog({
 
   const updateAuthority = useMutation({
     mutationFn: async () => {
-      console.log("Updating authority with:", {
-        teacherId,
-        classIds: selectedClasses,
-      });
-
       const response = await fetch(`/api/teachers/${teacherId}/authority`, {
         method: "PUT",
         headers: {
@@ -89,26 +71,23 @@ export function GrantAuthorityDialog({
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to update authority");
+        const errorText = await response.text();
+        try {
+          const errorData = JSON.parse(errorText);
+          throw new Error(errorData.message || "Failed to update authority");
+        } catch (e) {
+          throw new Error(errorText || "Failed to update authority");
+        }
       }
 
-      return response.json();
+      const data = await response.json();
+      return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ 
-        predicate: (query) => {
-          const queryKey = query.queryKey;
-          return (
-            Array.isArray(queryKey) && 
-            (
-              queryKey[0] === "/api/teachers" ||
-              (queryKey[0] === `/api/teachers/${teacherId}`) ||
-              (queryKey[1] === teacherId && queryKey[2] === "classes")
-            )
-          );
-        }
-      });
+      queryClient.invalidateQueries({ queryKey: ["/api/teachers"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/teachers/${teacherId}`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/teachers", teacherId, "classes"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/teachers", teacherId, "branches"] });
 
       toast({
         title: "Success",
@@ -137,12 +116,8 @@ export function GrantAuthorityDialog({
   ).sort((a, b) => {
     const branchA = getBranchName(a.branchId);
     const branchB = getBranchName(b.branchId);
-
-    // First sort by branch name
     if (branchA < branchB) return -1;
     if (branchA > branchB) return 1;
-
-    // If same branch, sort by class name
     return a.name.localeCompare(b.name);
   });
 
@@ -179,7 +154,7 @@ export function GrantAuthorityDialog({
 
           <div>
             <h3 className="text-lg font-semibold mb-2">Individual Classes</h3>
-            <ScrollArea className="h-[200px]">
+            <ScrollArea className="h-[200px] border rounded-md p-4">
               <div className="space-y-2">
                 {filteredClasses?.map((cls) => (
                   <div key={cls.id} className="flex items-center space-x-2">

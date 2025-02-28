@@ -635,6 +635,9 @@ export class DatabaseStorage implements IStorage {
           email: users.email,
           role: users.role,
           branchId: users.branchId,
+          password: users.password,
+          phone_number: users.phone_number,
+          birth_date: users.birth_date
         })
         .from(users)
         .innerJoin(
