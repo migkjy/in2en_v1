@@ -372,9 +372,18 @@ export function registerRoutes(app: Express): Server {
 
   app.put(
     "/api/classes/:id/students/:studentId",
-    requireRole([UserRole.ADMIN]),
+    requireRole([UserRole.ADMIN, UserRole.TEACHER]),
     async (req, res) => {
       try {
+        // Check if the teacher has access to this class
+        if (req.user?.role === UserRole.TEACHER) {
+          const teacherClasses = await storage.getTeacherClasses(req.user.id);
+          const hasAccess = teacherClasses.some(cls => cls.id === Number(req.params.id));
+          if (!hasAccess) {
+            return res.status(403).json({ message: "You don't have permission to modify this class" });
+          }
+        }
+
         await storage.assignStudentToClass(
           Number(req.params.id),
           Number(req.params.studentId),
@@ -382,18 +391,29 @@ export function registerRoutes(app: Express): Server {
         res.json({ message: "Student added to class successfully" });
       } catch (error) {
         console.error("Error adding student to class:", error);
-        res
-          .status(500)
-          .json({ message: `Failed to add student: ${error.message}` });
+        if (error instanceof Error) {
+          res.status(400).json({ message: error.message });
+        } else {
+          res.status(500).json({ message: "An unknown error occurred" });
+        }
       }
     },
   );
 
   app.delete(
     "/api/classes/:id/students/:studentId",
-    requireRole([UserRole.ADMIN]),
+    requireRole([UserRole.ADMIN, UserRole.TEACHER]),
     async (req, res) => {
       try {
+        // Check if the teacher has access to this class
+        if (req.user?.role === UserRole.TEACHER) {
+          const teacherClasses = await storage.getTeacherClasses(req.user.id);
+          const hasAccess = teacherClasses.some(cls => cls.id === Number(req.params.id));
+          if (!hasAccess) {
+            return res.status(403).json({ message: "You don't have permission to modify this class" });
+          }
+        }
+
         await storage.removeStudentFromClass(
           Number(req.params.id),
           Number(req.params.studentId),
@@ -401,9 +421,11 @@ export function registerRoutes(app: Express): Server {
         res.status(204).send();
       } catch (error) {
         console.error("Error removing student from class:", error);
-        res
-          .status(500)
-          .json({ message: `Failed to remove student: ${error.message}` });
+        if (error instanceof Error) {
+          res.status(400).json({ message: error.message });
+        } else {
+          res.status(500).json({ message: "An unknown error occurred" });
+        }
       }
     },
   );
@@ -961,7 +983,7 @@ export function registerRoutes(app: Express): Server {
       } catch (error) {
         if (error instanceof Error) {
           res.status(400).json({ message: error.message });
-        }else {
+        } else {
           res.status(500).json({ message: "An unknown error occurred" });
         }
       }
