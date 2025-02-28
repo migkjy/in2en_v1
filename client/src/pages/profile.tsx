@@ -93,8 +93,8 @@ export default function ProfilePage() {
       });
 
       if (!response.ok) {
-        const errorData = await response.text();
-        throw new Error(errorData || "비밀번호 변경에 실패했습니다.");
+        const errorData = await response.json();
+        throw new Error(errorData.message || "비밀번호 변경에 실패했습니다.");
       }
 
       return await response.json();
@@ -114,8 +114,8 @@ export default function ProfilePage() {
     onError: (error: Error) => {
       let errorMessage = "비밀번호 변경에 실패했습니다.";
       try {
-        const parsedError = JSON.parse(error.message);
-        errorMessage = parsedError.message || errorMessage;
+        // 서버에서 반환된 에러 메시지를 직접 표시
+        errorMessage = error.message;
       } catch {
         errorMessage = error.message || errorMessage;
       }
