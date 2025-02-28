@@ -6,20 +6,46 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Lock, User } from "lucide-react";
 
 export default function ProfilePage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
+
+  // Get user details
+  const { data: userDetails, isLoading } = useQuery({
+    queryKey: [`/api/users/${user?.id}`],
+    queryFn: async () => {
+      if (!user?.id) throw new Error("User ID is required");
+      const response = await fetch(`/api/users/${user.id}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch user details");
+      }
+      return response.json();
+    },
+    enabled: !!user?.id,
+  });
+
   const [formData, setFormData] = useState({
-    name: user?.name || "",
-    phone_number: user?.phone_number || "",
+    name: userDetails?.name || "",
+    phone_number: userDetails?.phone_number || "",
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
   });
+
+  // Update when userDetails changes
+  useState(() => {
+    if (userDetails) {
+      setFormData(prev => ({
+        ...prev,
+        name: userDetails.name || "",
+        phone_number: userDetails.phone_number || "",
+      }));
+    }
+  }, [userDetails]);
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: { name: string; phone_number: string }) => {
@@ -116,6 +142,17 @@ export default function ProfilePage() {
     });
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex h-screen">
+        <Sidebar className="w-64" />
+        <main className="flex-1 p-8">
+          <div>Loading...</div>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen">
       <Sidebar className="w-64" />
@@ -136,11 +173,11 @@ export default function ProfilePage() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
                   <Label>ID</Label>
-                  <Input value={user?.email || ""} disabled />
+                  <Input value={userDetails?.email || ""} disabled />
                 </div>
                 <div className="space-y-2">
                   <Label>Email</Label>
-                  <Input value={user?.email || ""} disabled />
+                  <Input value={userDetails?.email || ""} disabled />
                 </div>
                 <div className="space-y-2">
                   <Label>이름</Label>
