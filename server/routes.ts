@@ -357,11 +357,11 @@ export function registerRoutes(app: Express): Server {
         res.json(teachers);
       } catch (error) {
         console.error("Error fetching class teachers:", error);
-        res
-          .status(500)
-          .json({
-            message: `Failed to fetch class teachers: ${error.message}`,
-          });
+        if (error instanceof Error) {
+          res.status(500).json({ message: error.message });
+        } else {
+          res.status(500).json({ message: "An unknown error occurred" });
+        }
       }
     },
   );
@@ -375,11 +375,11 @@ export function registerRoutes(app: Express): Server {
         res.json(students);
       } catch (error) {
         console.error("Error fetching class students:", error);
-        res
-          .status(500)
-          .json({
-            message: `Failed to fetch class students: ${error.message}`,
-          });
+        if (error instanceof Error) {
+          res.status(500).json({ message: error.message });
+        } else {
+          res.status(500).json({ message: "An unknown error occurred" });
+        }
       }
     },
   );
@@ -459,9 +459,11 @@ export function registerRoutes(app: Express): Server {
         res.json({ message: "Teacher role updated successfully" });
       } catch (error) {
         console.error("Error updating teacher role:", error);
-        res
-          .status(500)
-          .json({ message: `Failed to update teacher role: ${error.message}` });
+        if (error instanceof Error) {
+          res.status(500).json({ message: error.message });
+        } else {
+          res.status(500).json({ message: "An unknown error occurred" });
+        }
       }
     },
   );
@@ -478,9 +480,11 @@ export function registerRoutes(app: Express): Server {
         res.status(204).send();
       } catch (error) {
         console.error("Error removing teacher from class:", error);
-        res
-          .status(500)
-          .json({ message: `Failed to remove teacher: ${error.message}` });
+        if (error instanceof Error) {
+          res.status(500).json({ message: error.message });
+        } else {
+          res.status(500).json({ message: "An unknown error occurred" });
+        }
       }
     },
   );
@@ -674,8 +678,8 @@ export function registerRoutes(app: Express): Server {
       }
 
       // Include related data
-      const assignment = await storage.getAssignment(submission.assignmentId);
-      const student = await storage.getUser(submission.studentId);
+      const assignment = submission.assignmentId ? await storage.getAssignment(submission.assignmentId!) : null;
+      const student = submission.studentId ? await storage.getUser(submission.studentId) : null;
 
       res.json({
         ...submission,
