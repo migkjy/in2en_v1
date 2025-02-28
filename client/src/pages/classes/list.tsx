@@ -39,6 +39,10 @@ export default function ClassList() {
   const [isManageOptionsOpen, setIsManageOptionsOpen] = useState(false);
   const [selectedBranch, setSelectedBranch] = useState<string>("all");
   const [selectedClass, setSelectedClass] = useState<Class | null>(null);
+  
+  const { data: user } = useQuery({
+    queryKey: ["/api/user"],
+  });
 
 
   const { data: branches } = useQuery<Branch[]>({
@@ -113,10 +117,12 @@ export default function ClassList() {
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Classes Management</CardTitle>
               <div className="flex gap-2">
-                <Button onClick={() => setIsManageOptionsOpen(true)} variant="outline">
-                  <Settings className="w-4 h-4 mr-2" />
-                  Manage Options
-                </Button>
+                {user?.role === "ADMIN" && (
+                  <Button onClick={() => setIsManageOptionsOpen(true)} variant="outline">
+                    <Settings className="w-4 h-4 mr-2" />
+                    Manage Options
+                  </Button>
+                )}
                 <Button onClick={() => setIsCreateDialogOpen(true)}>
                   Create New Class
                 </Button>
