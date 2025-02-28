@@ -196,7 +196,11 @@ export default function ClassDetail() {
           <Button
             variant="outline"
             className="mb-4"
-            onClick={() => navigate("/admin/classes")}
+            onClick={() => {
+              const { data: user } = queryClient.getQueryData(["/api/user"]) || {};
+              const route = user?.role === "ADMIN" ? "/admin/classes" : "/teacher/classes";
+              navigate(route);
+            }}
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Classes List
