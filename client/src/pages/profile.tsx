@@ -123,13 +123,19 @@ export default function ProfilePage() {
 
       const responseData = await response.json();
       if (!response.ok) {
-        // Set field-specific error based on server response
-        if (responseData.message.includes("현재 비밀번호가 일치하지 않습니다")) {
+        // 필드별로 오류 메시지 설정
+        if (responseData.field === "currentPassword") {
           setError("currentPassword", {
             type: "manual",
             message: responseData.message,
           });
+        } else if (responseData.field === "newPassword") {
+          setError("newPassword", {
+            type: "manual",
+            message: responseData.message,
+          });
         } else {
+          // 일반적인 오류는 서버 오류로 표시
           setServerError(responseData.message);
         }
         throw new Error(responseData.message);
@@ -146,7 +152,7 @@ export default function ProfilePage() {
       setServerError(null);
     },
     onError: () => {
-      // Error is handled in mutationFn
+      // 오류는 mutationFn에서 처리됨
     },
   });
 
