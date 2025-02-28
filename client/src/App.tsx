@@ -17,6 +17,11 @@ import UploadAssignment from "@/pages/assignments/upload";
 import SubmissionDetail from "@/pages/submissions/submission-detail";
 import ClassList from "@/pages/classes/list";
 import ClassDetail from "@/pages/classes/class-detail";
+import BranchList from "@/pages/branches/list";
+import BranchDetail from "@/pages/branches/branch-detail";
+import TeacherList from "@/pages/teachers/list";
+import TeacherDetail from "@/pages/teachers/teacher-detail";
+import StudentList from "@/pages/students/list";
 
 function Router() {
   return (
@@ -32,6 +37,11 @@ function Router() {
       <ProtectedRoute path="/admin/assignments/review/:id" component={ReviewAssignment} allowedRole="ADMIN" />
       <ProtectedRoute path="/admin/classes" component={ClassList} allowedRole="ADMIN" />
       <ProtectedRoute path="/admin/classes/:id" component={ClassDetail} allowedRole="ADMIN" />
+      <ProtectedRoute path="/admin/branches" component={BranchList} allowedRole="ADMIN" />
+      <ProtectedRoute path="/admin/branches/:id" component={BranchDetail} allowedRole="ADMIN" />
+      <ProtectedRoute path="/admin/teachers" component={TeacherList} allowedRole="ADMIN" />
+      <ProtectedRoute path="/admin/teachers/:id" component={TeacherDetail} allowedRole="ADMIN" />
+      <ProtectedRoute path="/admin/students" component={StudentList} allowedRole="ADMIN" />
 
       {/* Teacher Routes */}
       <ProtectedRoute path="/teacher" component={TeacherDashboard} allowedRole="TEACHER" />
