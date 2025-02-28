@@ -969,8 +969,7 @@ export function registerRoutes(app: Express): Server {
 
   app.post("/api/teachers", requireRole([UserRole.ADMIN]), async (req, res) => {
     try {
-      const teacher = await storage.createUser({
-        ...req.body,
+      const teacher = await storage.createUser({        ...req.body,
         role: UserRole.TEACHER,
       });
       res.status(201).json(teacher);
@@ -1417,17 +1416,29 @@ export function registerRoutes(app: Express): Server {
 
     try {
       const { currentPassword, newPassword } = req.body;
-      const user = await storage.getUser(userId);
 
+      // Validate input
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({ message: "Both current and new passwords are required" });
+      }
+
+      const user = await storage.getUser(userId);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
 
-      // 비밀번호 검증 및 업데이트 로직
-      // TODO: Implement password hashing and verification
+      // Verify current password
+      const isPasswordValid = await comparePasswords(currentPassword, user.password);
+      if (!isPasswordValid) {
+        return res.status(400).json({ message: "Current password is incorrect" });
+      }
 
+      // Hash new password
+      const hashedPassword = await hashPassword(newPassword);
+
+      // Update password
       const updatedUser = await storage.updateUser(userId, {
-        password: newPassword, // This should be hashed in production
+        password: hashedPassword,
       });
 
       res.json({ message: "Password updated successfully" });
