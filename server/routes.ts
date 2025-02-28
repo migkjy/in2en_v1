@@ -224,14 +224,27 @@ export function registerRoutes(app: Express): Server {
         // Filter out hidden classes
         const visibleClasses = classes.filter((cls) => !cls.isHidden);
 
+        // Get statistics for each class
+        const classesWithStats = await Promise.all(
+          visibleClasses.map(async (cls) => {
+            const students = await storage.getClassStudents(cls.id);
+            const teachers = await storage.getClassTeachers(cls.id);
+            return {
+              ...cls,
+              studentCount: students.length,
+              teacherCount: teachers.length,
+            };
+          })
+        );
+
         // If user is a teacher, filter classes to only show accessible ones
         if (req.user?.role === UserRole.TEACHER) {
           const teacherClasses = await storage.getTeacherClasses(req.user.id);
           const accessibleClassIds = teacherClasses.map(tc => tc.id);
-          return res.json(visibleClasses.filter(cls => accessibleClassIds.includes(cls.id)));
+          return res.json(classesWithStats.filter(cls => accessibleClassIds.includes(cls.id)));
         }
 
-        res.json(visibleClasses);
+        res.json(classesWithStats);
       } catch (error) {
         console.error("Error fetching classes:", error);
         if (error instanceof Error) {
@@ -518,7 +531,7 @@ export function registerRoutes(app: Express): Server {
       if (teacherId) {
         const teacherClasses = await storage.getTeacherClasses(Number(teacherId));
         const teacherClassIds = teacherClasses.map(c => c.id);
-        assignments = assignments.filter(assignment => 
+        assignments = assignments.filter(assignment =>
           assignment.classId && teacherClassIds.includes(assignment.classId)
         );
       }

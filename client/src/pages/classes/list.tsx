@@ -26,6 +26,12 @@ import {
 } from "@/components/ui/select";
 import { useAuth } from "@/hooks/use-auth";
 
+// Add interface for class with stats
+interface ClassWithStats extends Class {
+  studentCount: number;
+  teacherCount: number;
+}
+
 export default function ClassList() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
@@ -43,7 +49,7 @@ export default function ClassList() {
     queryKey: ["/api/branches"],
   });
 
-  const { data: classes, isLoading: isClassesLoading } = useQuery<Class[]>({
+  const { data: classes, isLoading: isClassesLoading } = useQuery<ClassWithStats[]>({
     queryKey: ["/api/classes", selectedBranch],
     queryFn: async () => {
       const params = new URLSearchParams();
