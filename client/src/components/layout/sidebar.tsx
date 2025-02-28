@@ -35,9 +35,10 @@ export function Sidebar({ className }: SidebarProps) {
 
   const teacherLinks = [
     { href: "/teacher", icon: LayoutDashboard, label: "Dashboard" },
+    { href: "/teacher/classes", icon: GraduationCap, label: "My Classes" }, // Added Classes link
     { href: "/teacher/assignments", icon: BookCheck, label: "Assignments" },
     { href: "/teacher/assignments/create", icon: BookOpen, label: "Create Assignment" },
-    { href: "/teacher/assignments/upload", icon: Upload, label: "Upload Homework" }, //This line remains,  hiding is handled below.
+    { href: "/teacher/assignments/upload", icon: Upload, label: "Upload Homework" },
     { href: "/teacher/assignments/review", icon: ClipboardList, label: "Review" },
   ];
 
@@ -64,8 +65,8 @@ export function Sidebar({ className }: SidebarProps) {
           </h2>
           <div className="space-y-1.5">
             {links.map((link) => (
-              // Conditional rendering to hide "Upload Homework"
-              link.label !== "Upload Homework" && ( //Added condition here.
+              // Hide upload homework link
+              link.label !== "Upload Homework" && (
                 <Link key={link.href} href={link.href}>
                   <Button
                     variant={isActive(link.href) ? "secondary" : "ghost"}

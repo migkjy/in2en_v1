@@ -3,7 +3,7 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import { Plus, Upload, ClipboardList, Users, BookOpen } from "lucide-react"; // Added imports for new icons
+import { Plus, Upload, ClipboardList, Users, BookOpen } from "lucide-react";
 import type { Class, Assignment } from "@shared/schema";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -80,25 +80,31 @@ export default function TeacherDashboard() {
           {/* My Classes */}
           <Card className="border-0 shadow-sm">
             <CardHeader>
-              <CardTitle className="text-xl font-semibold">My Classes</CardTitle>
+              <div className="flex justify-between items-center">
+                <CardTitle className="text-xl font-semibold">My Classes</CardTitle>
+                <Link href="/teacher/classes">
+                  <Button variant="outline" size="sm">View All Classes</Button>
+                </Link>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {classes?.map((cls) => (
-                  <div 
-                    key={cls.id}
-                    className="p-4 rounded-lg border border-gray-100 hover:border-gray-200 hover:bg-gray-50/50 transition-colors group"
-                  >
-                    <h3 className="font-medium text-gray-900 group-hover:text-primary">{cls.name}</h3>
-                    <div className="mt-2 space-y-1">
-                      <p className="text-sm text-gray-500">
-                        Level: {cls.englishLevel || "Not set"}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        Age: {cls.ageGroup || "Not set"}
-                      </p>
+                  <Link key={cls.id} href={`/teacher/classes/${cls.id}`}>
+                    <div 
+                      className="p-4 rounded-lg border border-gray-100 hover:border-gray-200 hover:bg-gray-50/50 transition-colors group cursor-pointer"
+                    >
+                      <h3 className="font-medium text-gray-900 group-hover:text-primary">{cls.name}</h3>
+                      <div className="mt-2 space-y-1">
+                        <p className="text-sm text-gray-500">
+                          Level: {cls.englishLevel || "Not set"}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          Age: {cls.ageGroup || "Not set"}
+                        </p>
+                      </div>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             </CardContent>
@@ -107,7 +113,12 @@ export default function TeacherDashboard() {
           {/* Recent Assignments */}
           <Card className="border-0 shadow-sm">
             <CardHeader>
-              <CardTitle className="text-xl font-semibold">Recent Assignments</CardTitle>
+              <div className="flex justify-between items-center">
+                <CardTitle className="text-xl font-semibold">Recent Assignments</CardTitle>
+                <Link href="/teacher/assignments">
+                  <Button variant="outline" size="sm">View All Assignments</Button>
+                </Link>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
