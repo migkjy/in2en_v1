@@ -968,8 +968,9 @@ export function registerRoutes(app: Express): Server {
   });
 
   app.post("/api/teachers", requireRole([UserRole.ADMIN]), async (req, res) => {
-    try{
-      const teacher = await storage.createUser({        ...req.body,
+try {
+      const teacher = await storage.createUser({
+        ...req.body,
         role: UserRole.TEACHER,
       });
       res.status(201).json(teacher);
@@ -979,6 +980,68 @@ export function registerRoutes(app: Express): Server {
       } else {
         res.status(500).json({ message: "An unknown error occurred" });
       }
+    }
+  });
+
+  // 비밀번호 변경 엔드포인트 수정
+  app.patch("/api/users/:id/password", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user) {
+      return res.sendStatus(401);
+    }
+
+    const userId = Number(req.params.id);
+    if (req.user.id !== userId) {
+      return res.sendStatus(403);
+    }
+
+    try {
+      const { currentPassword, newPassword } = req.body;
+
+      // Validate input
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({ message: "현재 비밀번호와 새 비밀번호를 모두 입력해주세요." });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "사용자를 찾을 수 없습니다." });
+      }
+
+      console.log("Attempting password change for user:", userId);
+
+      try {
+        // Verify current password
+        const isPasswordValid = await comparePasswords(currentPassword, user.password);
+        if (!isPasswordValid) {
+          console.log("Password validation failed for user:", userId);
+          return res.status(400).json({ message: "현재 비밀번호가 일치하지 않습니다." });
+        }
+
+        console.log("Current password validated successfully for user:", userId);
+
+        // Hash new password
+        const hashedPassword = await hashPassword(newPassword);
+        console.log("New password hashed successfully for user:", userId);
+
+        // Update password
+        const updatedUser = await storage.updateUser(userId, {
+          password: hashedPassword,
+        });
+
+        if (!updatedUser) {
+          console.error("Failed to update user after password change:", userId);
+          return res.status(500).json({ message: "비밀번호 업데이트에 실패했습니다." });
+        }
+
+        console.log("Password updated successfully for user:", userId);
+        res.json({ message: "비밀번호가 성공적으로 변경되었습니다." });
+      } catch (error) {
+        console.error("Error in password validation/hashing:", error);
+        return res.status(500).json({ message: "비밀번호 처리 중 오류가 발생했습니다." });
+      }
+    } catch (error) {
+      console.error("Error updating password:", error);
+      res.status(500).json({ message: "비밀번호 변경 중 오류가 발생했습니다." });
     }
   });
 
@@ -1226,7 +1289,7 @@ export function registerRoutes(app: Express): Server {
         res.json(levels);
       } catch (error) {
         if (error instanceof Error) {
-          res.status(400).json({ message: error.message.message });
+          res.status(400).json({ message: error.message });
         } else {
           res.status(500).json({ message: "An unknown error occurred" });
         }
@@ -1427,25 +1490,38 @@ export function registerRoutes(app: Express): Server {
         return res.status(404).json({ message: "사용자를 찾을 수 없습니다." });
       }
 
-      // Verify current password
-      const isPasswordValid = await comparePasswords(currentPassword, user.password);
-      if (!isPasswordValid) {
-        return res.status(400).json({ message: "현재 비밀번호가 일치하지 않습니다." });
+      console.log("Attempting password change for user:", userId);
+
+      try {
+        // Verify current password
+        const isPasswordValid = await comparePasswords(currentPassword, user.password);
+        if (!isPasswordValid) {
+          console.log("Password validation failed for user:", userId);
+          return res.status(400).json({ message: "현재 비밀번호가 일치하지 않습니다." });
+        }
+
+        console.log("Current password validated successfully for user:", userId);
+
+        // Hash new password
+        const hashedPassword = await hashPassword(newPassword);
+        console.log("New password hashed successfully for user:", userId);
+
+        // Update password
+        const updatedUser = await storage.updateUser(userId, {
+          password: hashedPassword,
+        });
+
+        if (!updatedUser) {
+          console.error("Failed to update user after password change:", userId);
+          return res.status(500).json({ message: "비밀번호 업데이트에 실패했습니다." });
+        }
+
+        console.log("Password updated successfully for user:", userId);
+        res.json({ message: "비밀번호가 성공적으로 변경되었습니다." });
+      } catch (error) {
+        console.error("Error in password validation/hashing:", error);
+        return res.status(500).json({ message: "비밀번호 처리 중 오류가 발생했습니다." });
       }
-
-      // Hash new password
-      const hashedPassword = await hashPassword(newPassword);
-
-      // Update password
-      const updatedUser = await storage.updateUser(userId, {
-        password: hashedPassword,
-      });
-
-      if (!updatedUser) {
-        return res.status(500).json({ message: "비밀번호 업데이트에 실패했습니다." });
-      }
-
-      res.json({ message: "비밀번호가 성공적으로 변경되었습니다." });
     } catch (error) {
       console.error("Error updating password:", error);
       res.status(500).json({ message: "비밀번호 변경 중 오류가 발생했습니다." });

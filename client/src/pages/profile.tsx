@@ -97,7 +97,7 @@ export default function ProfilePage() {
         throw new Error(errorData || "비밀번호 변경에 실패했습니다.");
       }
 
-      return response.json();
+      return await response.json();
     },
     onSuccess: () => {
       toast({
@@ -112,9 +112,17 @@ export default function ProfilePage() {
       }));
     },
     onError: (error: Error) => {
+      let errorMessage = "비밀번호 변경에 실패했습니다.";
+      try {
+        const parsedError = JSON.parse(error.message);
+        errorMessage = parsedError.message || errorMessage;
+      } catch {
+        errorMessage = error.message || errorMessage;
+      }
+
       toast({
         title: "오류",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
     },
