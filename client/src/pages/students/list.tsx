@@ -34,7 +34,7 @@ export default function StudentList() {
   const [sortField, setSortField] = useState<string>("id"); // Added state for sorting field
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc"); // Added state for sorting direction
   const [currentPage, setCurrentPage] = useState(1); // Added state for current page
-  const itemsPerPage = 10; // Number of items per page
+  const itemsPerPage = 20; // Number of items per page
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
