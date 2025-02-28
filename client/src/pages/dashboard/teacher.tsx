@@ -3,7 +3,7 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import { Plus, Upload, ClipboardList } from "lucide-react";
+import { Plus, Upload, ClipboardList, Users, BookOpen } from "lucide-react"; // Added imports for new icons
 import type { Class, Assignment } from "@shared/schema";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -48,36 +48,30 @@ export default function TeacherDashboard() {
               </Card>
             </Link>
 
-            <Link href="/teacher/assignments/upload">
+            <Link href="/teacher/classes">
               <Card className="border-0 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group">
                 <CardContent className="p-6 flex flex-col items-center">
                   <div className="p-3 rounded-full bg-green-50 group-hover:bg-green-100 transition-colors mb-4">
-                    <Upload className="h-6 w-6 text-green-500" />
+                    <Users className="w-6 h-6 text-green-500" />
                   </div>
-                  <h3 className="font-medium text-lg text-gray-900">Upload Homework</h3>
+                  <h3 className="font-medium text-lg text-gray-900">My Classes</h3>
                   <p className="mt-2 text-sm text-gray-500 text-center">
-                    Upload student homework submissions
+                    View and manage your class list
                   </p>
                 </CardContent>
               </Card>
             </Link>
 
-            <Link href="/assignments/review">
+            <Link href="/teacher/assignments">
               <Card className="border-0 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group">
                 <CardContent className="p-6 flex flex-col items-center">
                   <div className="p-3 rounded-full bg-purple-50 group-hover:bg-purple-100 transition-colors mb-4">
-                    <ClipboardList className="h-6 w-6 text-purple-500" />
+                    <BookOpen className="h-6 w-6 text-purple-500" />
                   </div>
-                  <h3 className="font-medium text-lg text-gray-900">Review Submissions</h3>
-                  {pendingReviews?.length ? (
-                    <span className="mt-2 px-2.5 py-0.5 rounded-full text-sm font-medium bg-red-100 text-red-600">
-                      {pendingReviews.length} pending
-                    </span>
-                  ) : (
-                    <p className="mt-2 text-sm text-gray-500 text-center">
-                      Review and grade student work
-                    </p>
-                  )}
+                  <h3 className="font-medium text-lg text-gray-900">My Assignments</h3>
+                  <p className="mt-2 text-sm text-gray-500 text-center">
+                    View and manage homework assignments
+                  </p>
                 </CardContent>
               </Card>
             </Link>
