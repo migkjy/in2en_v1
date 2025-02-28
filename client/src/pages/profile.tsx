@@ -83,7 +83,7 @@ export default function ProfilePage() {
   const changePasswordMutation = useMutation({
     mutationFn: async (data: { currentPassword: string; newPassword: string }) => {
       const response = await fetch(`/api/users/${user?.id}/password`, {
-        method: "POST",
+        method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
@@ -233,7 +233,7 @@ export default function ProfilePage() {
                         type="submit"
                         disabled={updateProfileMutation.isPending}
                       >
-                        저장하기
+                        {updateProfileMutation.isPending ? "저장 중..." : "저장하기"}
                       </Button>
                     </>
                   )}
@@ -294,7 +294,7 @@ export default function ProfilePage() {
                     type="submit"
                     disabled={changePasswordMutation.isPending}
                   >
-                    비밀번호 변경
+                    {changePasswordMutation.isPending ? "변경 중..." : "비밀번호 변경"}
                   </Button>
                 </div>
               </form>

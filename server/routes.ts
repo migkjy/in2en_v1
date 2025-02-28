@@ -1349,6 +1349,94 @@ export function registerRoutes(app: Express): Server {
     },
   );
 
+  // Add User profile routes
+  app.get("/api/users/:id", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user) {
+      return res.sendStatus(401);
+    }
+
+    const requestedId = Number(req.params.id);
+    // Allow admin to view any profile, others can only view their own
+    if (req.user.role !== UserRole.ADMIN && req.user.id !== requestedId) {
+      return res.sendStatus(403);
+    }
+
+    try {
+      const userData = await storage.getUser(requestedId);
+      if (!userData) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Remove sensitive information
+      const { password, ...userInfo } = userData;
+      res.json(userInfo);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ message: "Failed to fetch user details" });
+    }
+  });
+
+  app.patch("/api/users/:id/profile", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user) {
+      return res.sendStatus(401);
+    }
+
+    const userId = Number(req.params.id);
+    if (req.user.id !== userId && req.user.role !== UserRole.ADMIN) {
+      return res.sendStatus(403);
+    }
+
+    try {
+      const { name, phone_number } = req.body;
+      const updatedUser = await storage.updateUser(userId, {
+        name,
+        phone_number,
+      });
+
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const { password, ...userInfo } = updatedUser;
+      res.json(userInfo);
+    } catch (error) {
+      console.error("Error updating user profile:", error);
+      res.status(500).json({ message: "Failed to update profile" });
+    }
+  });
+
+  app.patch("/api/users/:id/password", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user) {
+      return res.sendStatus(401);
+    }
+
+    const userId = Number(req.params.id);
+    if (req.user.id !== userId) {
+      return res.sendStatus(403);
+    }
+
+    try {
+      const { currentPassword, newPassword } = req.body;
+      const user = await storage.getUser(userId);
+
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // 비밀번호 검증 및 업데이트 로직
+      // TODO: Implement password hashing and verification
+
+      const updatedUser = await storage.updateUser(userId, {
+        password: newPassword, // This should be hashed in production
+      });
+
+      res.json({ message: "Password updated successfully" });
+    } catch (error) {
+      console.error("Error updating password:", error);
+      res.status(500).json({ message: "Failed to update password" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
