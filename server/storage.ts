@@ -454,42 +454,39 @@ export class DatabaseStorage implements IStorage {
     }
 
     await db.transaction(async (tx) => {
-      try {
-        // Delete existing access records
+      // Delete existing access records
+      await tx
+        .delete(teacherBranchAccess)
+        .where(eq(teacherBranchAccess.teacherId, teacherId));
+
+      await tx
+        .delete(teacherClassAccess)
+        .where(eq(teacherClassAccess.teacherId, teacherId));
+
+      // Insert new class access records if any exist
+      if (classIds && classIds.length > 0) {
         await tx
-          .delete(teacherBranchAccess)
-          .where(eq(teacherBranchAccess.teacherId, teacherId));
+          .insert(teacherClassAccess)
+          .values(
+            classIds.map(classId => ({
+              teacherId,
+              classId,
+            }))
+          )
+          .onConflictDoNothing();
+      }
 
+      // Only insert branch access records if any exist
+      if (branchIds && branchIds.length > 0) {
         await tx
-          .delete(teacherClassAccess)
-          .where(eq(teacherClassAccess.teacherId, teacherId));
-
-        // Insert new class access records if any exist
-        if (classIds && classIds.length > 0) {
-          await tx
-            .insert(teacherClassAccess)
-            .values(
-              classIds.map(classId => ({
-                teacherId,
-                classId,
-              }))
-            );
-        }
-
-        // Only insert branch access records if any exist
-        if (branchIds && branchIds.length > 0) {
-          await tx
-            .insert(teacherBranchAccess)
-            .values(
-              branchIds.map(branchId => ({
-                teacherId,
-                branchId,
-              }))
-            );
-        }
-      } catch (error) {
-        console.error("Error in updateTeacherAuthority transaction:", error);
-        throw new Error("Failed to update teacher authority");
+          .insert(teacherBranchAccess)
+          .values(
+            branchIds.map(branchId => ({
+              teacherId,
+              branchId,
+            }))
+          )
+          .onConflictDoNothing();
       }
     });
   }
