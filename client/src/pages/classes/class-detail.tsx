@@ -3,6 +3,7 @@ import { Class, Branch, User } from "@shared/schema";
 import { Sidebar } from "@/components/layout/sidebar";
 import { useToast } from "@/hooks/use-toast";
 import { useRoute, useLocation } from "wouter";
+import { useAuth } from "@/hooks/use-auth";
 import {
   Table,
   TableBody,
@@ -24,7 +25,15 @@ interface TeacherWithRoles extends User {
 }
 
 export default function ClassDetail() {
-  const [, params] = useRoute("/admin/classes/:id");
+  const { user } = useAuth();
+  const role = user?.role || "TEACHER";
+  const basePath = role === "ADMIN" ? "/admin" : "/teacher";
+
+  // Match both admin and teacher routes
+  const [, adminParams] = useRoute("/admin/classes/:id");
+  const [, teacherParams] = useRoute("/teacher/classes/:id");
+  const params = adminParams || teacherParams;
+
   const [, navigate] = useLocation();
   const classId = params?.id;
   const { toast } = useToast();
@@ -37,10 +46,14 @@ export default function ClassDetail() {
     queryFn: async () => {
       if (!classId) throw new Error("Class ID is required");
       const response = await fetch(`/api/classes/${classId}`);
-      if (!response.ok) throw new Error("Failed to fetch class");
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to fetch class");
+      }
       return response.json();
     },
     enabled: !!classId,
+    retry: 1,
   });
 
   const { data: branchData } = useQuery<Branch[]>({
@@ -49,6 +62,7 @@ export default function ClassDetail() {
 
   const { data: teachers = [] } = useQuery<User[]>({
     queryKey: ["/api/teachers"],
+    enabled: role === "ADMIN", // Only fetch teachers list for admin
   });
 
   const { data: assignedTeachers = [] } = useQuery<TeacherWithRoles[]>({
@@ -57,19 +71,17 @@ export default function ClassDetail() {
     queryFn: async () => {
       if (!classId) throw new Error("Class ID is required");
       const response = await fetch(`/api/classes/${classId}/teachers`);
-      if (!response.ok) throw new Error("Failed to fetch assigned teachers");
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to fetch assigned teachers");
+      }
       return response.json();
     },
   });
 
   const { data: students = [] } = useQuery<User[]>({
     queryKey: ["/api/students", classData?.branchId],
-    enabled: !!classData?.branchId,
-    queryFn: async () => {
-      const response = await fetch(`/api/students?branchId=${classData?.branchId}`);
-      if (!response.ok) throw new Error("Failed to fetch students");
-      return response.json();
-    },
+    enabled: !!classData?.branchId && role === "ADMIN",
   });
 
   const { data: assignedStudents = [] } = useQuery<User[]>({
@@ -78,7 +90,10 @@ export default function ClassDetail() {
     queryFn: async () => {
       if (!classId) throw new Error("Class ID is required");
       const response = await fetch(`/api/classes/${classId}/students`);
-      if (!response.ok) throw new Error("Failed to fetch assigned students");
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to fetch assigned students");
+      }
       return response.json();
     },
   });
@@ -93,7 +108,10 @@ export default function ClassDetail() {
 
   const branch = branchData?.find(b => b.id === classData.branchId);
 
+  // Only admin can assign/remove teachers and modify roles
   const handleAssignTeacher = async (teacherId: number, isLead: boolean, hasAccess: boolean) => {
+    if (role !== "ADMIN") return;
+
     try {
       const response = await fetch(`/api/classes/${classId}/teachers/${teacherId}`, {
         method: "PUT",
@@ -101,7 +119,10 @@ export default function ClassDetail() {
         body: JSON.stringify({ isLead, hasAccess }),
       });
 
-      if (!response.ok) throw new Error("Failed to update teacher roles");
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to update teacher roles");
+      }
 
       queryClient.invalidateQueries({ queryKey: ["/api/classes", classId, "teachers"] });
       toast({
@@ -111,13 +132,15 @@ export default function ClassDetail() {
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to update teacher roles",
+        description: error instanceof Error ? error.message : "Failed to update teacher roles",
         variant: "destructive",
       });
     }
   };
 
   const handleRemoveTeacher = async (teacherId: number) => {
+    if (role !== "ADMIN") return;
+
     if (!confirm("Are you sure you want to remove this teacher from the class?")) return;
 
     try {
@@ -125,7 +148,10 @@ export default function ClassDetail() {
         method: "DELETE",
       });
 
-      if (!response.ok) throw new Error("Failed to remove teacher");
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to remove teacher");
+      }
 
       queryClient.invalidateQueries({ queryKey: ["/api/classes", classId, "teachers"] });
       toast({
@@ -135,19 +161,24 @@ export default function ClassDetail() {
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to remove teacher",
+        description: error instanceof Error ? error.message : "Failed to remove teacher",
         variant: "destructive",
       });
     }
   };
 
   const handleAssignStudent = async (studentId: number) => {
+    if (role !== "ADMIN") return;
+
     try {
       const response = await fetch(`/api/classes/${classId}/students/${studentId}`, {
         method: "PUT",
       });
 
-      if (!response.ok) throw new Error("Failed to assign student");
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to assign student");
+      }
 
       queryClient.invalidateQueries({ queryKey: ["/api/classes", classId, "students"] });
       toast({
@@ -157,13 +188,15 @@ export default function ClassDetail() {
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to assign student",
+        description: error instanceof Error ? error.message : "Failed to assign student",
         variant: "destructive",
       });
     }
   };
 
   const handleRemoveStudent = async (studentId: number) => {
+    if (role !== "ADMIN") return;
+
     if (!confirm("Are you sure you want to remove this student from the class?")) return;
 
     try {
@@ -171,7 +204,10 @@ export default function ClassDetail() {
         method: "DELETE",
       });
 
-      if (!response.ok) throw new Error("Failed to remove student");
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to remove student");
+      }
 
       queryClient.invalidateQueries({ queryKey: ["/api/classes", classId, "students"] });
       toast({
@@ -181,7 +217,7 @@ export default function ClassDetail() {
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to remove student",
+        description: error instanceof Error ? error.message : "Failed to remove student",
         variant: "destructive",
       });
     }
@@ -192,15 +228,10 @@ export default function ClassDetail() {
       <Sidebar className="w-64" />
       <main className="flex-1 p-8 overflow-auto">
         <div className="max-w-6xl mx-auto">
-          {/* Added Back Button */}
           <Button
             variant="outline"
             className="mb-4"
-            onClick={() => {
-              const { data: user } = queryClient.getQueryData(["/api/user"]) || {};
-              const route = user?.role === "ADMIN" ? "/admin/classes" : "/teacher/classes";
-              navigate(route);
-            }}
+            onClick={() => navigate(`${basePath}/classes`)}
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Classes List
@@ -233,9 +264,11 @@ export default function ClassDetail() {
           <Card className="mb-8">
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Teachers</CardTitle>
-              <Button onClick={() => setIsAssignTeacherDialogOpen(true)}>
-                Assign Teacher
-              </Button>
+              {role === "ADMIN" && (
+                <Button onClick={() => setIsAssignTeacherDialogOpen(true)}>
+                  Assign Teacher
+                </Button>
+              )}
             </CardHeader>
             <CardContent>
               <Table>
@@ -245,7 +278,7 @@ export default function ClassDetail() {
                     <TableHead>Email</TableHead>
                     <TableHead className="w-[100px] text-center">Lead</TableHead>
                     <TableHead className="w-[100px] text-center">Access</TableHead>
-                    <TableHead className="w-[100px]">Actions</TableHead>
+                    {role === "ADMIN" && <TableHead className="w-[100px]">Actions</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -261,15 +294,17 @@ export default function ClassDetail() {
                         <TableCell className="text-center">
                           {teacher.hasAccess ? <Check className="mx-auto" /> : <X className="mx-auto text-muted-foreground" />}
                         </TableCell>
-                        <TableCell>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleRemoveTeacher(teacher.id)}
-                          >
-                            Remove
-                          </Button>
-                        </TableCell>
+                        {role === "ADMIN" && (
+                          <TableCell>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleRemoveTeacher(teacher.id)}
+                            >
+                              Remove
+                            </Button>
+                          </TableCell>
+                        )}
                       </TableRow>
                     ))}
                 </TableBody>
@@ -281,9 +316,11 @@ export default function ClassDetail() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Students</CardTitle>
-              <Button onClick={() => setIsAssignStudentDialogOpen(true)}>
-                Assign Students
-              </Button>
+              {role === "ADMIN" && (
+                <Button onClick={() => setIsAssignStudentDialogOpen(true)}>
+                  Assign Students
+                </Button>
+              )}
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -295,12 +332,14 @@ export default function ClassDetail() {
                         className="inline-flex items-center gap-2 px-3 py-1 bg-secondary rounded-full"
                       >
                         <span>{student.name}</span>
-                        <button
-                          onClick={() => handleRemoveStudent(student.id)}
-                          className="text-muted-foreground hover:text-destructive"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
+                        {role === "ADMIN" && (
+                          <button
+                            onClick={() => handleRemoveStudent(student.id)}
+                            className="text-muted-foreground hover:text-destructive"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -311,121 +350,126 @@ export default function ClassDetail() {
             </CardContent>
           </Card>
 
-          {/* Assign Teacher Dialog */}
-          <Dialog
-            open={isAssignTeacherDialogOpen}
-            onOpenChange={setIsAssignTeacherDialogOpen}
-          >
-            <DialogContent className="sm:max-w-[625px] max-h-[80vh]">
-              <DialogHeader>
-                <DialogTitle>Assign Teachers to {classData.name}</DialogTitle>
-                <p className="text-sm text-muted-foreground">
-                  Select teachers to assign to this class. Teachers can be given lead and access permissions.
-                </p>
-              </DialogHeader>
-              <div className="mt-4 overflow-y-auto" style={{ maxHeight: "calc(80vh - 200px)" }}>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead className="w-[80px] text-center">Lead</TableHead>
-                      <TableHead className="w-[80px] text-center">Access</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {teachers.map((teacher) => {
-                      const assignedTeacher = assignedTeachers.find(
-                        (at) => at.id === teacher.id
-                      );
-                      return (
-                        <TableRow key={teacher.id}>
-                          <TableCell>{teacher.name}</TableCell>
-                          <TableCell>{teacher.email}</TableCell>
-                          <TableCell className="text-center">
-                            <Checkbox
-                              checked={assignedTeacher?.isLead}
-                              onCheckedChange={(checked) => {
-                                handleAssignTeacher(
-                                  teacher.id,
-                                  checked as boolean,
-                                  assignedTeacher?.hasAccess || false
-                                );
-                              }}
-                            />
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Checkbox
-                              checked={assignedTeacher?.hasAccess}
-                              onCheckedChange={(checked) => {
-                                handleAssignTeacher(
-                                  teacher.id,
-                                  assignedTeacher?.isLead || false,
-                                  checked as boolean
-                                );
-                              }}
-                            />
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
-            </DialogContent>
-          </Dialog>
-          {/* Assign Student Dialog */}
-          <Dialog
-            open={isAssignStudentDialogOpen}
-            onOpenChange={setIsAssignStudentDialogOpen}
-          >
-            <DialogContent className="sm:max-w-[625px] max-h-[80vh]">
-              <DialogHeader>
-                <DialogTitle>Assign Students to {classData.name}</DialogTitle>
-                <p className="text-sm text-muted-foreground">
-                  Select students to assign to this class.
-                </p>
-              </DialogHeader>
-              <div className="mt-4 overflow-y-auto" style={{ maxHeight: "calc(80vh - 200px)" }}>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Phone</TableHead>
-                      <TableHead className="w-[80px] text-center">Assign</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {students.map((student) => {
-                      const isAssigned = assignedStudents.find(
-                        (as) => as.id === student.id
-                      );
-                      return (
-                        <TableRow key={student.id}>
-                          <TableCell>{student.name}</TableCell>
-                          <TableCell>{student.email}</TableCell>
-                          <TableCell>{student.phone_number || "-"}</TableCell>
-                          <TableCell className="text-center">
-                            <Checkbox
-                              checked={!!isAssigned}
-                              onCheckedChange={(checked) => {
-                                if (checked) {
-                                  handleAssignStudent(student.id);
-                                } else {
-                                  handleRemoveStudent(student.id);
-                                }
-                              }}
-                            />
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
-            </DialogContent>
-          </Dialog>
+          {/* Assign Teacher Dialog - Only for Admin */}
+          {role === "ADMIN" && (
+            <Dialog
+              open={isAssignTeacherDialogOpen}
+              onOpenChange={setIsAssignTeacherDialogOpen}
+            >
+              <DialogContent className="sm:max-w-[625px] max-h-[80vh]">
+                <DialogHeader>
+                  <DialogTitle>Assign Teachers to {classData.name}</DialogTitle>
+                  <p className="text-sm text-muted-foreground">
+                    Select teachers to assign to this class. Teachers can be given lead and access permissions.
+                  </p>
+                </DialogHeader>
+                <div className="mt-4 overflow-y-auto" style={{ maxHeight: "calc(80vh - 200px)" }}>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead className="w-[80px] text-center">Lead</TableHead>
+                        <TableHead className="w-[80px] text-center">Access</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {teachers.map((teacher) => {
+                        const assignedTeacher = assignedTeachers.find(
+                          (at) => at.id === teacher.id
+                        );
+                        return (
+                          <TableRow key={teacher.id}>
+                            <TableCell>{teacher.name}</TableCell>
+                            <TableCell>{teacher.email}</TableCell>
+                            <TableCell className="text-center">
+                              <Checkbox
+                                checked={assignedTeacher?.isLead}
+                                onCheckedChange={(checked) => {
+                                  handleAssignTeacher(
+                                    teacher.id,
+                                    checked as boolean,
+                                    assignedTeacher?.hasAccess || false
+                                  );
+                                }}
+                              />
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <Checkbox
+                                checked={assignedTeacher?.hasAccess}
+                                onCheckedChange={(checked) => {
+                                  handleAssignTeacher(
+                                    teacher.id,
+                                    assignedTeacher?.isLead || false,
+                                    checked as boolean
+                                  );
+                                }}
+                              />
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              </DialogContent>
+            </Dialog>
+          )}
+
+          {/* Assign Student Dialog - Only for Admin */}
+          {role === "ADMIN" && (
+            <Dialog
+              open={isAssignStudentDialogOpen}
+              onOpenChange={setIsAssignStudentDialogOpen}
+            >
+              <DialogContent className="sm:max-w-[625px] max-h-[80vh]">
+                <DialogHeader>
+                  <DialogTitle>Assign Students to {classData.name}</DialogTitle>
+                  <p className="text-sm text-muted-foreground">
+                    Select students to assign to this class.
+                  </p>
+                </DialogHeader>
+                <div className="mt-4 overflow-y-auto" style={{ maxHeight: "calc(80vh - 200px)" }}>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Phone</TableHead>
+                        <TableHead className="w-[80px] text-center">Assign</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {students.map((student) => {
+                        const isAssigned = assignedStudents.find(
+                          (as) => as.id === student.id
+                        );
+                        return (
+                          <TableRow key={student.id}>
+                            <TableCell>{student.name}</TableCell>
+                            <TableCell>{student.email}</TableCell>
+                            <TableCell>{student.phone_number || "-"}</TableCell>
+                            <TableCell className="text-center">
+                              <Checkbox
+                                checked={!!isAssigned}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    handleAssignStudent(student.id);
+                                  } else {
+                                    handleRemoveStudent(student.id);
+                                  }
+                                }}
+                              />
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              </DialogContent>
+            </Dialog>
+          )}
         </div>
       </main>
     </div>
