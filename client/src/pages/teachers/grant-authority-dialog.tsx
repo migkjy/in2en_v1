@@ -60,34 +60,22 @@ export function GrantAuthorityDialog({
 
   const updateAuthority = useMutation({
     mutationFn: async () => {
-      try {
-        const response = await fetch(`/api/teachers/${teacherId}/authority`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            classIds: selectedClasses,
-            branchIds: [], // Always send an empty array for branchIds
-          }),
-        });
+      const response = await fetch(`/api/teachers/${teacherId}/authority`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          classIds: selectedClasses,
+          branchIds: [],
+        }),
+      });
 
-        const contentType = response.headers.get("content-type");
-        if (!response.ok) {
-          if (contentType && contentType.includes("application/json")) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || "Failed to update authority");
-          } else {
-            const errorText = await response.text();
-            throw new Error(`Server error: ${errorText}`);
-          }
-        }
-
-        return await response.json();
-      } catch (error) {
-        console.error("Failed to update authority:", error);
-        throw error;
+      if (!response.ok) {
+        throw new Error("Failed to update authority");
       }
+
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/teachers"] });
@@ -102,10 +90,9 @@ export function GrantAuthorityDialog({
       onOpenChange(false);
     },
     onError: (error) => {
-      console.error("Failed to update authority:", error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to update authority",
+        description: "Failed to update authority",
         variant: "destructive",
       });
     },
