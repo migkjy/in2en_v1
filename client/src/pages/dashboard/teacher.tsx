@@ -33,12 +33,12 @@ export default function TeacherDashboard() {
           </div>
 
           {/* Quick Actions */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Link href="/teacher/assignments/create">
-              <Card className="border-0 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group">
-                <CardContent className="p-6 flex flex-col items-center">
+              <Card className="border-0 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group h-full">
+                <CardContent className="p-6 flex flex-col items-center justify-between h-[200px]">
                   <div className="p-3 rounded-full bg-blue-50 group-hover:bg-blue-100 transition-colors mb-4">
-                    <Plus className="h-6 w-6 text-blue-500" />
+                    <Plus className="w-6 h-6 text-blue-500" />
                   </div>
                   <h3 className="font-medium text-lg text-gray-900">Create Assignment</h3>
                   <p className="mt-2 text-sm text-gray-500 text-center">
@@ -49,8 +49,8 @@ export default function TeacherDashboard() {
             </Link>
 
             <Link href="/teacher/classes">
-              <Card className="border-0 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group">
-                <CardContent className="p-6 flex flex-col items-center">
+              <Card className="border-0 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group h-full">
+                <CardContent className="p-6 flex flex-col items-center justify-between h-[200px]">
                   <div className="p-3 rounded-full bg-green-50 group-hover:bg-green-100 transition-colors mb-4">
                     <Users className="w-6 h-6 text-green-500" />
                   </div>
@@ -63,8 +63,8 @@ export default function TeacherDashboard() {
             </Link>
 
             <Link href="/teacher/assignments">
-              <Card className="border-0 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group">
-                <CardContent className="p-6 flex flex-col items-center">
+              <Card className="border-0 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group h-full">
+                <CardContent className="p-6 flex flex-col items-center justify-between h-[200px]">
                   <div className="p-3 rounded-full bg-purple-50 group-hover:bg-purple-100 transition-colors mb-4">
                     <BookOpen className="h-6 w-6 text-purple-500" />
                   </div>
