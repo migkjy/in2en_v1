@@ -55,7 +55,7 @@ export interface IStorage {
   // Teacher authority operations
   getTeacherBranches(teacherId: number): Promise<Branch[]>;
   getTeacherClasses(teacherId: number): Promise<Class[]>;
-  updateTeacherAuthority(teacherId: number, branchIds: number[], classIds: number[]): Promise<void>;
+  updateTeacherAuthority(teacherId: number, branchIds: number[], classIds: number[]): Promise<{ success: true }>;
 
   // Lead Teacher operations
   assignLeadTeacher(classId: number, teacherId: number): Promise<ClassLeadTeacher>;
@@ -443,7 +443,7 @@ export class DatabaseStorage implements IStorage {
     teacherId: number,
     branchIds: number[],
     classIds: number[]
-  ): Promise<void> {
+  ): Promise<{ success: true }> {
     // Verify teacher exists and is a teacher
     const [user] = await db
       .select()
@@ -454,23 +454,26 @@ export class DatabaseStorage implements IStorage {
       throw new Error("Teacher not found");
     }
 
-    // Use a transaction to ensure data consistency
     await db.transaction(async (tx) => {
-      // First remove existing access
-      await tx.delete(teacherClassAccess)
+      // Delete existing class access records
+      await tx
+        .delete(teacherClassAccess)
         .where(eq(teacherClassAccess.teacherId, teacherId));
 
-      // Then add new access if any classes are selected
+      // Insert new class access records if any exist
       if (classIds.length > 0) {
-        await tx.insert(teacherClassAccess)
+        await tx
+          .insert(teacherClassAccess)
           .values(
             classIds.map(classId => ({
               teacherId,
-              classId
+              classId,
             }))
           );
       }
     });
+
+    return { success: true };
   }
 
   // Lead Teacher operations
