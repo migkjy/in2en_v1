@@ -229,10 +229,11 @@ export function registerRoutes(app: Express): Server {
           visibleClasses.map(async (cls) => {
             const students = await storage.getClassStudents(cls.id);
             const teachers = await storage.getClassTeachers(cls.id);
+            const accessibleTeachers = teachers.filter(teacher => teacher.hasAccess);
             return {
               ...cls,
               studentCount: students.length,
-              teacherCount: teachers.length,
+              teacherCount: accessibleTeachers.length,
             };
           })
         );
