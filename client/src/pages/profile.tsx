@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Lock, User } from "lucide-react";
+import { Lock, User, Loader2 } from "lucide-react";
 
 export default function ProfilePage() {
   const { user } = useAuth();
@@ -15,13 +15,14 @@ export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
 
   // Get user details
-  const { data: userDetails, isLoading } = useQuery({
-    queryKey: [`/api/users/${user?.id}`],
+  const { data: userDetails, isLoading, error } = useQuery({
+    queryKey: ["/api/users", user?.id],
     queryFn: async () => {
       if (!user?.id) throw new Error("User ID is required");
       const response = await fetch(`/api/users/${user.id}`);
       if (!response.ok) {
-        throw new Error("Failed to fetch user details");
+        const error = await response.text();
+        throw new Error(error || "Failed to fetch user details");
       }
       return response.json();
     },
@@ -29,15 +30,15 @@ export default function ProfilePage() {
   });
 
   const [formData, setFormData] = useState({
-    name: userDetails?.name || "",
-    phone_number: userDetails?.phone_number || "",
+    name: "",
+    phone_number: "",
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
   });
 
-  // Update when userDetails changes
-  useState(() => {
+  // Update form data when userDetails changes
+  useEffect(() => {
     if (userDetails) {
       setFormData(prev => ({
         ...prev,
@@ -147,7 +148,22 @@ export default function ProfilePage() {
       <div className="flex h-screen">
         <Sidebar className="w-64" />
         <main className="flex-1 p-8">
-          <div>Loading...</div>
+          <div className="flex items-center justify-center h-full">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (error || !userDetails) {
+    return (
+      <div className="flex h-screen">
+        <Sidebar className="w-64" />
+        <main className="flex-1 p-8">
+          <div className="text-center text-red-500">
+            프로필 정보를 불러오는데 실패했습니다.
+          </div>
         </main>
       </div>
     );
@@ -173,11 +189,11 @@ export default function ProfilePage() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
                   <Label>ID</Label>
-                  <Input value={userDetails?.email || ""} disabled />
+                  <Input value={userDetails.email || ""} disabled />
                 </div>
                 <div className="space-y-2">
                   <Label>Email</Label>
-                  <Input value={userDetails?.email || ""} disabled />
+                  <Input value={userDetails.email || ""} disabled />
                 </div>
                 <div className="space-y-2">
                   <Label>이름</Label>
