@@ -14,12 +14,12 @@ export default function ProfilePage() {
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
 
-  // Get user details
-  const { data: userDetails, isLoading } = useQuery({
-    queryKey: [`/api/users/${user?.id}`],
+  // Get user details based on role
+  const { data: userDetails, isLoading, error } = useQuery({
+    queryKey: [`/api/${user?.role === 'TEACHER' ? 'teachers' : 'users'}/${user?.id}`],
     queryFn: async () => {
       if (!user?.id) throw new Error("User ID is required");
-      const response = await fetch(`/api/users/${user.id}`);
+      const response = await fetch(`/api/${user?.role === 'TEACHER' ? 'teachers' : 'users'}/${user.id}`);
       if (!response.ok) {
         throw new Error("Failed to fetch user details");
       }
@@ -49,7 +49,8 @@ export default function ProfilePage() {
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: { name: string; phone_number: string }) => {
-      const response = await fetch(`/api/users/${user?.id}/profile`, {
+      const endpoint = user?.role === 'TEACHER' ? 'teachers' : 'users';
+      const response = await fetch(`/api/${endpoint}/${user?.id}/profile`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -82,7 +83,8 @@ export default function ProfilePage() {
 
   const changePasswordMutation = useMutation({
     mutationFn: async (data: { currentPassword: string; newPassword: string }) => {
-      const response = await fetch(`/api/users/${user?.id}/password`, {
+      const endpoint = user?.role === 'TEACHER' ? 'teachers' : 'users';
+      const response = await fetch(`/api/${endpoint}/${user?.id}/password`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -149,11 +151,30 @@ export default function ProfilePage() {
       <div className="flex h-screen">
         <Sidebar className="w-64" />
         <main className="flex-1 p-8">
-          <div>Loading...</div>
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+              <p className="mt-2">Loading profile...</p>
+            </div>
+          </div>
         </main>
       </div>
     );
   }
+
+  if (error) {
+    return (
+      <div className="flex h-screen">
+        <Sidebar className="w-64" />
+        <main className="flex-1 p-8">
+          <div className="flex items-center justify-center h-full">
+            <p className="text-red-500">Failed to load profile information</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
 
   return (
     <div className="flex h-screen">
