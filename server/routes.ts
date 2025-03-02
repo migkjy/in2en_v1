@@ -918,7 +918,6 @@ export function registerRoutes(app: Express): Server {
           const studentSubmissions = await db.select()
             .from(submissions)
             .where(eq(submissions.studentId, req.user.id));
-          console.log(`Found ${studentSubmissions.length} submissions for student ${req.user.id}`);
           return res.json(studentSubmissions);
         }
         
