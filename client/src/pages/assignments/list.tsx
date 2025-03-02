@@ -197,12 +197,13 @@ export default function AssignmentList() {
   const filteredAssignments = useMemo(() => {
     if (!assignments) return [];
 
-    // Sort assignments by due date (closest due date first)
+    // Sort assignments by due date in descending order (newest dates first)
     const sortedAssignments = [...assignments].sort((a, b) => {
       // Handle assignments without due dates (push them to the end)
       if (!a.dueDate) return 1;
       if (!b.dueDate) return -1;
-      return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+      // Descending order (newest to oldest)
+      return new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime();
     });
 
 
