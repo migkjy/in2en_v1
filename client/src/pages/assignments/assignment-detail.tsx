@@ -58,8 +58,8 @@ export default function AssignmentDetail() {
     enabled: !!assignment?.classId,
   });
 
-  // Get submissions
-  const { data: submissions } = useQuery<Submission[]>({
+  // Get submissions with student data
+  const { data: submissions = [], isLoading: isSubmissionsLoading } = useQuery<(Submission & { student?: User })[]>({
     queryKey: ["/api/submissions", assignmentId],
     queryFn: async () => {
       if (!assignmentId) throw new Error("Assignment ID is required");
@@ -188,11 +188,6 @@ export default function AssignmentDetail() {
     navigate(`/submissions/${submissionId}`);
   };
 
-  //const handleEditSubmission = (submissionId: number) => {  Removed
-  //  const basePath = user?.role === "ADMIN" ? "/admin" : "/teacher";
-  //  navigate(`${basePath}/assignments/review/${submissionId}/edit`);
-  //}; Removed
-
 
   return (
     <>
@@ -314,13 +309,7 @@ export default function AssignmentDetail() {
                         ) : (
                           submissions?.map((submission) => (
                             <TableRow key={submission.id}>
-                              <TableCell>
-                                {
-                                  students?.find(
-                                    (s) => s.id === submission.studentId,
-                                  )?.name
-                                }
-                              </TableCell>
+                              <TableCell>{submission.student?.name || `Student ID: ${submission.studentId}`}</TableCell>
                               <TableCell>
                                 <span
                                   className={`px-2 py-1 rounded text-sm ${
