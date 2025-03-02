@@ -1,95 +1,32 @@
-
-import { useState, useMemo } from "react";
-import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { Assignment, Submission, Class, Branch, User } from "@shared/schema";
+import { useRoute, useLocation } from "wouter";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Loader2, ArrowLeft } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import {
   Table,
-  TableHeader,
-  TableRow,
-  TableHead,
   TableBody,
   TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
 import { useAuth } from "@/hooks/use-auth";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import {
-  Pencil,
-  Upload,
-  Loader2,
-  AlertTriangle,
-  RefreshCcw,
-  Trash2,
-} from "lucide-react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { Badge } from "@/components/ui/badge";
-import type { Assignment, Class, Branch, User, Submission } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { formatDate } from "@/lib/utils";
-
-function getStatusLabel(status: string) {
-  switch (status) {
-    case "uploaded":
-      return "Uploaded";
-    case "processing":
-      return "Processing";
-    case "ai-reviewed":
-      return "AI Reviewed";
-    case "teacher-reviewed":
-      return "Teacher Reviewed";
-    case "completed":
-      return "Completed";
-    case "failed":
-      return "Failed";
-    default:
-      return status;
-  }
-}
-
-function getStatusColor(status: string) {
-  switch (status) {
-    case "uploaded":
-      return "bg-blue-100 text-blue-800";
-    case "processing":
-      return "bg-yellow-100 text-yellow-800";
-    case "ai-reviewed":
-      return "bg-purple-100 text-purple-800";
-    case "teacher-reviewed":
-      return "bg-green-100 text-green-800";
-    case "completed":
-      return "bg-green-100 text-green-800";
-    case "failed":
-      return "bg-red-100 text-red-800";
-    default:
-      return "bg-gray-100 text-gray-800";
-  }
-}
+import React, { useState, useMemo } from "react";
+import {AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction} from "@/components/ui/alert-dialog";
 
 export default function AssignmentDetail() {
-  const { assignmentId } = useParams();
-  const navigate = useNavigate();
-  const { toast } = useToast();
+  const [, params] = useRoute("/:role/assignments/:id");
+  const [, navigate] = useLocation();
+  const assignmentId = params?.id;
   const { user } = useAuth();
-  const [deleteSubmissionId, setDeleteSubmissionId] = useState<number | null>(
-    null,
-  );
+  const { toast } = useToast();
+  const [deleteSubmissionId, setDeleteSubmissionId] = useState<number | null>(null);
 
   // Get assignment details
   const { data: assignment, isLoading: isAssignmentLoading } =
@@ -118,63 +55,75 @@ export default function AssignmentDetail() {
       }
       return response.json();
     },
-    enabled: !!assignment?.classId && (user?.role === "TEACHER" || user?.role === "ADMIN"),
+    enabled: !!assignment?.classId,
   });
 
-  // Get submissions - different endpoints for students vs teachers/admins
+  // Get submissions
   const { data: submissions } = useQuery<Submission[]>({
     queryKey: ["/api/submissions", assignmentId],
     queryFn: async () => {
       if (!assignmentId) throw new Error("Assignment ID is required");
-      
-      // For students, we fetch all their submissions
-      if (user?.role === "STUDENT") {
-        const response = await fetch(`/api/submissions`);
-        if (!response.ok) {
-          throw new Error("Failed to fetch submissions");
-        }
-        const allSubmissions = await response.json();
-        // Filter submissions for this specific assignment
-        return allSubmissions.filter(
-          (submission: Submission) => submission.assignmentId === Number(assignmentId)
-        );
-      } else {
-        // For teachers and admins, fetch by assignment ID
-        const response = await fetch(
-          `/api/submissions?assignmentId=${assignmentId}`,
-        );
-        if (!response.ok) {
-          throw new Error("Failed to fetch submissions");
-        }
-        return response.json();
+      const response = await fetch(
+        `/api/submissions?assignmentId=${assignmentId}`,
+      );
+      if (!response.ok) {
+        throw new Error("Failed to fetch submissions");
       }
+      return response.json();
     },
     enabled: !!assignmentId,
   });
 
+  // Sort submissions by student name
+  const sortedSubmissions = useMemo(() => {
+    if (!submissions || !students) return [];
+
+    return [...submissions].sort((a, b) => {
+      const studentA = students.find(s => s.id === a.studentId)?.name || '';
+      const studentB = students.find(s => s.id === b.studentId)?.name || '';
+      return studentA.localeCompare(studentB);
+    });
+  }, [submissions, students]);
+
+  // Add mutation for AI review
   const aiReviewMutation = useMutation({
     mutationFn: async () => {
       const response = await apiRequest(
         "POST",
         `/api/submissions/${assignmentId}/review`,
+        {}
       );
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText);
+        const error = await response.text();
+        throw new Error(error);
       }
       return response.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/submissions", assignmentId] });
+    onMutate: () => {
       toast({
-        title: "Success",
-        description: "AI review process started",
+        title: "Starting AI Review",
+        description: "AI review process has begun. Please wait...",
       });
+      const previousSubmissions = queryClient.getQueryData(["/api/submissions", assignmentId]);
+      queryClient.setQueryData(
+        ["/api/submissions", assignmentId],
+        (old: any) => old?.map((s: any) => ({
+          ...s,
+          status: s.status === "uploaded" || !s.ocrText ? "processing" : s.status
+        }))
+      );
+      return { previousSubmissions };
     },
-    onError: (error) => {
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/submissions", assignmentId] });
+    },
+    onError: (error, _, context) => {
+      if (context?.previousSubmissions) {
+        queryClient.setQueryData(["/api/submissions", assignmentId], context.previousSubmissions);
+      }
       toast({
         title: "Error",
-        description: error.message || "Failed to start AI review",
+        description: error.message || "Failed to process AI review",
         variant: "destructive",
       });
     },
@@ -212,11 +161,9 @@ export default function AssignmentDetail() {
   });
 
   const isTeacherOrAdmin = user?.role === "TEACHER" || user?.role === "ADMIN";
-  const basePath = user?.role === "ADMIN" ? "/admin/assignments" : 
-                  user?.role === "TEACHER" ? "/teacher/assignments" : 
-                  "/student/assignments";
+  const basePath = user?.role === "ADMIN" ? "/admin/assignments" : "/teacher/assignments";
 
-  const backPath = basePath;
+  const backPath = user?.role === "ADMIN" ? "/admin/assignments" : "/teacher/assignments";
 
   if (isAssignmentLoading) {
     return (
@@ -230,262 +177,221 @@ export default function AssignmentDetail() {
     return <div>Assignment not found</div>;
   }
 
-  // Get student's submissions
-  const studentSubmissions = submissions?.filter(
-    (submission) => submission.studentId === user?.id
-  );
-
-  // Different displays based on user role
-  const renderContent = () => {
-    // For students
-    if (user?.role === "STUDENT") {
-      return (
-        <div className="space-y-6">
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold">My Submissions</h2>
-            <Button onClick={() => navigate(`/student/assignments/${assignmentId}/upload`)}>
-              Submit Assignment
-            </Button>
-          </div>
-
-          {studentSubmissions && studentSubmissions.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Submitted</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {studentSubmissions.map((submission) => (
-                  <TableRow key={submission.id}>
-                    <TableCell>
-                      {formatDate(submission.createdAt)}
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={getStatusColor(submission.status)}>
-                        {getStatusLabel(submission.status)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => navigate(`/student/submissions/${submission.id}`)}
-                      >
-                        View
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : (
-            <div className="border rounded-md p-8 text-center bg-gray-50">
-              <p className="text-gray-500 mb-4">
-                You haven't submitted anything for this assignment yet.
-              </p>
-              <Button onClick={() => navigate(`/student/assignments/${assignmentId}/upload`)}>
-                Submit Now
-              </Button>
-            </div>
-          )}
-        </div>
-      );
+  const getStatusBadgeStyle = (status: string | null) => {
+    if (!status) return "bg-gray-100 text-gray-800";
+    switch (status) {
+      case "ai-reviewed":
+        return "bg-green-100 text-green-800";
+      case "processing":
+        return "bg-blue-100 text-blue-800";
+      case "failed":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-yellow-100 text-yellow-800";
     }
-
-    // For teachers and admins
-    return (
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h2 className="text-xl font-semibold">Student Submissions</h2>
-          <div className="space-x-2">
-            <Button
-              variant="outline"
-              onClick={() => {
-                navigate(`${basePath}/${assignmentId}/upload`);
-              }}
-            >
-              <Upload className="h-4 w-4 mr-2" />
-              Upload for Student
-            </Button>
-            <Button
-              onClick={() => {
-                aiReviewMutation.mutate();
-              }}
-              disabled={aiReviewMutation.isPending}
-            >
-              <RefreshCcw className="h-4 w-4 mr-2" />
-              Start AI Review
-            </Button>
-          </div>
-        </div>
-
-        {submissions && submissions.length > 0 ? (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Student</TableHead>
-                <TableHead>Submitted</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {submissions.map((submission) => {
-                const student = students?.find(
-                  (s) => s.id === submission.studentId,
-                );
-                return (
-                  <TableRow key={submission.id}>
-                    <TableCell>{student?.name || "Unknown Student"}</TableCell>
-                    <TableCell>
-                      {formatDate(submission.createdAt)}
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={getStatusColor(submission.status)}>
-                        {getStatusLabel(submission.status)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() =>
-                            navigate(`${basePath.replace("assignments", "submissions")}/${submission.id}`)
-                          }
-                        >
-                          View
-                        </Button>
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setDeleteSubmissionId(submission.id)}
-                              >
-                                <Trash2 className="h-4 w-4 text-red-500" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Delete submission</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        ) : (
-          <div className="border rounded-md p-8 text-center bg-gray-50">
-            <p className="text-gray-500">No submissions yet</p>
-          </div>
-        )}
-      </div>
-    );
   };
 
+  const getStatusText = (status: string | null) => {
+    return status ? status.toUpperCase() : "PENDING";
+  };
+
+  const handleViewSubmission = (submissionId: number) => {
+    navigate(`/submissions/${submissionId}`);
+  };
+
+
   return (
-    <div className="flex h-screen">
-      <Sidebar className="w-64" />
-      <main className="flex-1 p-8 overflow-auto">
-        <div className="max-w-6xl mx-auto">
-          <div className="mb-4 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate(backPath)}
-              >
-                Back
-              </Button>
-              <h1 className="text-2xl font-bold">{assignment.title}</h1>
-              {isTeacherOrAdmin && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => navigate(`${basePath}/${assignmentId}/edit`)}
-                >
-                  <Pencil className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
+    <>
+      <div className="flex h-screen">
+        <Sidebar className="w-64" />
+        <main className="flex-1 p-8 overflow-auto">
+          <div className="max-w-6xl mx-auto">
+            {/* Added Back Button */}
+            <Button
+              variant="outline"
+              className="mb-4"
+              onClick={() => navigate(backPath)}
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Assignments List
+            </Button>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>{assignment.title}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  {/* Assignment Info */}
+                  <div className="flex justify-between text-sm text-gray-600">
+                    <div>
+                      <span className="font-medium">Branch:</span>{" "}
+                      {assignment.branch?.name || "-"}
+                    </div>
+                    <div>
+                      <span className="font-medium">Class:</span>{" "}
+                      {assignment.class?.name || "-"} - {assignment.class?.englishLevel || "-"}
+                    </div>
+                    <div>
+                      <span className="font-medium">Due:</span>{" "}
+                      {assignment.dueDate
+                        ? format(new Date(assignment.dueDate), "MM/dd/yy")
+                        : "No due date"}
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="text-sm font-medium mb-2">Description</h3>
+                    <p className="text-gray-600">{assignment.description}</p>
+                  </div>
+
+                  {/* Students List */}
+                  <div>
+                    <h3 className="text-sm font-medium mb-4">Class Students</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {students?.map((student) => (
+                        <div
+                          key={student.id}
+                          className="flex items-center gap-1 px-3 py-1 bg-gray-100 rounded-full text-sm"
+                        >
+                          {student.name}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Action Buttons for Teachers/Admins */}
+                  {isTeacherOrAdmin && (
+                    <div className="flex gap-4">
+                      <Button
+                        onClick={() =>
+                          navigate(`/assignments/${assignmentId}/upload`)
+                        }
+                      >
+                        Bulk Upload
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          const uploadedSubmissions = submissions?.filter(s => s.status === "uploaded") || [];
+                          if (uploadedSubmissions.length === 0) {
+                            toast({
+                              title: "No submissions to review",
+                              description: "There are no uploaded assignments to review",
+                              variant: "destructive",
+                            });
+                            return;
+                          }
+                          aiReviewMutation.mutate();
+                        }}
+                        disabled={aiReviewMutation.isPending}
+                      >
+                        {aiReviewMutation.isPending ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Processing...
+                          </>
+                        ) : (
+                          "AI Feedback"
+                        )}
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* Submissions Table */}
+                  <div>
+                    <div className="mb-4">
+                      <h3 className="text-lg font-medium">Submissions</h3>
+                    </div>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Student Name</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {!sortedSubmissions || sortedSubmissions.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={3} className="text-center py-4">
+                              No submissions yet
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          sortedSubmissions.map((submission) => (
+                            <TableRow key={submission.id}>
+                              <TableCell>
+                                {
+                                  students?.find(
+                                    (s) => s.id === submission.studentId,
+                                  )?.name
+                                }
+                              </TableCell>
+                              <TableCell>
+                                <span
+                                  className={`px-2 py-1 rounded text-sm ${
+                                    getStatusBadgeStyle(submission.status)
+                                  }`}
+                                >
+                                  {getStatusText(submission.status)}
+                                </span>
+                              </TableCell>
+                              <TableCell>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="mr-2"
+                                  onClick={() => handleViewSubmission(submission.id)}
+                                >
+                                  View
+                                </Button>
+                                {isTeacherOrAdmin && (
+                                  <>
+                                    <Button
+                                      variant="destructive"
+                                      size="sm"
+                                      onClick={() => setDeleteSubmissionId(submission.id)}
+                                    >
+                                      Delete
+                                    </Button>
+                                  </>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
+        </main>
+      </div>
 
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle>Assignment Details</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid md:grid-cols-3 gap-4 mb-4">
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Class</p>
-                  <p>{assignment.class?.name || "No class assigned"}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Branch</p>
-                  <p>{assignment.branch?.name || "N/A"}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Due Date</p>
-                  <p>
-                    {assignment.dueDate
-                      ? new Date(assignment.dueDate).toLocaleDateString()
-                      : "No due date"}
-                  </p>
-                </div>
-              </div>
-
-              <div className="mb-4">
-                <p className="text-sm font-medium text-gray-500 mb-2">
-                  Description
-                </p>
-                <div className="bg-gray-50 p-4 rounded">
-                  <p className="whitespace-pre-wrap">
-                    {assignment.description || "No description provided"}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Submissions</CardTitle>
-            </CardHeader>
-            <CardContent>{renderContent()}</CardContent>
-          </Card>
-        </div>
-      </main>
-
-      <AlertDialog open={deleteSubmissionId !== null} onOpenChange={() => setDeleteSubmissionId(null)}>
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog 
+        open={!!deleteSubmissionId} 
+        onOpenChange={(open) => !open && setDeleteSubmissionId(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle>Delete Submission</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete this submission. This action cannot be undone.
+              Are you sure you want to delete this submission? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction 
-              onClick={() => {
-                if (deleteSubmissionId) {
-                  deleteSubmissionMutation.mutate(deleteSubmissionId);
-                }
-              }}
+              onClick={() => deleteSubmissionId && deleteSubmissionMutation.mutate(deleteSubmissionId)}
             >
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </>
   );
 }
