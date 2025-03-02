@@ -14,14 +14,15 @@ export default function ProfilePage() {
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
 
-  // Get user details
+  // Get user details with proper query key
   const { data: userDetails, isLoading } = useQuery({
-    queryKey: [`/api/users/${user?.id}`],
+    queryKey: ["/api/users", user?.id],
     queryFn: async () => {
       if (!user?.id) throw new Error("User ID is required");
       const response = await fetch(`/api/users/${user.id}`);
       if (!response.ok) {
-        throw new Error("Failed to fetch user details");
+        const error = await response.json();
+        throw new Error(error.message || "Failed to fetch user details");
       }
       return response.json();
     },
@@ -58,8 +59,8 @@ export default function ProfilePage() {
       });
 
       if (!response.ok) {
-        const error = await response.text();
-        throw new Error(error || "Failed to update profile");
+        const error = await response.json();
+        throw new Error(error.message || "Failed to update profile");
       }
 
       return response.json();
@@ -91,8 +92,8 @@ export default function ProfilePage() {
       });
 
       if (!response.ok) {
-        const error = await response.text();
-        throw new Error(error || "Failed to change password");
+        const error = await response.json();
+        throw new Error(error.message || "Failed to change password");
       }
 
       return response.json();
@@ -144,12 +145,14 @@ export default function ProfilePage() {
     });
   };
 
-  if (isLoading) {
+  if (isLoading || !user) {
     return (
       <div className="flex h-screen">
         <Sidebar className="w-64" />
         <main className="flex-1 p-8">
-          <div>Loading...</div>
+          <div className="flex items-center justify-center h-full">
+            <div className="text-lg text-muted-foreground">Loading...</div>
+          </div>
         </main>
       </div>
     );
