@@ -27,17 +27,18 @@ export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
   const [, setLocation] = useLocation();
 
+  // Fix: Add proper dependency array to useEffect
   useEffect(() => {
-    if (user) {
-      const homePath =
-        user.role === "ADMIN"
-          ? "/admin"
-          : user.role === "TEACHER"
-            ? "/teacher"
-            : "/student";
-      setLocation(homePath);
-    }
-  }, [user, setLocation]);
+    if (!user) return; // Early return if no user
+
+    const homePath =
+      user.role === "ADMIN"
+        ? "/admin"
+        : user.role === "TEACHER"
+          ? "/teacher"
+          : "/student";
+    setLocation(homePath);
+  }, [user, setLocation]); // Only re-run when user or setLocation changes
 
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -78,7 +79,7 @@ export default function AuthPage() {
               <TabsContent value="login">
                 <form
                   onSubmit={loginForm.handleSubmit((data) =>
-                    loginMutation.mutate(data),
+                    loginMutation.mutate(data)
                   )}
                   className="space-y-4 mt-4"
                 >
@@ -118,7 +119,7 @@ export default function AuthPage() {
               <TabsContent value="register">
                 <form
                   onSubmit={registerForm.handleSubmit((data) =>
-                    registerMutation.mutate(data),
+                    registerMutation.mutate(data)
                   )}
                   className="space-y-4 mt-4"
                 >
