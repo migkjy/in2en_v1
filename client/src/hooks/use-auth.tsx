@@ -47,6 +47,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     },
     retry: false,
+    staleTime: Infinity,
   });
 
   const login = async (email: string, password: string) => {
@@ -83,6 +84,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (!response.ok) {
         throw new Error('Logout failed');
       }
+      // Clear all queries from the cache
+      queryClient.removeQueries();
+      // Set auth user to null
       queryClient.setQueryData(['auth-user'], null);
       setError(null);
     } catch (e) {

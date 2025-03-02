@@ -22,27 +22,13 @@ async function hashPassword(password: string): Promise<string> {
 
 async function comparePasswords(supplied: string, stored: string): Promise<boolean> {
   try {
-    // Split stored hash and salt
     const [storedHash, salt] = stored.split('.');
-
     if (!storedHash || !salt) {
       console.error('Invalid password format:', { hasHash: !!storedHash, hasSalt: !!salt });
       return false;
     }
-
-    // Hash the supplied password with the same salt
     const suppliedBuffer = (await scryptAsync(supplied, salt, 64)) as Buffer;
     const storedBuffer = Buffer.from(storedHash, 'hex');
-
-    // Debug logging
-    console.log('Password comparison:', {
-      suppliedLength: suppliedBuffer.length,
-      storedLength: storedBuffer.length,
-      suppliedHash: suppliedBuffer.toString('hex'),
-      storedHash: storedHash
-    });
-
-    // Compare the two buffers
     return timingSafeEqual(suppliedBuffer, storedBuffer);
   } catch (error) {
     console.error('Password comparison failed:', error);
@@ -173,10 +159,26 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/logout", (req, res, next) => {
-    req.logout((err) => {
-      if (err) return next(err);
-      res.sendStatus(200);
-    });
+    try {
+      console.log('Logging out user:', req.user);
+      req.logout((err) => {
+        if (err) {
+          console.error('Logout error:', err);
+          return next(err);
+        }
+        req.session.destroy((err) => {
+          if (err) {
+            console.error('Session destruction error:', err);
+            return next(err);
+          }
+          res.clearCookie('connect.sid');
+          res.sendStatus(200);
+        });
+      });
+    } catch (error) {
+      console.error('Unexpected logout error:', error);
+      next(error);
+    }
   });
 
   app.get("/api/user", (req, res) => {
