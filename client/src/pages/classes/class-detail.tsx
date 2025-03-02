@@ -194,8 +194,6 @@ export default function ClassDetail() {
   const handleRemoveStudent = async (studentId: number) => {
     if (!canManageStudents) return;
 
-    if (!confirm("Are you sure you want to remove this student from the class?")) return;
-
     try {
       const response = await fetch(`/api/classes/${classId}/students/${studentId}`, {
         method: "DELETE",
