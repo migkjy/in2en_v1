@@ -108,8 +108,6 @@ export default function AssignmentList() {
       if (user?.role === "TEACHER") {
         params.append("teacherId", user.id.toString());
       }
-      // For students, we still want to show all their assignments
-      // The server will filter by their access automatically
 
       const response = await fetch(`/api/assignments?${params.toString()}`);
       if (!response.ok) throw new Error("Failed to fetch assignments");
