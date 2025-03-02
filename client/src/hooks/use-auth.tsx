@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { queryClient } from '@/lib/queryClient';
 import { useQuery, useMutation } from '@tanstack/react-query';
@@ -11,6 +11,7 @@ interface AuthContextType {
   loginMutation: any;
   logoutMutation: any;
   registerMutation: any;
+  updateUser: (updatedUserData: User) => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -26,23 +27,33 @@ export const useAuth = () => {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { toast } = useToast();
   const [error, setError] = useState<Error | null>(null);
+  const [user, setUser] = useState<User | null>(null); // Added user state
+  const [isLoading, setIsLoading] = useState(true); // Added loading state
 
-  const { data: user, isLoading } = useQuery<User | null>({
-    queryKey: ['auth-user'],
-    queryFn: async () => {
-      try {
-        const response = await fetch('/api/user');
-        if (response.status === 401) return null;
-        if (!response.ok) throw new Error('Failed to fetch user');
-        return response.json();
-      } catch (e) {
-        console.error('Auth error:', e);
-        return null;
+  useEffect(() => {
+    // Fetch user on initial load
+    fetchUser();
+  }, []);
+
+  const fetchUser = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch('/api/user');
+      if (response.status === 401) {
+        setUser(null);
+        setIsLoading(false);
+        return;
       }
-    },
-    retry: false,
-    staleTime: Infinity,
-  });
+      if (!response.ok) throw new Error('Failed to fetch user');
+      const data = await response.json();
+      setUser(data);
+      setIsLoading(false);
+    } catch (e) {
+      console.error('Auth error:', e);
+      setUser(null);
+      setIsLoading(false);
+    }
+  };
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: { email: string; password: string }) => {
@@ -58,6 +69,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return response.json();
     },
     onSuccess: (data) => {
+      setUser(data); // Update user state directly
       queryClient.setQueryData(['auth-user'], data);
       setError(null);
     },
@@ -79,6 +91,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     },
     onSuccess: () => {
+      setUser(null); // Update user state directly
       queryClient.removeQueries();
       queryClient.setQueryData(['auth-user'], null);
       setError(null);
@@ -107,6 +120,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return response.json();
     },
     onSuccess: (data) => {
+      setUser(data); // Update user state directly
       queryClient.setQueryData(['auth-user'], data);
       setError(null);
     },
@@ -120,15 +134,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     },
   });
 
+  const updateUser = (updatedUserData: User) => {
+    setUser(prev => {
+      if (!prev) return updatedUserData;
+      return { ...prev, ...updatedUserData };
+    });
+  };
+
   return (
     <AuthContext.Provider
       value={{
-        user: user || null,
+        user: user,
         isLoading,
         error,
         loginMutation,
         logoutMutation,
-        registerMutation
+        registerMutation,
+        updateUser
       }}
     >
       {children}
