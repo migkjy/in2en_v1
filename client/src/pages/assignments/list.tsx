@@ -265,6 +265,7 @@ export default function AssignmentList() {
     enabled: !!assignments && assignments.length > 0,
   });
 
+  const canCreateAssignment = user?.role === "ADMIN" || user?.role === "TEACHER";
 
   return (
     <div className="flex h-screen">
@@ -274,9 +275,11 @@ export default function AssignmentList() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Assignments Management</CardTitle>
-              <Button onClick={handleCreateAssignment}>
-                Create New Assignment
-              </Button>
+              {canCreateAssignment && (
+                <Button onClick={handleCreateAssignment}>
+                  Create New Assignment
+                </Button>
+              )}
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-3 gap-4 mb-6">
