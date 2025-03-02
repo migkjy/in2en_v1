@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,40 +7,37 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Lock, User, Loader2 } from "lucide-react";
-
-const PASSWORD_PATTERN = /^[A-Za-z0-9!@#$%^&*()_+\-=\[\]{};:'",.<>/?]+$/;
+import { Lock, User } from "lucide-react";
 
 export default function ProfilePage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
 
-  const [formData, setFormData] = useState({
-    name: "",
-    phone_number: "",
-    currentPassword: "",
-    newPassword: "",
-    confirmPassword: "",
-  });
-
   // Get user details
-  const { data: userDetails, isLoading, error } = useQuery({
-    queryKey: ["/api/users", user?.id],
+  const { data: userDetails, isLoading } = useQuery({
+    queryKey: [`/api/users/${user?.id}`],
     queryFn: async () => {
       if (!user?.id) throw new Error("User ID is required");
       const response = await fetch(`/api/users/${user.id}`);
       if (!response.ok) {
-        const error = await response.text();
-        throw new Error(error || "Failed to fetch user details");
+        throw new Error("Failed to fetch user details");
       }
       return response.json();
     },
     enabled: !!user?.id,
   });
 
-  // Update form data when userDetails changes
-  useEffect(() => {
+  const [formData, setFormData] = useState({
+    name: userDetails?.name || "",
+    phone_number: userDetails?.phone_number || "",
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+
+  // Update when userDetails changes
+  useState(() => {
     if (userDetails) {
       setFormData(prev => ({
         ...prev,
@@ -85,7 +82,7 @@ export default function ProfilePage() {
   const changePasswordMutation = useMutation({
     mutationFn: async (data: { currentPassword: string; newPassword: string }) => {
       const response = await fetch(`/api/users/${user?.id}/password`, {
-        method: "PATCH",
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
@@ -93,8 +90,7 @@ export default function ProfilePage() {
       });
 
       if (!response.ok) {
-        const errorData = await response.text();
-        throw new Error(errorData || "비밀번호 변경에 실패했습니다.");
+        throw new Error("비밀번호 변경에 실패했습니다.");
       }
 
       return response.json();
@@ -111,10 +107,10 @@ export default function ProfilePage() {
         confirmPassword: "",
       }));
     },
-    onError: (error: Error) => {
+    onError: () => {
       toast({
         title: "오류",
-        description: error.message,
+        description: "비밀번호 변경에 실패했습니다.",
         variant: "destructive",
       });
     },
@@ -132,45 +128,6 @@ export default function ProfilePage() {
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Validate required fields
-    if (!formData.currentPassword.trim()) {
-      toast({
-        title: "오류",
-        description: "현재 비밀번호를 입력해주세요.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!formData.newPassword.trim()) {
-      toast({
-        title: "오류",
-        description: "새 비밀번호를 입력해주세요.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!formData.confirmPassword.trim()) {
-      toast({
-        title: "오류",
-        description: "새 비밀번호 확인을 입력해주세요.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Validate password pattern
-    if (!PASSWORD_PATTERN.test(formData.newPassword)) {
-      toast({
-        title: "오류",
-        description: "비밀번호는 영문, 숫자, 특수문자만 사용 가능합니다.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     if (formData.newPassword !== formData.confirmPassword) {
       toast({
         title: "오류",
@@ -179,7 +136,6 @@ export default function ProfilePage() {
       });
       return;
     }
-
     await changePasswordMutation.mutate({
       currentPassword: formData.currentPassword,
       newPassword: formData.newPassword,
@@ -191,22 +147,7 @@ export default function ProfilePage() {
       <div className="flex h-screen">
         <Sidebar className="w-64" />
         <main className="flex-1 p-8">
-          <div className="flex items-center justify-center h-full">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          </div>
-        </main>
-      </div>
-    );
-  }
-
-  if (error || !userDetails) {
-    return (
-      <div className="flex h-screen">
-        <Sidebar className="w-64" />
-        <main className="flex-1 p-8">
-          <div className="text-center text-red-500">
-            프로필 정보를 불러오는데 실패했습니다.
-          </div>
+          <div>Loading...</div>
         </main>
       </div>
     );
@@ -232,11 +173,11 @@ export default function ProfilePage() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
                   <Label>ID</Label>
-                  <Input value={userDetails.email || ""} disabled />
+                  <Input value={userDetails?.email || ""} disabled />
                 </div>
                 <div className="space-y-2">
                   <Label>Email</Label>
-                  <Input value={userDetails.email || ""} disabled />
+                  <Input value={userDetails?.email || ""} disabled />
                 </div>
                 <div className="space-y-2">
                   <Label>이름</Label>
@@ -276,7 +217,7 @@ export default function ProfilePage() {
                         type="submit"
                         disabled={updateProfileMutation.isPending}
                       >
-                        {updateProfileMutation.isPending ? "저장 중..." : "저장하기"}
+                        저장하기
                       </Button>
                     </>
                   )}
@@ -307,8 +248,6 @@ export default function ProfilePage() {
                         currentPassword: e.target.value,
                       })
                     }
-                    pattern={PASSWORD_PATTERN.source}
-                    title="영문, 숫자, 특수문자만 입력 가능합니다."
                   />
                 </div>
                 <div className="space-y-2">
@@ -319,8 +258,6 @@ export default function ProfilePage() {
                     onChange={(e) =>
                       setFormData({ ...formData, newPassword: e.target.value })
                     }
-                    pattern={PASSWORD_PATTERN.source}
-                    title="영문, 숫자, 특수문자만 입력 가능합니다."
                   />
                 </div>
                 <div className="space-y-2">
@@ -334,8 +271,6 @@ export default function ProfilePage() {
                         confirmPassword: e.target.value,
                       })
                     }
-                    pattern={PASSWORD_PATTERN.source}
-                    title="영문, 숫자, 특수문자만 입력 가능합니다."
                   />
                 </div>
                 <div className="flex justify-end">
@@ -343,7 +278,7 @@ export default function ProfilePage() {
                     type="submit"
                     disabled={changePasswordMutation.isPending}
                   >
-                    {changePasswordMutation.isPending ? "변경 중..." : "비밀번호 변경"}
+                    비밀번호 변경
                   </Button>
                 </div>
               </form>

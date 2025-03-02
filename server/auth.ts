@@ -29,9 +29,6 @@ async function hashPassword(password: string) {
 }
 
 async function comparePasswords(supplied: string, stored: string) {
-  if (!stored || !stored.includes('.')) {
-    return false;
-  }
   const [hashed, salt] = stored.split(".");
   const hashedBuf = Buffer.from(hashed, "hex");
   const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
@@ -67,15 +64,10 @@ export function setupAuth(app: Express) {
       async (email, password, done) => {
         try {
           const user = await storage.getUserByEmail(email);
-          if (!user) {
+          if (!user || !(await comparePasswords(password, user.password))) {
             return done(null, false, { message: "Invalid credentials" });
           }
-
-          const isValidPassword = await comparePasswords(password, user.password);
-          if (!isValidPassword) {
-            return done(null, false, { message: "Invalid credentials" });
-          }
-
+          // Only pass the necessary authentication fields
           return done(null, { id: user.id, role: user.role });
         } catch (error) {
           return done(error);
@@ -94,6 +86,7 @@ export function setupAuth(app: Express) {
       if (!user) {
         return done(new Error("User not found"));
       }
+      // Only pass the necessary authentication fields
       done(null, { id: user.id, role: user.role });
     } catch (error) {
       done(error);
@@ -119,7 +112,8 @@ export function setupAuth(app: Express) {
 
       req.login({ id: user.id, role: user.role }, (err) => {
         if (err) return next(err);
-        const { password: _, ...userWithoutPassword } = user;
+        // Remove password from response
+        const { password, ...userWithoutPassword } = user;
         res.status(201).json(userWithoutPassword);
       });
     } catch (error) {

@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -27,7 +27,18 @@ export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
   const [, setLocation] = useLocation();
 
-  // Initialize form state
+  useEffect(() => {
+    if (user) {
+      const homePath =
+        user.role === "ADMIN"
+          ? "/admin"
+          : user.role === "TEACHER"
+            ? "/teacher"
+            : "/student";
+      setLocation(homePath);
+    }
+  }, [user, setLocation]);
+
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -45,33 +56,6 @@ export default function AuthPage() {
       role: "STUDENT",
     },
   });
-
-  // Handle navigation based on user role
-  if (user) {
-    const homePath = 
-      user.role === "ADMIN" 
-        ? "/admin" 
-        : user.role === "TEACHER" 
-          ? "/teacher" 
-          : "/student";
-    setLocation(homePath);
-    return null;
-  }
-
-  // Memoized form handlers
-  const handleLogin = useCallback(
-    (data: LoginFormData) => {
-      loginMutation.mutate(data);
-    },
-    [loginMutation]
-  );
-
-  const handleRegister = useCallback(
-    (data: z.infer<typeof insertUserSchema>) => {
-      registerMutation.mutate(data);
-    },
-    [registerMutation]
-  );
 
   return (
     <div className="min-h-screen flex">
@@ -93,7 +77,9 @@ export default function AuthPage() {
 
               <TabsContent value="login">
                 <form
-                  onSubmit={loginForm.handleSubmit(handleLogin)}
+                  onSubmit={loginForm.handleSubmit((data) =>
+                    loginMutation.mutate(data),
+                  )}
                   className="space-y-4 mt-4"
                 >
                   <div>
@@ -131,7 +117,9 @@ export default function AuthPage() {
 
               <TabsContent value="register">
                 <form
-                  onSubmit={registerForm.handleSubmit(handleRegister)}
+                  onSubmit={registerForm.handleSubmit((data) =>
+                    registerMutation.mutate(data),
+                  )}
                   className="space-y-4 mt-4"
                 >
                   <div>
