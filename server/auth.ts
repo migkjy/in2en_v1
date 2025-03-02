@@ -88,8 +88,7 @@ export function setupAuth(app: Express) {
           if (!user || !(await comparePasswords(password, user.password))) {
             return done(null, false, { message: "Invalid credentials" });
           }
-          // Only pass the necessary authentication fields
-          return done(null, { id: user.id, role: user.role });
+          return done(null, { id: user.id, role: user.role as UserRole });
         } catch (error) {
           return done(error);
         }
@@ -107,8 +106,7 @@ export function setupAuth(app: Express) {
       if (!user) {
         return done(new Error("User not found"));
       }
-      // Only pass the necessary authentication fields
-      done(null, { id: user.id, role: user.role });
+      done(null, { id: user.id, role: user.role as UserRole });
     } catch (error) {
       done(error);
     }
@@ -131,7 +129,7 @@ export function setupAuth(app: Express) {
         role: role as UserRole
       });
 
-      req.login({ id: user.id, role: user.role }, (err) => {
+      req.login({ id: user.id, role: user.role as UserRole }, (err) => {
         if (err) return next(err);
         // Remove password from response
         const { password, ...userWithoutPassword } = user;
