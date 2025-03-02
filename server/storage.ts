@@ -115,6 +115,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createUser(user: InsertUser): Promise<User> {
+    // Hash password if it exists and isn't already hashed
+    if (user.password && !user.password.includes('.')) {
+      const salt = randomBytes(16).toString('hex');
+      const derivedKey = (await scryptAsync(user.password, salt, 64)) as Buffer;
+      user.password = `${derivedKey.toString('hex')}.${salt}`;
+    }
+    
     const [newUser] = await db.insert(users).values([user]).returning();
     return newUser;
   }
@@ -124,6 +131,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateUser(id: number, data: Partial<User>): Promise<User | undefined> {
+    // Hash password if it exists and isn't already hashed
+    if (data.password && !data.password.includes('.')) {
+      const salt = randomBytes(16).toString('hex');
+      const derivedKey = (await scryptAsync(data.password, salt, 64)) as Buffer;
+      data.password = `${derivedKey.toString('hex')}.${salt}`;
+    }
+    
     const [user] = await db
       .update(users)
       .set(data)

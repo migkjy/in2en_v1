@@ -1181,7 +1181,7 @@ export function registerRoutes(app: Express): Server {
         // If password is empty string or undefined, remove it from the request body
         const updateData = { ...req.body };
         
-        // Handle password - validate and hash if present
+        // Handle password - validate if present
         if (updateData.password) {
           // Password validation
           if (updateData.password.length < 6) {
@@ -1190,11 +1190,7 @@ export function registerRoutes(app: Express): Server {
             });
           }
           
-          // Hash the password (using the function from auth.ts)
-          const scryptAsync = promisify(scrypt);
-          const salt = randomBytes(16).toString('hex');
-          const derivedKey = (await scryptAsync(updateData.password, salt, 64)) as Buffer;
-          updateData.password = `${derivedKey.toString('hex')}.${salt}`;
+          // Hashing is now handled in the storage layer
         } else {
           delete updateData.password;
         }
