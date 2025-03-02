@@ -58,20 +58,20 @@ export default function AssignmentDetail() {
     enabled: !!assignment?.classId,
   });
 
-  // Get submissions -  Corrected to fetch based on student ID if the user is a student.
+  // Get submissions
   const { data: submissions } = useQuery<Submission[]>({
-    queryKey: ["/api/submissions", user?.id, assignmentId],
+    queryKey: ["/api/submissions", assignmentId],
     queryFn: async () => {
-      if (!assignmentId || !user?.id) throw new Error("Assignment ID and User ID are required");
+      if (!assignmentId) throw new Error("Assignment ID is required");
       const response = await fetch(
-        `/api/submissions?${user?.role === 'STUDENT' ? `studentId=${user.id}&` : ``}assignmentId=${assignmentId}`,
+        `/api/submissions?assignmentId=${assignmentId}`,
       );
       if (!response.ok) {
         throw new Error("Failed to fetch submissions");
       }
       return response.json();
     },
-    enabled: !!assignmentId && !!user?.id,
+    enabled: !!assignmentId,
   });
 
   // Sort submissions by student name
@@ -196,10 +196,7 @@ export default function AssignmentDetail() {
   };
 
   const handleViewSubmission = (submissionId: number) => {
-    // Use role-specific routing
-    const basePath = user?.role === "STUDENT" ? "/student" : 
-      user?.role === "TEACHER" ? "/teacher" : "/admin";
-    navigate(`${basePath}/submissions/${submissionId}`);
+    navigate(`/submissions/${submissionId}`);
   };
 
 
