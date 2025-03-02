@@ -458,29 +458,16 @@ export default function ClassDetail() {
                                 <Checkbox
                                   checked={!!isAssigned}
                                   onCheckedChange={(checked) => {
-                                    // Prevent action if mutations are in progress
-                                    if (assignStudentMutation.isPending || removeStudentMutation.isPending) return;
-
                                     if (checked) {
-                                      // Additional check to prevent duplicate assignments
-                                      if (!isAssigned && !assignStudentMutation.isPending) {
-                                        assignStudentMutation.mutate(student.id);
-                                      }
+                                      assignStudentMutation.mutate(student.id);
                                     } else {
-                                      if (isAssigned && !removeStudentMutation.isPending) {
-                                        removeStudentMutation.mutate(student.id);
-                                      }
+                                      removeStudentMutation.mutate(student.id);
                                     }
                                   }}
                                   disabled={
-                                    !!isAssigned ||
                                     assignStudentMutation.isPending ||
                                     removeStudentMutation.isPending
                                   }
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    e.preventDefault();
-                                  }}
                                 />
                               </TableCell>
                             </TableRow>
