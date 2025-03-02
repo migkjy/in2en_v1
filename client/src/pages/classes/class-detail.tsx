@@ -178,10 +178,7 @@ export default function ClassDetail() {
       }
 
       queryClient.invalidateQueries({ queryKey: ["/api/classes", classId, "students"] });
-      toast({
-        title: "Success",
-        description: "Student assigned successfully",
-      });
+      // Success toast removed
     } catch (error) {
       toast({
         title: "Error",
