@@ -90,7 +90,8 @@ export default function CreateAssignment() {
       dueDate: "",
       userId: user?.id,
       status: "draft"
-    }
+    },
+    mode: "onChange"
   });
 
   const onSubmit = form.handleSubmit((data) => {
@@ -183,11 +184,19 @@ export default function CreateAssignment() {
                   </Button>
                   <Button
                     type="submit"
-                    disabled={createMutation.isPending}
+                    disabled={createMutation.isPending || !form.formState.isValid || 
+                      !form.watch("title") || 
+                      !form.watch("classId")}
                   >
                     Create Assignment
                   </Button>
                 </div>
+                {form.formState.errors.title && (
+                  <p className="text-sm text-red-500 mt-1">Title is required</p>
+                )}
+                {form.formState.errors.classId && (
+                  <p className="text-sm text-red-500 mt-1">Class is required</p>
+                )}
               </form>
             </CardContent>
           </Card>
