@@ -89,9 +89,6 @@ export interface IStorage {
   // Password operations
   verifyPassword(user: User, password: string): Promise<boolean>;
   updateUserPassword(userId: number, newPassword: string): Promise<boolean>;
-  
-  // Submissions for a specific user
-  listUserSubmissions(userId: number): Promise<Submission[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -798,11 +795,6 @@ export class DatabaseStorage implements IStorage {
 
   async deleteAgeGroup(id: number): Promise<void> {
     await db.delete(ageGroups).where(eq(ageGroups.id, id));
-  }
-  
-  // List all submissions from a specific user
-  async listUserSubmissions(userId: number): Promise<Submission[]> {
-    return await db.select().from(submissions).where(eq(submissions.studentId, userId));
   }
   
   async verifyPassword(user: User, password: string): Promise<boolean> {
