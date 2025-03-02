@@ -6,7 +6,6 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
 import { UserRole } from "@shared/schema";
-import type { User } from "@shared/schema";
 
 const scryptAsync = promisify(scrypt);
 
@@ -19,13 +18,15 @@ async function hashPassword(password: string) {
 async function comparePasswords(supplied: string, stored: string) {
   try {
     if (!stored || !stored.includes('.')) {
+      console.log('Invalid stored password format');
       return false;
     }
-    const [hashed, salt] = stored.split(".");
-    if (!hashed || !salt) {
+    const [hashedPassword, salt] = stored.split(".");
+    if (!hashedPassword || !salt) {
+      console.log('Missing hash or salt');
       return false;
     }
-    const hashedBuf = Buffer.from(hashed, "hex");
+    const hashedBuf = Buffer.from(hashedPassword, "hex");
     const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
     return timingSafeEqual(hashedBuf, suppliedBuf);
   } catch (error) {
@@ -35,22 +36,16 @@ async function comparePasswords(supplied: string, stored: string) {
 }
 
 export function setupAuth(app: Express) {
-  const sessionSettings: session.SessionOptions = {
-    secret: process.env.REPL_ID!,
+  app.use(session({
+    secret: process.env.REPL_ID || 'dev-secret',
     resave: false,
     saveUninitialized: false,
-    store: storage.sessionStore,
     cookie: {
-      secure: app.get("env") === "production",
+      secure: process.env.NODE_ENV === "production",
       maxAge: 24 * 60 * 60 * 1000 // 24 hours
     }
-  };
+  }));
 
-  if (app.get("env") === "production") {
-    app.set("trust proxy", 1);
-  }
-
-  app.use(session(sessionSettings));
   app.use(passport.initialize());
   app.use(passport.session());
 
@@ -62,27 +57,35 @@ export function setupAuth(app: Express) {
       },
       async (email, password, done) => {
         try {
+          console.log('Attempting login for:', email);
           const user = await storage.getUserByEmail(email);
+
           if (!user) {
+            console.log('User not found:', email);
             return done(null, false, { message: "Invalid email or password" });
           }
 
-          const isValidPassword = await comparePasswords(password, user.password);
-          if (!isValidPassword) {
+          console.log('User found, comparing passwords');
+          const isValid = await comparePasswords(password, user.password);
+
+          if (!isValid) {
+            console.log('Invalid password');
             return done(null, false, { message: "Invalid email or password" });
           }
 
+          console.log('Login successful');
           const { password: _, ...userWithoutPassword } = user;
           return done(null, userWithoutPassword);
         } catch (error) {
-          console.error('Authentication error:', error);
+          console.error('Login error:', error);
           return done(error);
         }
       }
     )
   );
 
-  passport.serializeUser((user, done) => {
+  passport.serializeUser((user: Express.User, done) => {
+    console.log('Serializing user:', user.id);
     done(null, user.id);
   });
 
@@ -90,7 +93,7 @@ export function setupAuth(app: Express) {
     try {
       const user = await storage.getUser(id);
       if (!user) {
-        return done(new Error("User not found"));
+        return done(null, false);
       }
       const { password: _, ...userWithoutPassword } = user;
       done(null, userWithoutPassword);
@@ -127,15 +130,20 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/login", (req, res, next) => {
-    passport.authenticate("local", (err: unknown, user: User | false, info: { message?: string } | undefined) => {
-      if (err) return next(err);
+    passport.authenticate("local", (err, user, info) => {
+      if (err) {
+        console.error('Authentication error:', err);
+        return next(err);
+      }
       if (!user) {
         return res.status(401).json({ message: info?.message || "Invalid credentials" });
       }
       req.login(user, (err) => {
-        if (err) return next(err);
-        const { password: _, ...userWithoutPassword } = user;
-        res.json(userWithoutPassword);
+        if (err) {
+          console.error('Login error:', err);
+          return next(err);
+        }
+        res.json(user);
       });
     })(req, res, next);
   });

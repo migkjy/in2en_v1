@@ -52,8 +52,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     },
     retry: false,
     staleTime: 300000, // 5 minutes
-    cacheTime: 3600000, // 1 hour
-    refetchOnWindowFocus: false,
   });
 
   const login = async (email: string, password: string) => {
@@ -91,7 +89,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error('Logout failed');
       }
       queryClient.setQueryData(['auth-user'], null);
-      queryClient.removeQueries(['auth-user']);
       setError(null);
     } catch (e) {
       const error = e as Error;
@@ -136,7 +133,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   return (
     <AuthContext.Provider
       value={{
-        user,
+        user: user || null,
         isLoading,
         error,
         login,
