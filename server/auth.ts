@@ -17,14 +17,21 @@ async function hashPassword(password: string) {
 
 async function comparePasswords(supplied: string, stored: string) {
   try {
-    const [hashedPassword, salt] = stored.split(".");
-    if (!hashedPassword || !salt) {
-      console.error('Invalid stored password format');
+    const [hashedStored, salt] = stored.split(".");
+    if (!hashedStored || !salt) {
+      console.error('Invalid stored password format:', { hashedStored: !!hashedStored, salt: !!salt });
       return false;
     }
+
     const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
-    const storedBuf = Buffer.from(hashedPassword, "hex");
-    return timingSafeEqual(suppliedBuf, storedBuf);
+    const storedBuf = Buffer.from(hashedStored, "hex");
+
+    console.log('Comparing passwords:', {
+      suppliedLength: suppliedBuf.length,
+      storedLength: storedBuf.length
+    });
+
+    return timingSafeEqual(storedBuf, suppliedBuf);
   } catch (error) {
     console.error('Password comparison error:', error);
     return false;
@@ -55,19 +62,27 @@ export function setupAuth(app: Express) {
       },
       async (email, password, done) => {
         try {
+          console.log('Login attempt for email:', email);
           const user = await storage.getUserByEmail(email);
+
           if (!user) {
+            console.log('User not found:', email);
             return done(null, false, { message: "Invalid email or password" });
           }
 
+          console.log('Found user, comparing passwords');
           const isValid = await comparePasswords(password, user.password);
+
           if (!isValid) {
+            console.log('Password comparison failed');
             return done(null, false, { message: "Invalid email or password" });
           }
 
+          console.log('Login successful');
           const { password: _, ...userWithoutPassword } = user;
           return done(null, userWithoutPassword);
         } catch (error) {
+          console.error('Login error:', error);
           return done(error);
         }
       }
@@ -101,6 +116,8 @@ export function setupAuth(app: Express) {
       }
 
       const hashedPassword = await hashPassword(password);
+      console.log('Created hashed password:', hashedPassword.split('.')[0].length);
+
       const user = await storage.createUser({
         email,
         password: hashedPassword,
@@ -109,7 +126,6 @@ export function setupAuth(app: Express) {
       });
 
       const { password: _, ...userWithoutPassword } = user;
-
       req.login(userWithoutPassword, (err) => {
         if (err) return next(err);
         res.status(201).json(userWithoutPassword);
@@ -121,12 +137,18 @@ export function setupAuth(app: Express) {
 
   app.post("/api/login", (req, res, next) => {
     passport.authenticate("local", (err, user, info) => {
-      if (err) return next(err);
+      if (err) {
+        console.error('Authentication error:', err);
+        return next(err);
+      }
       if (!user) {
         return res.status(401).json({ message: info?.message || "Invalid credentials" });
       }
       req.login(user, (err) => {
-        if (err) return next(err);
+        if (err) {
+          console.error('Login session error:', err);
+          return next(err);
+        }
         res.json(user);
       });
     })(req, res, next);
