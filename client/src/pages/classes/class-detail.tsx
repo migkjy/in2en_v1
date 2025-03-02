@@ -18,6 +18,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Check, X, ArrowLeft } from "lucide-react";
+import { useMutation } from "@tanstack/react-query";
 
 interface TeacherWithRoles extends User {
   isLead: boolean;
@@ -99,6 +100,55 @@ export default function ClassDetail() {
     },
   });
 
+  const assignStudentMutation = useMutation(
+    async (studentId: number) => {
+      const response = await fetch(`/api/classes/${classId}/students/${studentId}`, {
+        method: "PUT",
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to assign student");
+      }
+    },
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["/api/classes", classId, "students"] });
+      },
+      onError: (error) => {
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : "Failed to assign student",
+          variant: "destructive",
+        });
+      },
+    }
+  );
+
+  const removeStudentMutation = useMutation(
+    async (studentId: number) => {
+      const response = await fetch(`/api/classes/${classId}/students/${studentId}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to remove student");
+      }
+    },
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["/api/classes", classId, "students"] });
+      },
+      onError: (error) => {
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : "Failed to remove student",
+          variant: "destructive",
+        });
+      },
+    }
+  );
+
+
   if (isClassLoading) {
     return <div>Loading...</div>;
   }
@@ -167,6 +217,10 @@ export default function ClassDetail() {
   const handleAssignStudent = async (studentId: number) => {
     if (!canManageStudents) return;
 
+    // Check if student is already assigned
+    const isAlreadyAssigned = assignedStudents.some(student => student.id === studentId);
+    if (isAlreadyAssigned) return;
+
     try {
       const response = await fetch(`/api/classes/${classId}/students/${studentId}`, {
         method: "PUT",
@@ -178,7 +232,6 @@ export default function ClassDetail() {
       }
 
       queryClient.invalidateQueries({ queryKey: ["/api/classes", classId, "students"] });
-      // Success toast removed
     } catch (error) {
       toast({
         title: "Error",
@@ -322,7 +375,7 @@ export default function ClassDetail() {
                         <span>{student.name}</span>
                         {canManageStudents && (
                           <button
-                            onClick={() => handleRemoveStudent(student.id)}
+                            onClick={() => removeStudentMutation.mutate(student.id)}
                             className="text-muted-foreground hover:text-destructive"
                           >
                             <X className="h-4 w-4" />
@@ -450,12 +503,13 @@ export default function ClassDetail() {
                                   checked={!!isAssigned}
                                   onCheckedChange={(checked) => {
                                     if (checked) {
-                                      handleAssignStudent(student.id);
+                                      assignStudentMutation.mutate(student.id);
                                     } else {
-                                      handleRemoveStudent(student.id);
+                                      removeStudentMutation.mutate(student.id);
                                     }
                                   }}
-                                  disabled={!!isAssigned}
+                                  disabled={!!isAssigned || assignStudentMutation.isPending || removeStudentMutation.isPending}
+                                  onClick={(e) => e.stopPropagation()} // Prevent event bubbling
                                 />
                               </TableCell>
                             </TableRow>
