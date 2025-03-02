@@ -5,7 +5,7 @@ import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
-import { UserRole } from "@shared/schema";
+import { User } from "@shared/schema";
 
 const scryptAsync = promisify(scrypt);
 
@@ -17,18 +17,14 @@ async function hashPassword(password: string) {
 
 async function comparePasswords(supplied: string, stored: string) {
   try {
-    if (!stored || !stored.includes('.')) {
-      console.log('Invalid stored password format');
-      return false;
-    }
     const [hashedPassword, salt] = stored.split(".");
     if (!hashedPassword || !salt) {
-      console.log('Missing hash or salt');
+      console.error('Invalid stored password format');
       return false;
     }
-    const hashedBuf = Buffer.from(hashedPassword, "hex");
     const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
-    return timingSafeEqual(hashedBuf, suppliedBuf);
+    const storedBuf = Buffer.from(hashedPassword, "hex");
+    return timingSafeEqual(suppliedBuf, storedBuf);
   } catch (error) {
     console.error('Password comparison error:', error);
     return false;
@@ -36,15 +32,17 @@ async function comparePasswords(supplied: string, stored: string) {
 }
 
 export function setupAuth(app: Express) {
-  app.use(session({
-    secret: process.env.REPL_ID || 'dev-secret',
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      secure: process.env.NODE_ENV === "production",
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
-    }
-  }));
+  app.use(
+    session({
+      secret: process.env.REPL_ID || "development-secret",
+      resave: false,
+      saveUninitialized: false,
+      cookie: {
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      },
+    })
+  );
 
   app.use(passport.initialize());
   app.use(passport.session());
@@ -57,27 +55,19 @@ export function setupAuth(app: Express) {
       },
       async (email, password, done) => {
         try {
-          console.log('Attempting login for:', email);
           const user = await storage.getUserByEmail(email);
-
           if (!user) {
-            console.log('User not found:', email);
             return done(null, false, { message: "Invalid email or password" });
           }
 
-          console.log('User found, comparing passwords');
           const isValid = await comparePasswords(password, user.password);
-
           if (!isValid) {
-            console.log('Invalid password');
             return done(null, false, { message: "Invalid email or password" });
           }
 
-          console.log('Login successful');
           const { password: _, ...userWithoutPassword } = user;
           return done(null, userWithoutPassword);
         } catch (error) {
-          console.error('Login error:', error);
           return done(error);
         }
       }
@@ -85,7 +75,6 @@ export function setupAuth(app: Express) {
   );
 
   passport.serializeUser((user: Express.User, done) => {
-    console.log('Serializing user:', user.id);
     done(null, user.id);
   });
 
@@ -116,10 +105,11 @@ export function setupAuth(app: Express) {
         email,
         password: hashedPassword,
         name,
-        role: role as UserRole
+        role,
       });
 
       const { password: _, ...userWithoutPassword } = user;
+
       req.login(userWithoutPassword, (err) => {
         if (err) return next(err);
         res.status(201).json(userWithoutPassword);
@@ -131,18 +121,12 @@ export function setupAuth(app: Express) {
 
   app.post("/api/login", (req, res, next) => {
     passport.authenticate("local", (err, user, info) => {
-      if (err) {
-        console.error('Authentication error:', err);
-        return next(err);
-      }
+      if (err) return next(err);
       if (!user) {
         return res.status(401).json({ message: info?.message || "Invalid credentials" });
       }
       req.login(user, (err) => {
-        if (err) {
-          console.error('Login error:', err);
-          return next(err);
-        }
+        if (err) return next(err);
         res.json(user);
       });
     })(req, res, next);

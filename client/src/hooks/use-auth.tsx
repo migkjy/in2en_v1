@@ -38,12 +38,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     queryFn: async () => {
       try {
         const response = await fetch('/api/user');
-        if (!response.ok) {
-          if (response.status === 401) {
-            return null;
-          }
-          throw new Error('Failed to fetch user');
-        }
+        if (response.status === 401) return null;
+        if (!response.ok) throw new Error('Failed to fetch user');
         return response.json();
       } catch (e) {
         console.error('Auth error:', e);
@@ -51,7 +47,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     },
     retry: false,
-    staleTime: 300000, // 5 minutes
   });
 
   const login = async (email: string, password: string) => {

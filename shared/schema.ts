@@ -166,7 +166,12 @@ export const classesRelations = relations(classes, ({ one }) => ({
 
 
 // Schema definitions
-export const insertUserSchema = createInsertSchema(users);
+export const insertUserSchema = createInsertSchema(users).extend({
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  email: z.string().email("Invalid email address"),
+  name: z.string().min(1, "Name is required"),
+  role: z.enum(["ADMIN", "TEACHER", "STUDENT"]),
+});
 export const insertBranchSchema = createInsertSchema(branches);
 export const insertClassSchema = createInsertSchema(classes);
 export const insertAssignmentSchema = createInsertSchema(assignments);
