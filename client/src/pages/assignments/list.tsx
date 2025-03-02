@@ -193,6 +193,7 @@ export default function AssignmentList() {
     }
   };
 
+  // Filter assignments based on selected filters
   // Query to get all student submissions
   const { data: studentSubmissions } = useQuery({
     queryKey: ["/api/submissions", "student"],
@@ -226,15 +227,25 @@ export default function AssignmentList() {
       return new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime();
     });
 
-    // If user is a student, show all published assignments regardless of submission status
-    // Filter out draft assignments
-    if (user?.role === "STUDENT") {
-      return sortedAssignments
-        .filter(a => a.status !== "draft");
-    }
+    return sortedAssignments.filter((assignment) => {
+      // For students, only show published and completed assignments
+      if (user?.role === "STUDENT") {
+        // First check status
+        if (!["published", "completed"].includes(assignment.status.toLowerCase())) {
+          return false;
+        }
 
-    // Filter by branch
-    const filtered = sortedAssignments.filter((assignment) => {
+        // Then check if student has a submission for this assignment
+        if (studentSubmissions && studentSubmissions.length > 0) {
+          const hasSubmission = studentSubmissions.some(
+            submission => submission.assignmentId === assignment.id
+          );
+          return hasSubmission;
+        }
+        return false; // No submissions available
+      }
+
+      // Filter by branch
       if (selectedBranch !== "all") {
         const cls = assignmentClasses.data?.[assignment.classId!];
         if (!cls || cls.branchId !== Number(selectedBranch)) {
@@ -254,7 +265,6 @@ export default function AssignmentList() {
 
       return true;
     });
-    return filtered;
   }, [assignments, selectedBranch, selectedClass, selectedStatus, assignmentClasses.data, user?.role]);
 
   // Get submission counts for each assignment
