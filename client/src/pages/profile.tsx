@@ -122,38 +122,23 @@ export default function ProfilePage() {
       return response.json();
     },
     onSuccess: () => {
-      // Store current form data before toast
-      const currentState = {...formData};
-      
       toast({
         title: "Success",
         description: "Password changed successfully",
       });
-      
-      // Use setTimeout to ensure form state is preserved during toast animation
-      setTimeout(() => {
-        setFormData(prev => ({
-          ...prev,
-          currentPassword: "",
-          newPassword: "",
-          confirmPassword: "",
-        }));
-      }, 100);
+      setFormData(prev => ({
+        ...prev,
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      }));
     },
     onError: (error: Error) => {
-      // Store current form data before toast
-      const currentState = {...formData};
-      
       toast({
         title: "Error",
         description: error.message || "Failed to change password",
         variant: "destructive",
       });
-      
-      // Preserve form state with a slight delay
-      setTimeout(() => {
-        setFormData(currentState);
-      }, 100);
     },
   });
 
