@@ -34,7 +34,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useLocation } from "wouter";
-import type { Assignment, Branch, Class } from "@shared/schema";
+import type { Assignment, Branch, Class, Submission } from "@shared/schema";
 import { format } from "date-fns";
 import { useState, useEffect, useMemo } from "react";
 import { EditAssignmentDialog } from "./edit-dialog";
@@ -193,27 +193,22 @@ export default function AssignmentList() {
     }
   };
 
-  // Filter assignments based on selected filters
   // Query to get all student submissions
   const { data: studentSubmissions, isLoading: submissionsLoading } = useQuery({
-    queryKey: ["/api/submissions", "student"],
+    queryKey: ["/api/submissions", user?.id],
     queryFn: async () => {
-      // Student role needs to check their own submissions
-      if (user?.role === "STUDENT") {
-        try {
-          // Get the student's submissions without needing a status param
-          const response = await fetch(`/api/submissions`);
-          if (!response.ok) {
-            console.error("Error fetching submissions:", await response.text());
-            return [];
-          }
-          return await response.json();
-        } catch (error) {
-          console.error("Error fetching student submissions:", error);
+      if (user?.role !== "STUDENT") return [];
+      try {
+        const response = await fetch(`/api/submissions?studentId=${user.id}`); // Added studentId to filter submissions
+        if (!response.ok) {
+          console.error("Error fetching submissions:", await response.text());
           return [];
         }
+        return await response.json();
+      } catch (error) {
+        console.error("Error fetching student submissions:", error);
+        return [];
       }
-      return [];
     },
     enabled: user?.role === "STUDENT"
   });
@@ -221,54 +216,35 @@ export default function AssignmentList() {
   const filteredAssignments = useMemo(() => {
     if (!assignments) return [];
 
-    // Sort assignments by due date in descending order (newest dates first)
-    const sortedAssignments = [...assignments].sort((a, b) => {
+    // For students, we need to show assignments based on their submissions
+    if (user?.role === "STUDENT" && studentSubmissions) {
+      // Get all assignments where the student has a submission
+      const submissionAssignmentIds = studentSubmissions.map(sub => sub.assignmentId);
+
+      // Get relevant assignments
+      let relevantAssignments = assignments.filter(assignment =>
+        submissionAssignmentIds.includes(assignment.id)
+      );
+
+      // Sort assignments by due date
+      return relevantAssignments.sort((a, b) => {
+        // Handle assignments without due dates (push them to the end)
+        if (!a.dueDate) return 1;
+        if (!b.dueDate) return -1;
+
+        return new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime();
+      });
+    }
+
+    // For teachers and admins, show all assignments
+    return [...assignments].sort((a, b) => {
       // Handle assignments without due dates (push them to the end)
       if (!a.dueDate) return 1;
       if (!b.dueDate) return -1;
-      // Descending order (newest to oldest)
+
       return new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime();
     });
-
-    return sortedAssignments.filter((assignment) => {
-      // For students, only show published and completed assignments where they have a submission
-      if (user?.role === "STUDENT") {
-        // First check status
-        if (!["published", "completed"].includes(assignment.status.toLowerCase())) {
-          return false;
-        }
-
-        // Then check if student has a submission for this assignment
-        if (studentSubmissions && studentSubmissions.length > 0) {
-          const hasSubmission = studentSubmissions.some(
-            submission => submission.assignmentId === assignment.id
-          );
-          return hasSubmission;
-        }
-        return false; // No submissions available
-      }
-
-      // Filter by branch
-      if (selectedBranch !== "all") {
-        const cls = assignmentClasses.data?.[assignment.classId!];
-        if (!cls || cls.branchId !== Number(selectedBranch)) {
-          return false;
-        }
-      }
-
-      // Filter by class
-      if (selectedClass !== "all" && assignment.classId !== Number(selectedClass)) {
-        return false;
-      }
-
-      // Filter by status
-      if (selectedStatus !== "all" && assignment.status.toLowerCase() !== selectedStatus) {
-        return false;
-      }
-
-      return true;
-    });
-  }, [assignments, selectedBranch, selectedClass, selectedStatus, assignmentClasses.data, user?.role]);
+  }, [assignments, studentSubmissions, user]);
 
   // Get submission counts for each assignment
   const { data: submissionCounts } = useQuery({
