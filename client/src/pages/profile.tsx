@@ -152,8 +152,30 @@ export default function ProfilePage() {
     }
   };
 
+  const validatePassword = (password: string): { isValid: boolean; message: string } => {
+    if (!password) {
+      return { isValid: false, message: "Password is required" };
+    }
+    if (password.length < 6) {
+      return { isValid: false, message: "Password must be at least 6 characters" };
+    }
+    return { isValid: true, message: "" };
+  };
+
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate the new password
+    const validation = validatePassword(formData.newPassword);
+    if (!validation.isValid) {
+      toast({
+        title: "Error",
+        description: validation.message,
+        variant: "destructive",
+      });
+      return;
+    }
+    
     if (formData.newPassword !== formData.confirmPassword) {
       toast({
         title: "Error",
@@ -162,6 +184,16 @@ export default function ProfilePage() {
       });
       return;
     }
+    
+    if (!formData.currentPassword) {
+      toast({
+        title: "Error",
+        description: "Current password is required",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     await changePasswordMutation.mutate({
       currentPassword: formData.currentPassword,
       newPassword: formData.newPassword,
@@ -294,6 +326,14 @@ export default function ProfilePage() {
                       })
                     }
                   />
+                </div>
+                <div className="text-sm text-gray-500 bg-gray-50 p-3 rounded-md border my-2">
+                  <p className="font-medium mb-1">Password Requirements:</p>
+                  <ul className="list-disc pl-5 space-y-1">
+                    <li>Password must be at least 6 characters long</li>
+                    <li>Current password is required</li>
+                    <li>New password and confirmation must match</li>
+                  </ul>
                 </div>
                 <div className="flex justify-end">
                   <Button
