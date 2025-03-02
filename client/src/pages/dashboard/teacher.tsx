@@ -141,7 +141,7 @@ export default function TeacherDashboard() {
                             : "No due date"}
                         </p>
                       </div>
-                      <Link href={`/assignments/review/${assignment.id}`}>
+                      <Link href={`/teacher/assignments/${assignment.id}`}>
                         <Button 
                           variant="outline" 
                           size="sm"
