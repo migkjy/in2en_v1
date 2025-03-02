@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useContext } from "react";
+import { createContext, ReactNode, useContext, useMemo } from "react";
 import {
   useQuery,
   useMutation,
@@ -20,6 +20,7 @@ type AuthContextType = {
 type LoginData = Pick<InsertUser, "username" | "password">;
 
 export const AuthContext = createContext<AuthContextType | null>(null);
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   const {
@@ -29,6 +30,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   } = useQuery<SelectUser | undefined, Error>({
     queryKey: ["/api/user"],
     queryFn: getQueryFn({ on401: "returnNull" }),
+    staleTime: Infinity, // Prevent unnecessary refetches
   });
 
   const loginMutation = useMutation({
@@ -81,17 +83,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
   });
 
+  // Memoize the context value to prevent unnecessary re-renders
+  const contextValue = useMemo(
+    () => ({
+      user: user ?? null,
+      isLoading,
+      error,
+      loginMutation,
+      logoutMutation,
+      registerMutation,
+    }),
+    [user, isLoading, error, loginMutation, logoutMutation, registerMutation]
+  );
+
   return (
-    <AuthContext.Provider
-      value={{
-        user: user ?? null,
-        isLoading,
-        error,
-        loginMutation,
-        logoutMutation,
-        registerMutation,
-      }}
-    >
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );
