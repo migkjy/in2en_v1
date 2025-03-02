@@ -65,37 +65,39 @@ function Router() {
         {/* Admin Routes */}
         <Route path="/admin" component={(props) => <ProtectedRoute component={AdminDashboard} {...props} />} />
         <Route path="/admin/profile" component={(props) => <ProtectedRoute component={Profile} {...props} />} />
-        <Route path="/admin/assignments" component={(props) => <ProtectedRoute component={AssignmentList} {...props} />} />
         <Route path="/admin/assignments/create" component={(props) => <ProtectedRoute component={CreateAssignment} {...props} />} />
-        <Route path="/admin/assignments/:id" component={(props) => <ProtectedRoute component={AssignmentDetail} {...props} />} />
         <Route path="/admin/assignments/review/:id" component={(props) => <ProtectedRoute component={ReviewAssignment} {...props} />} />
-        <Route path="/admin/classes" component={(props) => <ProtectedRoute component={ClassList} {...props} />} />
+        <Route path="/admin/assignments/upload/:id" component={(props) => <ProtectedRoute component={UploadAssignment} {...props} />} />
+        <Route path="/admin/assignments/:id" component={(props) => <ProtectedRoute component={AssignmentDetail} {...props} />} />
+        <Route path="/admin/assignments" component={(props) => <ProtectedRoute component={AssignmentList} {...props} />} />
         <Route path="/admin/classes/:id" component={(props) => <ProtectedRoute component={ClassDetail} {...props} />} />
-        <Route path="/admin/branches" component={(props) => <ProtectedRoute component={BranchList} {...props} />} />
+        <Route path="/admin/classes" component={(props) => <ProtectedRoute component={ClassList} {...props} />} />
         <Route path="/admin/branches/:id" component={(props) => <ProtectedRoute component={BranchDetail} {...props} />} />
-        <Route path="/admin/teachers" component={(props) => <ProtectedRoute component={TeacherList} {...props} />} />
+        <Route path="/admin/branches" component={(props) => <ProtectedRoute component={BranchList} {...props} />} />
         <Route path="/admin/teachers/:id" component={(props) => <ProtectedRoute component={TeacherDetail} {...props} />} />
+        <Route path="/admin/teachers" component={(props) => <ProtectedRoute component={TeacherList} {...props} />} />
         <Route path="/admin/students" component={(props) => <ProtectedRoute component={StudentList} {...props} />} />
 
         {/* Teacher Routes */}
         <Route path="/teacher" component={(props) => <ProtectedRoute component={TeacherDashboard} {...props} />} />
         <Route path="/teacher/profile" component={(props) => <ProtectedRoute component={Profile} {...props} />} />
-        <Route path="/teacher/assignments" component={(props) => <ProtectedRoute component={AssignmentList} {...props} />} />
         <Route path="/teacher/assignments/create" component={(props) => <ProtectedRoute component={CreateAssignment} {...props} />} />
-        <Route path="/teacher/assignments/:id" component={(props) => <ProtectedRoute component={AssignmentDetail} {...props} />} />
         <Route path="/teacher/assignments/review/:id" component={(props) => <ProtectedRoute component={ReviewAssignment} {...props} />} />
-        <Route path="/teacher/classes" component={(props) => <ProtectedRoute component={ClassList} {...props} />} />
+        <Route path="/teacher/assignments/upload/:id" component={(props) => <ProtectedRoute component={UploadAssignment} {...props} />} />
+        <Route path="/teacher/assignments/:id" component={(props) => <ProtectedRoute component={AssignmentDetail} {...props} />} />
+        <Route path="/teacher/assignments" component={(props) => <ProtectedRoute component={AssignmentList} {...props} />} />
         <Route path="/teacher/classes/:id" component={(props) => <ProtectedRoute component={ClassDetail} {...props} />} />
+        <Route path="/teacher/classes" component={(props) => <ProtectedRoute component={ClassList} {...props} />} />
 
         {/* Student Routes */}
         <Route path="/student" component={(props) => <ProtectedRoute component={StudentDashboard} {...props} />} />
         <Route path="/student/profile" component={(props) => <ProtectedRoute component={Profile} {...props} />} />
-        <Route path="/student/assignments" component={(props) => <ProtectedRoute component={AssignmentList} {...props} />} />
-        <Route path="/student/assignments/:id" component={(props) => <ProtectedRoute component={AssignmentDetail} {...props} />} />
         <Route path="/student/assignments/upload/:id" component={(props) => <ProtectedRoute component={UploadAssignment} {...props} />} />
+        <Route path="/student/assignments/:id" component={(props) => <ProtectedRoute component={AssignmentDetail} {...props} />} />
+        <Route path="/student/assignments" component={(props) => <ProtectedRoute component={AssignmentList} {...props} />} />
         <Route path="/student/submissions/:id" component={(props) => <ProtectedRoute component={SubmissionDetail} {...props} />} />
-        <Route path="/student/classes" component={(props) => <ProtectedRoute component={ClassList} {...props} />} />
         <Route path="/student/classes/:id" component={(props) => <ProtectedRoute component={ClassDetail} {...props} />} />
+        <Route path="/student/classes" component={(props) => <ProtectedRoute component={ClassList} {...props} />} />
 
         {/* Common Routes */}
         <Route path="/submissions/:id" component={(props) => <ProtectedRoute component={SubmissionDetail} {...props} />} />
