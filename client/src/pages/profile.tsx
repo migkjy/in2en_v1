@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
 import { Lock, User } from "lucide-react";
 
 export default function ProfilePage() {
@@ -77,7 +78,17 @@ export default function ProfilePage() {
 
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (updatedUser) => {
+      // Update the form data with the new values
+      setFormData(prev => ({
+        ...prev,
+        name: updatedUser.name || "",
+        phone_number: updatedUser.phone_number || "",
+      }));
+
+      // Update the React Query cache with the new user data
+      queryClient.setQueryData([`/api/users/${user?.id}`], updatedUser);
+      
       toast({
         title: "Success",
         description: "Profile updated successfully",
