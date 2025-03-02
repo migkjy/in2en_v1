@@ -443,7 +443,12 @@ export default function AssignmentList() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => navigate(user?.role === "ADMIN" ? `/admin/assignments/${assignment.id}` : `/teacher/assignments/${assignment.id}`)}
+                                onClick={() => {
+                                  // Use role-specific routing
+                                  const basePath = user?.role === "STUDENT" ? "/student" : 
+                                    user?.role === "TEACHER" ? "/teacher" : "/admin";
+                                  navigate(`${basePath}/assignments/${assignment.id}`);
+                                }}
                               >
                                 View
                               </Button>
