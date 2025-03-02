@@ -1022,91 +1022,14 @@ export function registerRoutes(app: Express): Server {
       }
     },
   );
-  
-  // Add profile update endpoint
-  app.patch(
-    "/api/teachers/:id/profile",
-    requireRole([UserRole.ADMIN, UserRole.TEACHER]),
-    async (req, res) => {
-      try {
-        // Allow teachers to update only their own profile
-        if (req.user?.role === UserRole.TEACHER && req.user.id !== Number(req.params.id)) {
-          return res.status(403).json({ message: "You can only update your own profile" });
-        }
-        
-        const updateData = {
-          name: req.body.name,
-          phone_number: req.body.phone_number
-        };
-        
-        const updatedUser = await storage.updateUser(Number(req.params.id), updateData);
-        if (!updatedUser) {
-          return res.status(404).json({ message: "User not found" });
-        }
-        
-        const { password, ...userWithoutPassword } = updatedUser;
-        res.json(userWithoutPassword);
-      } catch (error) {
-        console.error("Error updating user profile:", error);
-        if (error instanceof Error) {
-          res.status(400).json({ message: error.message });
-        } else {
-          res.status(500).json({ message: "An unknown error occurred" });
-        }
-      }
-    },
-  );
-  
-  // Add password change endpoint
-  app.post(
-    "/api/teachers/:id/password",
-    requireRole([UserRole.ADMIN, UserRole.TEACHER]),
-    async (req, res) => {
-      try {
-        // Allow teachers to change only their own password
-        if (req.user?.role === UserRole.TEACHER && req.user.id !== Number(req.params.id)) {
-          return res.status(403).json({ message: "You can only change your own password" });
-        }
-        
-        const { currentPassword, newPassword } = req.body;
-        
-        // Verify current password
-        const user = await storage.getUser(Number(req.params.id));
-        if (!user) {
-          return res.status(404).json({ message: "User not found" });
-        }
-        
-        // TODO: Add proper password validation here
-        // For now, just update the password directly
-        
-        const updatedUser = await storage.updateUser(Number(req.params.id), {
-          password: newPassword
-        });
-        
-        res.json({ message: "Password updated successfully" });
-      } catch (error) {
-        console.error("Error changing password:", error);
-        if (error instanceof Error) {
-          res.status(400).json({ message: error.message });
-        } else {
-          res.status(500).json({ message: "An unknown error occurred" });
-        }
-      }
-    },
-  );
 
   // Add these routes after the existing teacher routes
   // Update the students route to handle branch filtering
   app.get(
     "/api/teachers/:id",
-    requireRole([UserRole.ADMIN, UserRole.TEACHER]),
+    requireRole([UserRole.ADMIN]),
     async (req, res) => {
       try {
-        // Allow teachers to access their own profile
-        if (req.user?.role === UserRole.TEACHER && req.user.id !== Number(req.params.id)) {
-          return res.status(403).json({ message: "You can only view your own profile" });
-        }
-        
         const teacher = await storage.getUser(Number(req.params.id));
         if (!teacher || teacher.role !== UserRole.TEACHER) {
           return res.status(404).json({ message: "Teacher not found" });
