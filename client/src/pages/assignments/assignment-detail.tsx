@@ -318,7 +318,7 @@ export default function AssignmentDetail() {
                                 {
                                   students?.find(
                                     (s) => s.id === submission.studentId,
-                                  )?.name
+                                  )?.name || "Unknown Student"
                                 }
                               </TableCell>
                               <TableCell>
