@@ -111,7 +111,7 @@ export function registerRoutes(app: Express): Server {
   // Branch routes
   app.get(
     "/api/branches",
-    requireRole([UserRole.ADMIN, UserRole.TEACHER]),
+    requireRole([UserRole.ADMIN, UserRole.TEACHER, UserRole.STUDENT]),
     async (req, res) => {
       const branches = await storage.listBranches();
       // Filter out hidden branches
@@ -214,7 +214,7 @@ export function registerRoutes(app: Express): Server {
   // Class routes
   app.get(
     "/api/classes",
-    requireRole([UserRole.ADMIN, UserRole.TEACHER]),
+    requireRole([UserRole.ADMIN, UserRole.TEACHER, UserRole.STUDENT]),
     async (req, res) => {
       const { branchId } = req.query;
       try {
@@ -334,7 +334,7 @@ export function registerRoutes(app: Express): Server {
   // Add this route before the existing class routes
   app.get(
     "/api/classes/:id",
-    requireRole([UserRole.ADMIN, UserRole.TEACHER]),
+    requireRole([UserRole.ADMIN, UserRole.TEACHER, UserRole.STUDENT]),
     async (req, res) => {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
