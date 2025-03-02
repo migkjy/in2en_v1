@@ -2,13 +2,7 @@ import React, { createContext, useContext, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { queryClient } from '@/lib/queryClient';
 import { useQuery, useMutation } from '@tanstack/react-query';
-
-interface User {
-  id: number;
-  email: string;
-  role: 'ADMIN' | 'TEACHER' | 'STUDENT';
-  name: string;
-}
+import type { User } from '@shared/schema';
 
 interface AuthContextType {
   user: User | null;
