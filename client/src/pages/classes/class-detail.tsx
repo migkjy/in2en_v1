@@ -102,10 +102,10 @@ export default function ClassDetail() {
 
   const assignStudentMutation = useMutation({
     mutationFn: async (studentId: number) => {
-      // Prevent duplicate assignments
+      // Check if student is already assigned
       const isAlreadyAssigned = assignedStudents.some(student => student.id === studentId);
       if (isAlreadyAssigned) {
-        throw new Error("Student is already assigned to this class");
+        return;
       }
 
       const response = await fetch(`/api/classes/${classId}/students/${studentId}`, {
@@ -120,14 +120,11 @@ export default function ClassDetail() {
       queryClient.invalidateQueries({ queryKey: ["/api/classes", classId, "students"] });
     },
     onError: (error: Error) => {
-      // Only show error toast for non-duplicate assignments
-      if (!error.message.includes("already assigned")) {
-        toast({
-          title: "Error",
-          description: error.message || "Failed to assign student",
-          variant: "destructive",
-        });
-      }
+      toast({
+        title: "Error",
+        description: error.message || "Failed to assign student",
+        variant: "destructive",
+      });
     },
   });
 
