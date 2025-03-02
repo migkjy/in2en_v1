@@ -17,7 +17,7 @@ import {
 import { format } from "date-fns";
 import { useAuth } from "@/hooks/use-auth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction} from "@/components/ui/alert-dialog";
 
 export default function AssignmentDetail() {
@@ -77,7 +77,7 @@ export default function AssignmentDetail() {
   // Sort submissions by student name
   const sortedSubmissions = useMemo(() => {
     if (!submissions || !students) return [];
-    
+
     return [...submissions].sort((a, b) => {
       const studentA = students.find(s => s.id === a.studentId)?.name || '';
       const studentB = students.find(s => s.id === b.studentId)?.name || '';
@@ -198,11 +198,6 @@ export default function AssignmentDetail() {
   const handleViewSubmission = (submissionId: number) => {
     navigate(`/submissions/${submissionId}`);
   };
-
-  //const handleEditSubmission = (submissionId: number) => {  Removed
-  //  const basePath = user?.role === "ADMIN" ? "/admin" : "/teacher";
-  //  navigate(`${basePath}/assignments/review/${submissionId}/edit`);
-  //}; Removed
 
 
   return (
