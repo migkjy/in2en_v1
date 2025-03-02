@@ -4,9 +4,11 @@ import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { extractTextFromImage, generateFeedback } from "./openai";
 import multer from "multer";
-import { UserRole, classes } from "@shared/schema";
+import { UserRole, classes, submissions } from "@shared/schema";
 import { eq } from "drizzle-orm";
 import { db } from "./db";
+import { scrypt, randomBytes } from "crypto";
+import { promisify } from "util";
 
 // Extend Express Request type to include user properties
 declare global {
@@ -896,9 +898,7 @@ export function registerRoutes(app: Express): Server {
       // Special case for students
       if (req.isAuthenticated() && req.user?.role === "STUDENT") {
         // Get all submissions for the authenticated student regardless of query params
-        const studentSubmissions = await db.select()
-          .from(submissions)
-          .where(eq(submissions.studentId, req.user.id));
+        const studentSubmissions = await storage.listUserSubmissions(req.user.id);
         return res.json(studentSubmissions);
       }
 
@@ -1180,7 +1180,22 @@ export function registerRoutes(app: Express): Server {
 
         // If password is empty string or undefined, remove it from the request body
         const updateData = { ...req.body };
-        if (!updateData.password) {
+        
+        // Handle password - validate and hash if present
+        if (updateData.password) {
+          // Password validation
+          if (updateData.password.length < 6) {
+            return res.status(400).json({ 
+              message: "Password must be at least 6 characters long" 
+            });
+          }
+          
+          // Hash the password (using the function from auth.ts)
+          const scryptAsync = promisify(scrypt);
+          const salt = randomBytes(16).toString('hex');
+          const derivedKey = (await scryptAsync(updateData.password, salt, 64)) as Buffer;
+          updateData.password = `${derivedKey.toString('hex')}.${salt}`;
+        } else {
           delete updateData.password;
         }
 
