@@ -8,18 +8,6 @@ import { storage } from "./storage";
 import { UserRole } from "@shared/schema";
 import type { User } from "@shared/schema";
 
-// Define a base type for the user to avoid circular reference
-type AuthUser = {
-  id: number;
-  role: UserRole;
-};
-
-declare global {
-  namespace Express {
-    interface User extends AuthUser {}
-  }
-}
-
 const scryptAsync = promisify(scrypt);
 
 async function hashPassword(password: string) {
@@ -29,10 +17,21 @@ async function hashPassword(password: string) {
 }
 
 async function comparePasswords(supplied: string, stored: string) {
-  const [hashed, salt] = stored.split(".");
-  const hashedBuf = Buffer.from(hashed, "hex");
-  const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
-  return timingSafeEqual(hashedBuf, suppliedBuf);
+  try {
+    if (!stored || !stored.includes('.')) {
+      return false;
+    }
+    const [hashed, salt] = stored.split(".");
+    if (!hashed || !salt) {
+      return false;
+    }
+    const hashedBuf = Buffer.from(hashed, "hex");
+    const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
+    return timingSafeEqual(hashedBuf, suppliedBuf);
+  } catch (error) {
+    console.error('Password comparison error:', error);
+    return false;
+  }
 }
 
 export function setupAuth(app: Express) {
@@ -64,12 +63,19 @@ export function setupAuth(app: Express) {
       async (email, password, done) => {
         try {
           const user = await storage.getUserByEmail(email);
-          if (!user || !(await comparePasswords(password, user.password))) {
-            return done(null, false, { message: "Invalid credentials" });
+          if (!user) {
+            return done(null, false, { message: "Invalid email or password" });
           }
-          // Only pass the necessary authentication fields
-          return done(null, { id: user.id, role: user.role });
+
+          const isValidPassword = await comparePasswords(password, user.password);
+          if (!isValidPassword) {
+            return done(null, false, { message: "Invalid email or password" });
+          }
+
+          const { password: _, ...userWithoutPassword } = user;
+          return done(null, userWithoutPassword);
         } catch (error) {
+          console.error('Authentication error:', error);
           return done(error);
         }
       }
@@ -86,8 +92,8 @@ export function setupAuth(app: Express) {
       if (!user) {
         return done(new Error("User not found"));
       }
-      // Only pass the necessary authentication fields
-      done(null, { id: user.id, role: user.role });
+      const { password: _, ...userWithoutPassword } = user;
+      done(null, userWithoutPassword);
     } catch (error) {
       done(error);
     }
@@ -110,10 +116,9 @@ export function setupAuth(app: Express) {
         role: role as UserRole
       });
 
-      req.login({ id: user.id, role: user.role }, (err) => {
+      const { password: _, ...userWithoutPassword } = user;
+      req.login(userWithoutPassword, (err) => {
         if (err) return next(err);
-        // Remove password from response
-        const { password, ...userWithoutPassword } = user;
         res.status(201).json(userWithoutPassword);
       });
     } catch (error) {
@@ -122,14 +127,15 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/login", (req, res, next) => {
-    passport.authenticate("local", (err: unknown, user: AuthUser | false, info: { message?: string } | undefined) => {
+    passport.authenticate("local", (err: unknown, user: User | false, info: { message?: string } | undefined) => {
       if (err) return next(err);
       if (!user) {
         return res.status(401).json({ message: info?.message || "Invalid credentials" });
       }
       req.login(user, (err) => {
         if (err) return next(err);
-        res.json(user);
+        const { password: _, ...userWithoutPassword } = user;
+        res.json(userWithoutPassword);
       });
     })(req, res, next);
   });
