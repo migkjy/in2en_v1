@@ -455,6 +455,7 @@ export default function ClassDetail() {
                                       handleRemoveStudent(student.id);
                                     }
                                   }}
+                                  disabled={!!isAssigned}
                                 />
                               </TableCell>
                             </TableRow>
