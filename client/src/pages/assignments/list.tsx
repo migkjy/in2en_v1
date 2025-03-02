@@ -228,7 +228,7 @@ export default function AssignmentList() {
     });
 
     return sortedAssignments.filter((assignment) => {
-      // For students, only show published and completed assignments
+      // For students, only show published and completed assignments where they have a submission
       if (user?.role === "STUDENT") {
         // First check status
         if (!["published", "completed"].includes(assignment.status.toLowerCase())) {
