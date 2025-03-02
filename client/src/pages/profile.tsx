@@ -14,14 +14,15 @@ export default function ProfilePage() {
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
 
-  // Get user details
+  // Get user details - Fixed query key structure and added proper type
   const { data: userDetails, isLoading } = useQuery({
-    queryKey: [`/api/users/${user?.id}`],
+    queryKey: ["/api/users/profile"],
     queryFn: async () => {
       if (!user?.id) throw new Error("User ID is required");
-      const response = await fetch(`/api/users/${user.id}`);
+      const response = await fetch("/api/users/profile");
       if (!response.ok) {
-        throw new Error("Failed to fetch user details");
+        const error = await response.json();
+        throw new Error(error.message || "Failed to fetch user details");
       }
       return response.json();
     },
@@ -49,7 +50,7 @@ export default function ProfilePage() {
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: { name: string; phone_number: string }) => {
-      const response = await fetch(`/api/users/${user?.id}/profile`, {
+      const response = await fetch("/api/users/profile", {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -58,8 +59,8 @@ export default function ProfilePage() {
       });
 
       if (!response.ok) {
-        const error = await response.text();
-        throw new Error(error || "Failed to update profile");
+        const error = await response.json();
+        throw new Error(error.message || "Failed to update profile");
       }
 
       return response.json();
@@ -82,7 +83,7 @@ export default function ProfilePage() {
 
   const changePasswordMutation = useMutation({
     mutationFn: async (data: { currentPassword: string; newPassword: string }) => {
-      const response = await fetch(`/api/users/${user?.id}/password`, {
+      const response = await fetch("/api/users/password", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -91,8 +92,8 @@ export default function ProfilePage() {
       });
 
       if (!response.ok) {
-        const error = await response.text();
-        throw new Error(error || "Failed to change password");
+        const error = await response.json();
+        throw new Error(error.message || "Failed to change password");
       }
 
       return response.json();
@@ -144,12 +145,19 @@ export default function ProfilePage() {
     });
   };
 
-  if (isLoading) {
+  // Added better loading state handling
+  if (isLoading || !userDetails) {
     return (
       <div className="flex h-screen">
         <Sidebar className="w-64" />
         <main className="flex-1 p-8">
-          <div>Loading...</div>
+          <div className="max-w-2xl mx-auto">
+            <Card>
+              <CardContent className="p-8 flex justify-center items-center">
+                <div className="text-muted-foreground">Loading profile information...</div>
+              </CardContent>
+            </Card>
+          </div>
         </main>
       </div>
     );
@@ -175,7 +183,7 @@ export default function ProfilePage() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
                   <Label>Email</Label>
-                  <Input value={userDetails?.email || ""} disabled />
+                  <Input value={userDetails.email || ""} disabled />
                 </div>
                 <div className="space-y-2">
                   <Label>Name</Label>
