@@ -5,7 +5,10 @@ import session from "express-session";
 import { db } from "./db";
 import { and, eq } from "drizzle-orm";
 import connectPg from "connect-pg-simple";
+import { scrypt, randomBytes, timingSafeEqual } from "crypto";
+import { promisify } from "util";
 
+const scryptAsync = promisify(scrypt);
 const PostgresSessionStore = connectPg(session);
 
 export interface IStorage {
@@ -82,6 +85,10 @@ export interface IStorage {
   createAgeGroup(data: { name: string; description?: string }): Promise<AgeGroup>;
   listAgeGroups(): Promise<AgeGroup[]>;
   deleteAgeGroup(id: number): Promise<void>;
+  
+  // Password operations
+  verifyPassword(user: User, password: string): Promise<boolean>;
+  updateUserPassword(userId: number, newPassword: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -774,6 +781,45 @@ export class DatabaseStorage implements IStorage {
 
   async deleteAgeGroup(id: number): Promise<void> {
     await db.delete(ageGroups).where(eq(ageGroups.id, id));
+  }
+  
+  async verifyPassword(user: User, password: string): Promise<boolean> {
+    try {
+      if (!user.password) return false;
+      
+      // Check if password has salt (contains a period)
+      if (user.password.includes('.')) {
+        const [hashedPassword, salt] = user.password.split('.');
+        const derivedKey = await scryptAsync(password, salt, 64) as Buffer;
+        return timingSafeEqual(
+          Buffer.from(hashedPassword, 'hex'),
+          derivedKey
+        );
+      } else {
+        // For backward compatibility with unhashed passwords
+        return user.password === password;
+      }
+    } catch (error) {
+      console.error("Error verifying password:", error);
+      return false;
+    }
+  }
+  
+  async updateUserPassword(userId: number, newPassword: string): Promise<boolean> {
+    try {
+      const salt = randomBytes(16).toString('hex');
+      const derivedKey = await scryptAsync(newPassword, salt, 64) as Buffer;
+      const hashedPassword = `${derivedKey.toString('hex')}.${salt}`;
+      
+      await db.update(users)
+        .set({ password: hashedPassword })
+        .where(eq(users.id, userId));
+        
+      return true;
+    } catch (error) {
+      console.error("Error updating password:", error);
+      return false;
+    }
   }
 }
 

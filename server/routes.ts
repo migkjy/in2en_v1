@@ -1387,6 +1387,88 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Update user profile
+  app.patch("/api/users/:id/profile", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+
+      // Allow access only to current user's own profile or admin access
+      if (req.user?.id !== id && req.user?.role !== "ADMIN") {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const { name, phone_number } = req.body;
+      const updatedUser = await storage.updateUser(id, {
+        name,
+        phone_number,
+      });
+
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Remove sensitive information
+      const { password, ...userWithoutPassword } = updatedUser;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      console.error("Error updating user profile:", error);
+      res.status(500).json({ message: "An error occurred" });
+    }
+  });
+
+  // Change user password
+  app.post("/api/users/:id/password", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+
+      // Allow access only to current user's own password
+      if (req.user?.id !== id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const { currentPassword, newPassword } = req.body;
+      
+      // Get the user
+      const user = await storage.getUser(id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Check if passwords are set
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({ message: "Current and new passwords are required" });
+      }
+      
+      // Verify current password
+      const isValid = await storage.verifyPassword(user, currentPassword);
+      if (!isValid) {
+        return res.status(400).json({ message: "Current password is incorrect" });
+      }
+      
+      // Update the password
+      await storage.updateUserPassword(id, newPassword);
+      
+      res.json({ message: "Password updated successfully" });
+    } catch (error) {
+      console.error("Error changing password:", error);
+      res.status(500).json({ message: "An error occurred" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
