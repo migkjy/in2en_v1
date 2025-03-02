@@ -63,21 +63,13 @@ export default function AssignmentDetail() {
     queryKey: ["/api/submissions", assignmentId],
     queryFn: async () => {
       if (!assignmentId) throw new Error("Assignment ID is required");
-
-      // For students, we get all their submissions from the general endpoint
-      // The API will filter for the student's submissions
       const response = await fetch(
-        `/api/submissions`,
+        `/api/submissions?assignmentId=${assignmentId}`,
       );
-
       if (!response.ok) {
         throw new Error("Failed to fetch submissions");
       }
-
-      const data = await response.json();
-
-      // Filter the submissions for this assignment
-      return data.filter((sub: Submission) => sub.assignmentId === Number(assignmentId));
+      return response.json();
     },
     enabled: !!assignmentId,
   });
@@ -253,22 +245,20 @@ export default function AssignmentDetail() {
                     <p className="text-gray-600">{assignment.description}</p>
                   </div>
 
-                  {/* Conditionally render Students List based on user role */}
-                  {isTeacherOrAdmin && (
-                    <div>
-                      <h3 className="text-sm font-medium mb-4">Class Students</h3>
-                      <div className="flex flex-wrap gap-2">
-                        {students?.map((student) => (
-                          <div
-                            key={student.id}
-                            className="flex items-center gap-1 px-3 py-1 bg-gray-100 rounded-full text-sm"
-                          >
-                            {student.name}
-                          </div>
-                        ))}
-                      </div>
+                  {/* Students List */}
+                  <div>
+                    <h3 className="text-sm font-medium mb-4">Class Students</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {students?.map((student) => (
+                        <div
+                          key={student.id}
+                          className="flex items-center gap-1 px-3 py-1 bg-gray-100 rounded-full text-sm"
+                        >
+                          {student.name}
+                        </div>
+                      ))}
                     </div>
-                  )}
+                  </div>
 
                   {/* Action Buttons for Teachers/Admins */}
                   {isTeacherOrAdmin && (
