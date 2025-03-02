@@ -898,13 +898,7 @@ export function registerRoutes(app: Express): Server {
       // Special case for students
       if (req.isAuthenticated() && req.user?.role === "STUDENT") {
         // Get all submissions for the authenticated student regardless of query params
-        console.log("Fetching submissions for student ID:", req.user.id);
-        const studentSubmissions = await db
-          .select()
-          .from(submissions)
-          .where(eq(submissions.studentId, req.user.id));
-        
-        console.log("Found student submissions:", studentSubmissions.length);
+        const studentSubmissions = await storage.listUserSubmissions(req.user.id);
         return res.json(studentSubmissions);
       }
 

@@ -207,9 +207,7 @@ export default function AssignmentList() {
             console.error("Error fetching submissions:", await response.text());
             return [];
           }
-          console.log("Fetched student submissions:", await response.json());
-          const data = await response.json();
-          return data;
+          return await response.json();
         } catch (error) {
           console.error("Error fetching student submissions:", error);
           return [];
@@ -222,28 +220,9 @@ export default function AssignmentList() {
 
   const filteredAssignments = useMemo(() => {
     if (!assignments) return [];
-    
-    // For students, we need to include all assignments for classes they're in
-    // and also assignments they've submitted to
-    let relevantAssignments = [...assignments];
-    
-    // If student, include assignments they've submitted to
-    if (user?.role === "STUDENT" && studentSubmissions?.length > 0) {
-      console.log("Student submissions:", studentSubmissions);
-      // Get assignment IDs from submissions
-      const submissionAssignmentIds = studentSubmissions.map(sub => sub.assignmentId);
-      console.log("Submission assignment IDs:", submissionAssignmentIds);
-      
-      // Filter to include only assignments in student's submissions
-      if (submissionAssignmentIds.length > 0) {
-        relevantAssignments = relevantAssignments.filter(assignment => 
-          submissionAssignmentIds.includes(assignment.id)
-        );
-      }
-    }
 
     // Sort assignments by due date in descending order (newest dates first)
-    const sortedAssignments = relevantAssignments.sort((a, b) => {
+    const sortedAssignments = [...assignments].sort((a, b) => {
       // Handle assignments without due dates (push them to the end)
       if (!a.dueDate) return 1;
       if (!b.dueDate) return -1;
