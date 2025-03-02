@@ -205,10 +205,6 @@ export default function ClassDetail() {
       }
 
       queryClient.invalidateQueries({ queryKey: ["/api/classes", classId, "students"] });
-      toast({
-        title: "Success",
-        description: "Student removed successfully",
-      });
     } catch (error) {
       toast({
         title: "Error",
