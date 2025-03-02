@@ -49,14 +49,21 @@ function AssignmentRedirect() {
   const [, setLocation] = useLocation();
 
   useEffect(() => {
-    const role = user?.role?.toLowerCase() || 'student';
+    if (!user) return;
+
+    const role = user.role.toLowerCase();
     const path = window.location.pathname;
-    if (path.startsWith('/assignments/')) {
-      setLocation(`/${role}${path}`);
+
+    // Handle all assignment-related paths
+    if (path.startsWith('/assignments')) {
+      const newPath = `/${role}${path}`;
+      console.log(`Redirecting from ${path} to ${newPath}`); // Debug log
+      setLocation(newPath);
     }
   }, [user, setLocation]);
 
-  return null;
+  // Show loading while redirecting
+  return <div>Loading...</div>;
 }
 
 function Router() {
@@ -77,15 +84,15 @@ function Router() {
       <Switch>
         <Route path="/auth" component={AuthPage} />
 
-        {/* Add catch-all route for assignments */}
+        {/* Important: Place this before other routes to catch all assignment paths */}
         <Route path="/assignments/:rest*" component={AssignmentRedirect} />
 
         {/* Admin Routes */}
         <Route path="/admin" component={(props) => <ProtectedRoute component={AdminDashboard} {...props} />} />
         <Route path="/admin/profile" component={(props) => <ProtectedRoute component={Profile} {...props} />} />
+        <Route path="/admin/assignments/upload/:id" component={(props) => <ProtectedRoute component={UploadAssignment} {...props} />} />
         <Route path="/admin/assignments/create" component={(props) => <ProtectedRoute component={CreateAssignment} {...props} />} />
         <Route path="/admin/assignments/review/:id" component={(props) => <ProtectedRoute component={ReviewAssignment} {...props} />} />
-        <Route path="/admin/assignments/upload/:id" component={(props) => <ProtectedRoute component={UploadAssignment} {...props} />} />
         <Route path="/admin/assignments/:id" component={(props) => <ProtectedRoute component={AssignmentDetail} {...props} />} />
         <Route path="/admin/assignments" component={(props) => <ProtectedRoute component={AssignmentList} {...props} />} />
         <Route path="/admin/classes/:id" component={(props) => <ProtectedRoute component={ClassDetail} {...props} />} />
@@ -99,9 +106,9 @@ function Router() {
         {/* Teacher Routes */}
         <Route path="/teacher" component={(props) => <ProtectedRoute component={TeacherDashboard} {...props} />} />
         <Route path="/teacher/profile" component={(props) => <ProtectedRoute component={Profile} {...props} />} />
+        <Route path="/teacher/assignments/upload/:id" component={(props) => <ProtectedRoute component={UploadAssignment} {...props} />} />
         <Route path="/teacher/assignments/create" component={(props) => <ProtectedRoute component={CreateAssignment} {...props} />} />
         <Route path="/teacher/assignments/review/:id" component={(props) => <ProtectedRoute component={ReviewAssignment} {...props} />} />
-        <Route path="/teacher/assignments/upload/:id" component={(props) => <ProtectedRoute component={UploadAssignment} {...props} />} />
         <Route path="/teacher/assignments/:id" component={(props) => <ProtectedRoute component={AssignmentDetail} {...props} />} />
         <Route path="/teacher/assignments" component={(props) => <ProtectedRoute component={AssignmentList} {...props} />} />
         <Route path="/teacher/classes/:id" component={(props) => <ProtectedRoute component={ClassDetail} {...props} />} />
