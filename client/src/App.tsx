@@ -26,7 +26,6 @@ const TeacherDetail = lazy(() => import("@/pages/teachers/detail"));
 const StudentList = lazy(() => import("@/pages/students/list"));
 const NotFound = lazy(() => import("@/pages/not-found"));
 
-// Protected Route Component
 function ProtectedRoute({ component: Component, ...rest }) {
   const { user, isLoading } = useAuth();
   const [, setLocation] = useLocation();
@@ -61,6 +60,11 @@ function Router() {
     <Suspense fallback={<div>Loading...</div>}>
       <Switch>
         <Route path="/auth" component={AuthPage} />
+
+        {/* Common Routes */}
+        <Route path="/assignments/:id/upload" component={(props) => <ProtectedRoute component={UploadAssignment} {...props} />} />
+        <Route path="/assignments/:id" component={(props) => <ProtectedRoute component={AssignmentDetail} {...props} />} />
+        <Route path="/submissions/:id" component={(props) => <ProtectedRoute component={SubmissionDetail} {...props} />} />
 
         {/* Admin Routes */}
         <Route path="/admin" component={(props) => <ProtectedRoute component={AdminDashboard} {...props} />} />
@@ -98,9 +102,6 @@ function Router() {
         <Route path="/student/submissions/:id" component={(props) => <ProtectedRoute component={SubmissionDetail} {...props} />} />
         <Route path="/student/classes/:id" component={(props) => <ProtectedRoute component={ClassDetail} {...props} />} />
         <Route path="/student/classes" component={(props) => <ProtectedRoute component={ClassList} {...props} />} />
-
-        {/* Common Routes */}
-        <Route path="/submissions/:id" component={(props) => <ProtectedRoute component={SubmissionDetail} {...props} />} />
 
         {/* Root Route */}
         <Route path="/" component={() => {

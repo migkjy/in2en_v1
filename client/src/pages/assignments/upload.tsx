@@ -19,7 +19,7 @@ interface UploadFile extends File {
 export default function UploadAssignment() {
   const { user } = useAuth();
   const basePath = user?.role.toLowerCase();
-  const [, params] = useRoute(`/${basePath}/assignments/:id/upload`);
+  const [, params] = useRoute("/assignments/:id/upload") || useRoute(`/${basePath}/assignments/:id/upload`);
   const assignmentId = params?.id;
   const [, navigate] = useLocation();
   const { toast } = useToast();
@@ -64,13 +64,6 @@ export default function UploadAssignment() {
           formData.append("assignmentId", assignmentId);
           formData.append("studentId", file.studentId!.toString());
 
-          console.log('Uploading file:', {
-            fileName: file.name,
-            fileSize: file.size,
-            fileType: file.type,
-            studentId: file.studentId
-          });
-
           const res = await apiRequest("POST", "/api/submissions/upload", formData, {
             credentials: 'include',
             headers: {
@@ -80,7 +73,6 @@ export default function UploadAssignment() {
 
           if (!res.ok) {
             const text = await res.text();
-            console.error("Upload failed with response:", text);
             throw new Error(text || res.statusText || `Error: ${res.status}`);
           }
 
