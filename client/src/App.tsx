@@ -44,38 +44,26 @@ function ProtectedRoute({ component: Component, ...rest }) {
   return user ? <Component {...rest} /> : null;
 }
 
-function AssignmentRedirect() {
-  const { user } = useAuth();
-  const [, setLocation] = useLocation();
-
-  useEffect(() => {
-    if (!user) return;
-
-    const role = user.role.toLowerCase();
-    const path = window.location.pathname;
-
-    // Handle all assignment-related paths
-    if (path.startsWith('/assignments')) {
-      const newPath = `/${role}${path}`;
-      console.log(`Redirecting from ${path} to ${newPath}`); // Debug log
-      setLocation(newPath);
-    }
-  }, [user, setLocation]);
-
-  // Show loading while redirecting
-  return <div>Loading...</div>;
-}
-
 function Router() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
 
   useEffect(() => {
     if (user) {
-      const homePath = 
-        user.role === "ADMIN" ? "/admin" :
-        user.role === "TEACHER" ? "/teacher" : "/student";
-      setLocation(homePath);
+      const path = window.location.pathname;
+      if (path.startsWith('/assignments/')) {
+        const newPath = `/${user.role.toLowerCase()}${path}`;
+        setLocation(newPath);
+        return;
+      }
+
+      // Redirect to role-specific dashboard
+      if (path === '/') {
+        const homePath = 
+          user.role === "ADMIN" ? "/admin" :
+          user.role === "TEACHER" ? "/teacher" : "/student";
+        setLocation(homePath);
+      }
     }
   }, [user, setLocation]);
 
@@ -84,14 +72,11 @@ function Router() {
       <Switch>
         <Route path="/auth" component={AuthPage} />
 
-        {/* Important: Place this before other routes to catch all assignment paths */}
-        <Route path="/assignments/:rest*" component={AssignmentRedirect} />
-
         {/* Admin Routes */}
         <Route path="/admin" component={(props) => <ProtectedRoute component={AdminDashboard} {...props} />} />
         <Route path="/admin/profile" component={(props) => <ProtectedRoute component={Profile} {...props} />} />
-        <Route path="/admin/assignments/upload/:id" component={(props) => <ProtectedRoute component={UploadAssignment} {...props} />} />
         <Route path="/admin/assignments/create" component={(props) => <ProtectedRoute component={CreateAssignment} {...props} />} />
+        <Route path="/admin/assignments/upload/:id" component={(props) => <ProtectedRoute component={UploadAssignment} {...props} />} />
         <Route path="/admin/assignments/review/:id" component={(props) => <ProtectedRoute component={ReviewAssignment} {...props} />} />
         <Route path="/admin/assignments/:id" component={(props) => <ProtectedRoute component={AssignmentDetail} {...props} />} />
         <Route path="/admin/assignments" component={(props) => <ProtectedRoute component={AssignmentList} {...props} />} />
@@ -106,8 +91,8 @@ function Router() {
         {/* Teacher Routes */}
         <Route path="/teacher" component={(props) => <ProtectedRoute component={TeacherDashboard} {...props} />} />
         <Route path="/teacher/profile" component={(props) => <ProtectedRoute component={Profile} {...props} />} />
-        <Route path="/teacher/assignments/upload/:id" component={(props) => <ProtectedRoute component={UploadAssignment} {...props} />} />
         <Route path="/teacher/assignments/create" component={(props) => <ProtectedRoute component={CreateAssignment} {...props} />} />
+        <Route path="/teacher/assignments/upload/:id" component={(props) => <ProtectedRoute component={UploadAssignment} {...props} />} />
         <Route path="/teacher/assignments/review/:id" component={(props) => <ProtectedRoute component={ReviewAssignment} {...props} />} />
         <Route path="/teacher/assignments/:id" component={(props) => <ProtectedRoute component={AssignmentDetail} {...props} />} />
         <Route path="/teacher/assignments" component={(props) => <ProtectedRoute component={AssignmentList} {...props} />} />
@@ -117,6 +102,7 @@ function Router() {
         {/* Student Routes */}
         <Route path="/student" component={(props) => <ProtectedRoute component={StudentDashboard} {...props} />} />
         <Route path="/student/profile" component={(props) => <ProtectedRoute component={Profile} {...props} />} />
+        <Route path="/student/assignments/create" component={(props) => <ProtectedRoute component={CreateAssignment} {...props} />} />
         <Route path="/student/assignments/upload/:id" component={(props) => <ProtectedRoute component={UploadAssignment} {...props} />} />
         <Route path="/student/assignments/:id" component={(props) => <ProtectedRoute component={AssignmentDetail} {...props} />} />
         <Route path="/student/assignments" component={(props) => <ProtectedRoute component={AssignmentList} {...props} />} />
@@ -124,11 +110,32 @@ function Router() {
         <Route path="/student/classes/:id" component={(props) => <ProtectedRoute component={ClassDetail} {...props} />} />
         <Route path="/student/classes" component={(props) => <ProtectedRoute component={ClassList} {...props} />} />
 
+        {/* Catch-all routes for assignments */}
+        <Route path="/assignments/upload/:id" component={(props) => {
+          const { user } = useAuth();
+          if (!user) return null;
+          setLocation(`/${user.role.toLowerCase()}/assignments/upload/${props.params.id}`);
+          return <div>Redirecting...</div>;
+        }} />
+        <Route path="/assignments/:id" component={(props) => {
+          const { user } = useAuth();
+          if (!user) return null;
+          setLocation(`/${user.role.toLowerCase()}/assignments/${props.params.id}`);
+          return <div>Redirecting...</div>;
+        }} />
+        <Route path="/assignments" component={() => {
+          const { user } = useAuth();
+          if (!user) return null;
+          setLocation(`/${user.role.toLowerCase()}/assignments`);
+          return <div>Redirecting...</div>;
+        }} />
+
         {/* Common Routes */}
         <Route path="/submissions/:id" component={(props) => <ProtectedRoute component={SubmissionDetail} {...props} />} />
 
         {/* Root Route */}
         <Route path="/" component={() => {
+          const { user } = useAuth();
           if (!user) {
             setLocation('/auth');
             return null;
