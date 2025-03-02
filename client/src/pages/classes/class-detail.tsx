@@ -102,6 +102,12 @@ export default function ClassDetail() {
 
   const assignStudentMutation = useMutation({
     mutationFn: async (studentId: number) => {
+      // Prevent duplicate assignments
+      const isAlreadyAssigned = assignedStudents.some(student => student.id === studentId);
+      if (isAlreadyAssigned) {
+        throw new Error("Student is already assigned to this class");
+      }
+
       const response = await fetch(`/api/classes/${classId}/students/${studentId}`, {
         method: "PUT",
       });
@@ -114,11 +120,14 @@ export default function ClassDetail() {
       queryClient.invalidateQueries({ queryKey: ["/api/classes", classId, "students"] });
     },
     onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to assign student",
-        variant: "destructive",
-      });
+      // Only show error toast for non-duplicate assignments
+      if (!error.message.includes("already assigned")) {
+        toast({
+          title: "Error",
+          description: error.message || "Failed to assign student",
+          variant: "destructive",
+        });
+      }
     },
   });
 
@@ -449,14 +458,29 @@ export default function ClassDetail() {
                                 <Checkbox
                                   checked={!!isAssigned}
                                   onCheckedChange={(checked) => {
+                                    // Prevent action if mutations are in progress
+                                    if (assignStudentMutation.isPending || removeStudentMutation.isPending) return;
+
                                     if (checked) {
-                                      assignStudentMutation.mutate(student.id);
+                                      // Additional check to prevent duplicate assignments
+                                      if (!isAssigned && !assignStudentMutation.isPending) {
+                                        assignStudentMutation.mutate(student.id);
+                                      }
                                     } else {
-                                      removeStudentMutation.mutate(student.id);
+                                      if (isAssigned && !removeStudentMutation.isPending) {
+                                        removeStudentMutation.mutate(student.id);
+                                      }
                                     }
                                   }}
-                                  disabled={!!isAssigned || assignStudentMutation.isPending || removeStudentMutation.isPending}
-                                  onClick={(e) => e.stopPropagation()} // Prevent event bubbling
+                                  disabled={
+                                    !!isAssigned ||
+                                    assignStudentMutation.isPending ||
+                                    removeStudentMutation.isPending
+                                  }
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    e.preventDefault();
+                                  }}
                                 />
                               </TableCell>
                             </TableRow>
