@@ -17,14 +17,13 @@ interface UploadFile extends File {
 }
 
 export default function UploadAssignment() {
-  const [, params] = useRoute("/assignments/:id/upload");
+  const { user } = useAuth();
+  const basePath = user?.role === "ADMIN" ? "/admin" : "/teacher";
+  const [, params] = useRoute(`${basePath}/assignments/:id/upload`);
   const assignmentId = params?.id;
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const [files, setFiles] = useState<UploadFile[]>([]);
-  const { user } = useAuth();
-
-  const basePath = user?.role === "ADMIN" ? "/admin/assignments" : "/teacher/assignments";
 
   const { data: assignment } = useQuery<Assignment>({
     queryKey: ["/api/assignments", assignmentId],
@@ -97,7 +96,7 @@ export default function UploadAssignment() {
         title: "Success",
         description: "Homework files uploaded successfully",
       });
-      navigate(`${basePath}/${assignmentId}`);
+      navigate(`${basePath}/assignments/${assignmentId}`);
     },
     onError: (error) => {
       toast({
@@ -225,7 +224,7 @@ export default function UploadAssignment() {
                 <div className="flex justify-end gap-4">
                   <Button
                     variant="outline"
-                    onClick={() => navigate(`${basePath}/${assignmentId}`)}
+                    onClick={() => navigate(`${basePath}/assignments/${assignmentId}`)}
                   >
                     Cancel
                   </Button>
