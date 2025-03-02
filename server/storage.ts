@@ -5,6 +5,7 @@ import session from "express-session";
 import { db } from "./db";
 import { and, eq } from "drizzle-orm";
 import connectPg from "connect-pg-simple";
+import bcrypt from 'bcrypt'; //Import bcrypt
 
 const PostgresSessionStore = connectPg(session);
 
@@ -16,6 +17,8 @@ export interface IStorage {
   listUsers(): Promise<User[]>;
   updateUser(id: number, data: Partial<User>): Promise<User | undefined>;
   deleteUser(id: number): Promise<void>;
+  verifyPassword(user: User, password: string): Promise<boolean>; // Added
+  updateUserPassword(userId: number, newPassword: string): Promise<boolean>; // Added
 
   // Branch operations
   createBranch(data: Partial<Branch>): Promise<Branch>;
@@ -117,12 +120,31 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateUser(id: number, data: Partial<User>): Promise<User | undefined> {
-    const [user] = await db
+    const user = await this.getUser(id);
+    if (!user) return null;
+
+    // If there's a new password, hash it before saving
+    let hashedPassword;
+    if (data.password) {
+      hashedPassword = await bcrypt.hash(data.password, 10);
+    }
+
+    const updateData = {
+      ...data,
+      password: hashedPassword,
+    };
+
+    if (!hashedPassword) {
+      delete updateData.password;
+    }
+
+    const updatedUsers = await db
       .update(users)
-      .set(data)
+      .set(updateData)
       .where(eq(users.id, id))
       .returning();
-    return user;
+
+    return updatedUsers[0];
   }
 
   async deleteUser(id: number): Promise<void> {
@@ -774,6 +796,27 @@ export class DatabaseStorage implements IStorage {
 
   async deleteAgeGroup(id: number): Promise<void> {
     await db.delete(ageGroups).where(eq(ageGroups.id, id));
+  }
+
+  async verifyPassword(user: User, password: string): Promise<boolean> {
+    if (!user || !user.password) return false;
+    return bcrypt.compare(password, user.password);
+  }
+
+  async updateUserPassword(userId: number, newPassword: string): Promise<boolean> {
+    const user = await this.getUser(userId);
+    if (!user) return false;
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await db
+      .update(users)
+      .set({
+        password: hashedPassword
+      })
+      .where(eq(users.id, userId));
+
+    return true;
   }
 }
 
