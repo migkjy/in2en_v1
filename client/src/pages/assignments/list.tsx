@@ -234,7 +234,7 @@ export default function AssignmentList() {
         if (!["published", "completed"].includes(assignment.status.toLowerCase())) {
           return false;
         }
-        
+
         // Then check if student has a submission for this assignment
         if (studentSubmissions && studentSubmissions.length > 0) {
           const hasSubmission = studentSubmissions.some(
@@ -266,6 +266,25 @@ export default function AssignmentList() {
       return true;
     });
   }, [assignments, selectedBranch, selectedClass, selectedStatus, assignmentClasses.data, user?.role]);
+
+  // Get submission counts for each assignment
+  const { data: submissionCounts } = useQuery({
+    queryKey: ["/api/assignments/submission-counts", assignments?.map(a => a.id)],
+    queryFn: async () => {
+      if (!assignments) return {};
+      const results = await Promise.all(assignments.map(async (assignment) => {
+        const response = await fetch(`/api/submissions?assignmentId=${assignment.id}`);
+        if (response.ok) {
+          const submissions = await response.json();
+          return { assignmentId: assignment.id, count: submissions.length };
+        } else {
+          return { assignmentId: assignment.id, count: 0 }; // Handle errors gracefully
+        }
+      }));
+      return Object.fromEntries(results.map(item => [item.assignmentId, item.count]));
+    },
+    enabled: !!assignments && assignments.length > 0,
+  });
 
 
   return (
@@ -350,7 +369,7 @@ export default function AssignmentList() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Title</TableHead>
+                    <TableHead className="w-[200px]">Title</TableHead>
                     {user?.role !== "STUDENT" && (
                       <>
                         <TableHead>Branch</TableHead>
@@ -359,13 +378,14 @@ export default function AssignmentList() {
                     )}
                     <TableHead>Due Date</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Submissions</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {!loadingAssignments && filteredAssignments.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                      <TableCell colSpan={7} className="text-center py-8 text-gray-500">
                         No assignments found
                       </TableCell>
                     </TableRow>
@@ -426,7 +446,18 @@ export default function AssignmentList() {
                                 </DropdownMenuContent>
                               </DropdownMenu>
                             </TableCell>
-                            <TableCell className="space-x-2 text-right">
+                            <TableCell>
+                              {submissionCounts && submissionCounts[assignment.id] !== undefined ? (
+                                <span className="px-2 py-1 bg-blue-50 text-blue-600 rounded-md font-medium">
+                                  {submissionCounts[assignment.id]}
+                                </span>
+                              ) : (
+                                <span className="px-2 py-1 bg-gray-50 text-gray-400 rounded-md">
+                                  0
+                                </span>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-right">
                               <Button
                                 variant="outline"
                                 size="sm"
