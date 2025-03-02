@@ -113,14 +113,6 @@ export default function TeacherList() {
                       variant="outline"
                       size="sm"
                       className="mr-2"
-                      onClick={() => setLocation(`/admin/teachers/${teacher.id}`)}
-                    >
-                      View
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="mr-2"
                       onClick={() => {
                         setSelectedTeacher(teacher);
                         setIsCreateTeacherDialogOpen(true);
