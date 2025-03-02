@@ -220,29 +220,9 @@ export default function AssignmentList() {
 
   const filteredAssignments = useMemo(() => {
     if (!assignments) return [];
-    
-    // For students, we need to filter assignments based on their submissions
-    let relevantAssignments = [...assignments];
-    
-    // If student, filter assignments to only include those they've submitted to
-    if (user?.role === "STUDENT" && studentSubmissions?.length > 0) {
-      console.log("Student has submissions:", studentSubmissions.length);
-      
-      // Get assignment IDs from submissions
-      const submissionAssignmentIds = studentSubmissions.map(sub => sub.assignmentId);
-      console.log("Student submission assignment IDs:", submissionAssignmentIds);
-      
-      // Check if the student has any submissions
-      if (submissionAssignmentIds.length > 0) {
-        // Include assignments that the student has submitted to
-        relevantAssignments = assignments.filter(assignment => 
-          submissionAssignmentIds.includes(assignment.id)
-        );
-      }
-    }
 
     // Sort assignments by due date in descending order (newest dates first)
-    const sortedAssignments = relevantAssignments.sort((a, b) => {
+    const sortedAssignments = [...assignments].sort((a, b) => {
       // Handle assignments without due dates (push them to the end)
       if (!a.dueDate) return 1;
       if (!b.dueDate) return -1;
