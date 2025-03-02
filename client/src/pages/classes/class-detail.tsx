@@ -100,8 +100,8 @@ export default function ClassDetail() {
     },
   });
 
-  const assignStudentMutation = useMutation(
-    async (studentId: number) => {
+  const assignStudentMutation = useMutation({
+    mutationFn: async (studentId: number) => {
       const response = await fetch(`/api/classes/${classId}/students/${studentId}`, {
         method: "PUT",
       });
@@ -110,22 +110,20 @@ export default function ClassDetail() {
         throw new Error(error.message || "Failed to assign student");
       }
     },
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["/api/classes", classId, "students"] });
-      },
-      onError: (error) => {
-        toast({
-          title: "Error",
-          description: error instanceof Error ? error.message : "Failed to assign student",
-          variant: "destructive",
-        });
-      },
-    }
-  );
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/classes", classId, "students"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to assign student",
+        variant: "destructive",
+      });
+    },
+  });
 
-  const removeStudentMutation = useMutation(
-    async (studentId: number) => {
+  const removeStudentMutation = useMutation({
+    mutationFn: async (studentId: number) => {
       const response = await fetch(`/api/classes/${classId}/students/${studentId}`, {
         method: "DELETE",
       });
@@ -134,19 +132,17 @@ export default function ClassDetail() {
         throw new Error(error.message || "Failed to remove student");
       }
     },
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["/api/classes", classId, "students"] });
-      },
-      onError: (error) => {
-        toast({
-          title: "Error",
-          description: error instanceof Error ? error.message : "Failed to remove student",
-          variant: "destructive",
-        });
-      },
-    }
-  );
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/classes", classId, "students"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to remove student",
+        variant: "destructive",
+      });
+    },
+  });
 
 
   if (isClassLoading) {
@@ -214,55 +210,6 @@ export default function ClassDetail() {
     }
   };
 
-  const handleAssignStudent = async (studentId: number) => {
-    if (!canManageStudents) return;
-
-    // Check if student is already assigned
-    const isAlreadyAssigned = assignedStudents.some(student => student.id === studentId);
-    if (isAlreadyAssigned) return;
-
-    try {
-      const response = await fetch(`/api/classes/${classId}/students/${studentId}`, {
-        method: "PUT",
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to assign student");
-      }
-
-      queryClient.invalidateQueries({ queryKey: ["/api/classes", classId, "students"] });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to assign student",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleRemoveStudent = async (studentId: number) => {
-    if (!canManageStudents) return;
-
-    try {
-      const response = await fetch(`/api/classes/${classId}/students/${studentId}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to remove student");
-      }
-
-      queryClient.invalidateQueries({ queryKey: ["/api/classes", classId, "students"] });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to remove student",
-        variant: "destructive",
-      });
-    }
-  };
 
   return (
     <div className="flex h-screen">
