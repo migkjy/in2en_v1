@@ -9,10 +9,20 @@ import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Lock, User, Loader2 } from "lucide-react";
 
+const PASSWORD_PATTERN = /^[A-Za-z0-9!@#$%^&*()_+\-=\[\]{};:'",.<>/?]+$/;
+
 export default function ProfilePage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
+
+  const [formData, setFormData] = useState({
+    name: "",
+    phone_number: "",
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
 
   // Get user details
   const { data: userDetails, isLoading, error } = useQuery({
@@ -27,14 +37,6 @@ export default function ProfilePage() {
       return response.json();
     },
     enabled: !!user?.id,
-  });
-
-  const [formData, setFormData] = useState({
-    name: "",
-    phone_number: "",
-    currentPassword: "",
-    newPassword: "",
-    confirmPassword: "",
   });
 
   // Update form data when userDetails changes
@@ -91,7 +93,8 @@ export default function ProfilePage() {
       });
 
       if (!response.ok) {
-        throw new Error("비밀번호 변경에 실패했습니다.");
+        const errorData = await response.text();
+        throw new Error(errorData || "비밀번호 변경에 실패했습니다.");
       }
 
       return response.json();
@@ -108,10 +111,10 @@ export default function ProfilePage() {
         confirmPassword: "",
       }));
     },
-    onError: () => {
+    onError: (error: Error) => {
       toast({
         title: "오류",
-        description: "비밀번호 변경에 실패했습니다.",
+        description: error.message,
         variant: "destructive",
       });
     },
@@ -129,6 +132,45 @@ export default function ProfilePage() {
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate required fields
+    if (!formData.currentPassword.trim()) {
+      toast({
+        title: "오류",
+        description: "현재 비밀번호를 입력해주세요.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!formData.newPassword.trim()) {
+      toast({
+        title: "오류",
+        description: "새 비밀번호를 입력해주세요.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!formData.confirmPassword.trim()) {
+      toast({
+        title: "오류",
+        description: "새 비밀번호 확인을 입력해주세요.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate password pattern
+    if (!PASSWORD_PATTERN.test(formData.newPassword)) {
+      toast({
+        title: "오류",
+        description: "비밀번호는 영문, 숫자, 특수문자만 사용 가능합니다.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (formData.newPassword !== formData.confirmPassword) {
       toast({
         title: "오류",
@@ -137,6 +179,7 @@ export default function ProfilePage() {
       });
       return;
     }
+
     await changePasswordMutation.mutate({
       currentPassword: formData.currentPassword,
       newPassword: formData.newPassword,
@@ -264,6 +307,8 @@ export default function ProfilePage() {
                         currentPassword: e.target.value,
                       })
                     }
+                    pattern={PASSWORD_PATTERN.source}
+                    title="영문, 숫자, 특수문자만 입력 가능합니다."
                   />
                 </div>
                 <div className="space-y-2">
@@ -274,6 +319,8 @@ export default function ProfilePage() {
                     onChange={(e) =>
                       setFormData({ ...formData, newPassword: e.target.value })
                     }
+                    pattern={PASSWORD_PATTERN.source}
+                    title="영문, 숫자, 특수문자만 입력 가능합니다."
                   />
                 </div>
                 <div className="space-y-2">
@@ -287,6 +334,8 @@ export default function ProfilePage() {
                         confirmPassword: e.target.value,
                       })
                     }
+                    pattern={PASSWORD_PATTERN.source}
+                    title="영문, 숫자, 특수문자만 입력 가능합니다."
                   />
                 </div>
                 <div className="flex justify-end">

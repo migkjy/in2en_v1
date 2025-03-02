@@ -6,6 +6,7 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
 import { UserRole } from "@shared/schema";
+import type { User } from "@shared/schema";
 
 // Define a base type for the user to avoid circular reference
 type AuthUser = {
@@ -66,6 +67,7 @@ export function setupAuth(app: Express) {
           if (!user || !(await comparePasswords(password, user.password))) {
             return done(null, false, { message: "Invalid credentials" });
           }
+          // Only pass the necessary authentication fields
           return done(null, { id: user.id, role: user.role });
         } catch (error) {
           return done(error);
@@ -84,6 +86,7 @@ export function setupAuth(app: Express) {
       if (!user) {
         return done(new Error("User not found"));
       }
+      // Only pass the necessary authentication fields
       done(null, { id: user.id, role: user.role });
     } catch (error) {
       done(error);

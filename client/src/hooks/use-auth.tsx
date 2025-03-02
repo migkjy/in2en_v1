@@ -17,10 +17,7 @@ type AuthContextType = {
   registerMutation: UseMutationResult<SelectUser, Error, InsertUser>;
 };
 
-type LoginData = {
-  email: string;
-  password: string;
-};
+type LoginData = Pick<InsertUser, "username" | "password">;
 
 export const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
