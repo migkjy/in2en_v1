@@ -1111,6 +1111,10 @@ export function registerRoutes(app: Express): Server {
         if (!teacher || teacher.role !== UserRole.TEACHER) {
           return res.status(404).json({ message: "Teacher not found" });
         }
+        
+        // Remove password before sending
+        const { password, ...teacherWithoutPassword } = teacher;
+        res.json(teacherWithoutPassword);
         res.json(teacher);
       } catch (error) {
         if (error instanceof Error) {

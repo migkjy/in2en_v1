@@ -328,3 +328,286 @@ export default function ProfilePage() {
     </div>
   );
 }
+import { useEffect, useState } from "react";
+import { useAuth } from "@/hooks/use-auth";
+import { Sidebar } from "@/components/layout/sidebar";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+
+export default function Profile() {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [name, setName] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  
+  // Current and new password fields for password change
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+
+  useEffect(() => {
+    if (user) {
+      // Fetch the detailed profile
+      fetchProfile();
+    }
+  }, [user]);
+
+  const fetchProfile = async () => {
+    if (!user) return;
+    
+    try {
+      setIsLoading(true);
+      const response = await fetch(`/api/teachers/${user.id}`);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch profile: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      setName(data.name || "");
+      setPhoneNumber(data.phone_number || "");
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to load profile",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    if (!user) return;
+    
+    try {
+      setIsLoading(true);
+      const response = await fetch(`/api/teachers/${user.id}/profile`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name,
+          phone_number: phoneNumber,
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to update profile");
+      }
+      
+      toast({
+        title: "Success",
+        description: "Profile updated successfully",
+      });
+      setIsEditMode(false);
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update profile",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (!user) return;
+    
+    // Validate passwords
+    if (newPassword !== confirmPassword) {
+      setPasswordError("Passwords do not match");
+      return;
+    }
+    
+    if (newPassword.length < 6) {
+      setPasswordError("Password must be at least 6 characters");
+      return;
+    }
+    
+    try {
+      setIsLoading(true);
+      const response = await fetch(`/api/teachers/${user.id}/password`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          currentPassword,
+          newPassword,
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to change password");
+      }
+      
+      toast({
+        title: "Success",
+        description: "Password changed successfully",
+      });
+      
+      // Reset password fields
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setPasswordError("");
+    } catch (error) {
+      console.error("Error changing password:", error);
+      toast({
+        title: "Error",
+        description: "Failed to change password",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="flex h-screen">
+      <Sidebar className="w-64" />
+      <main className="flex-1 p-8 overflow-auto">
+        <div className="max-w-3xl mx-auto">
+          <h1 className="text-2xl font-bold mb-6">My Profile</h1>
+          
+          {/* Profile Information Card */}
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Profile Information</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <div>Loading profile...</div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium">Name</label>
+                      {isEditMode ? (
+                        <Input 
+                          value={name} 
+                          onChange={(e) => setName(e.target.value)} 
+                          className="mt-1"
+                        />
+                      ) : (
+                        <p className="mt-1">{name}</p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Email</label>
+                      <p className="mt-1">{user?.email}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Phone Number</label>
+                      {isEditMode ? (
+                        <Input 
+                          value={phoneNumber} 
+                          onChange={(e) => setPhoneNumber(e.target.value)} 
+                          className="mt-1"
+                        />
+                      ) : (
+                        <p className="mt-1">{phoneNumber || "Not provided"}</p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium">Role</label>
+                      <p className="mt-1 capitalize">{user?.role.toLowerCase()}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-end pt-4">
+                    {isEditMode ? (
+                      <>
+                        <Button 
+                          variant="outline" 
+                          onClick={() => setIsEditMode(false)} 
+                          className="mr-2"
+                          disabled={isLoading}
+                        >
+                          Cancel
+                        </Button>
+                        <Button 
+                          onClick={handleSaveProfile}
+                          disabled={isLoading}
+                        >
+                          Save Changes
+                        </Button>
+                      </>
+                    ) : (
+                      <Button 
+                        onClick={() => setIsEditMode(true)}
+                        disabled={isLoading}
+                      >
+                        Edit Profile
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+          
+          {/* Change Password Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Change Password</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium">Current Password</label>
+                  <Input 
+                    type="password" 
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">New Password</label>
+                  <Input 
+                    type="password" 
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Confirm New Password</label>
+                  <Input 
+                    type="password" 
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="mt-1"
+                  />
+                  {passwordError && (
+                    <p className="text-sm text-red-500 mt-1">{passwordError}</p>
+                  )}
+                </div>
+                
+                <div className="flex justify-end pt-4">
+                  <Button 
+                    onClick={handleChangePassword}
+                    disabled={isLoading || !currentPassword || !newPassword || !confirmPassword}
+                  >
+                    Change Password
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </main>
+    </div>
+  );
+}
