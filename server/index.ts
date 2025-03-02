@@ -37,28 +37,48 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  const server = registerRoutes(app);
+  try {
+    const server = registerRoutes(app);
 
-  // Modified error handling middleware
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
+    // Modified error handling middleware
+    app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+      const status = err.status || err.statusCode || 500;
+      const message = err.message || "Internal Server Error";
 
-    // Log the error for debugging
-    console.error('Error:', err);
+      // Log the error for debugging
+      console.error('Error:', err);
 
-    // Send error response without throwing
-    res.status(status).json({ message });
-  });
+      // Send error response without throwing
+      res.status(status).json({ message });
+    });
 
-  if (app.get("env") === "development") {
-    await setupVite(app, server);
-  } else {
-    serveStatic(app);
+    if (app.get("env") === "development") {
+      await setupVite(app, server);
+    } else {
+      serveStatic(app);
+    }
+
+    const PORT = 5000;
+    server.listen(PORT, "0.0.0.0", () => {
+      log(`serving on port ${PORT}`);
+    });
+    
+    // Handle termination signals
+    process.on('SIGINT', () => {
+      log('Shutting down server...');
+      server.close(() => {
+        process.exit(0);
+      });
+    });
+    
+    process.on('uncaughtException', (err) => {
+      console.error('Uncaught exception:', err);
+      server.close(() => {
+        process.exit(1);
+      });
+    });
+  } catch (err) {
+    console.error('Failed to start server:', err);
+    process.exit(1);
   }
-
-  const PORT = 5000;
-  server.listen(PORT, "0.0.0.0", () => {
-    log(`serving on port ${PORT}`);
-  });
 })();
