@@ -31,7 +31,7 @@ export default function StudentList() {
   const [nameFilter, setNameFilter] = useState("");
   const [emailFilter, setEmailFilter] = useState("");
   const [branchFilter, setBranchFilter] = useState<string>("all");
-  const [sortField, setSortField] = useState<string>("id"); // Added state for sorting field
+  const [sortField, setSortField] = useState<string>("name"); // Default sorting by name
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc"); // Added state for sorting direction
   const [currentPage, setCurrentPage] = useState(1); // Added state for current page
   const itemsPerPage = 20; // Number of items per page
