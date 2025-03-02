@@ -44,6 +44,21 @@ function ProtectedRoute({ component: Component, ...rest }) {
   return user ? <Component {...rest} /> : null;
 }
 
+function AssignmentRedirect() {
+  const { user } = useAuth();
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    const role = user?.role?.toLowerCase() || 'student';
+    const path = window.location.pathname;
+    if (path.startsWith('/assignments/')) {
+      setLocation(`/${role}${path}`);
+    }
+  }, [user, setLocation]);
+
+  return null;
+}
+
 function Router() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
@@ -61,6 +76,9 @@ function Router() {
     <Suspense fallback={<div>Loading...</div>}>
       <Switch>
         <Route path="/auth" component={AuthPage} />
+
+        {/* Add catch-all route for assignments */}
+        <Route path="/assignments/:rest*" component={AssignmentRedirect} />
 
         {/* Admin Routes */}
         <Route path="/admin" component={(props) => <ProtectedRoute component={AdminDashboard} {...props} />} />
