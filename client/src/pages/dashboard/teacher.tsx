@@ -122,7 +122,12 @@ export default function TeacherDashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {assignments?.slice(0, 5).map((assignment) => (
+                {assignments?.filter(assignment => 
+                  // Only show assignments for classes the teacher has access to
+                  classes?.some(cls => cls.id === assignment.classId)
+                )
+                .slice(0, 5)
+                .map((assignment) => (
                   <div 
                     key={assignment.id}
                     className="p-4 rounded-lg border border-gray-100 hover:border-gray-200 hover:bg-gray-50/50 transition-colors"
