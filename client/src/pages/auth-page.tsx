@@ -26,9 +26,7 @@ const formSchema = z.object({
 type FormData = z.infer<typeof formSchema>;
 
 export default function AuthPage() {
-  const { user, login, register } = useAuth();
-  const [, setLocation] = useLocation();
-  const { toast } = useToast();
+  const { user, loginMutation, registerMutation } = useAuth();
   const [isRegistering, setIsRegistering] = useState(false);
 
   const form = useForm<FormData>({
@@ -46,24 +44,22 @@ export default function AuthPage() {
     const homePath = 
       user.role === "ADMIN" ? "/admin" :
       user.role === "TEACHER" ? "/teacher" : "/student";
-    setLocation(homePath);
-    return null;
+    return <h1>Redirecting...</h1>;
   }
 
   const onSubmit = async (data: FormData) => {
-    try {
-      if (isRegistering) {
-        await register({
-          email: data.email,
-          password: data.password,
-          name: data.name || "",
-          role: data.role || "STUDENT",
-        });
-      } else {
-        await login(data.email, data.password);
-      }
-    } catch (error) {
-      // Error handling is done in the auth context
+    if (isRegistering) {
+      registerMutation.mutate({
+        email: data.email,
+        password: data.password,
+        name: data.name || "",
+        role: data.role || "STUDENT",
+      });
+    } else {
+      loginMutation.mutate({
+        email: data.email,
+        password: data.password,
+      });
     }
   };
 
@@ -138,15 +134,11 @@ export default function AuthPage() {
                 <Button
                   type="submit"
                   className="w-full"
-                  disabled={form.formState.isSubmitting}
+                  disabled={isRegistering ? registerMutation.isPending : loginMutation.isPending}
                 >
-                  {form.formState.isSubmitting
-                    ? isRegistering
-                      ? "Registering..."
-                      : "Logging in..."
-                    : isRegistering
-                    ? "Register"
-                    : "Login"}
+                  {isRegistering
+                    ? (registerMutation.isPending ? "Registering..." : "Register")
+                    : (loginMutation.isPending ? "Logging in..." : "Login")}
                 </Button>
               </form>
             </Tabs>

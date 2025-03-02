@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { queryClient } from '@/lib/queryClient';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 
 interface User {
   id: number;
@@ -14,9 +14,9 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   error: Error | null;
-  login: (email: string, password: string) => Promise<void>;
-  logout: () => Promise<void>;
-  register: (data: { email: string; password: string; name: string; role: string }) => Promise<void>;
+  loginMutation: any;
+  logoutMutation: any;
+  registerMutation: any;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -50,84 +50,81 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     staleTime: Infinity,
   });
 
-  const login = async (email: string, password: string) => {
-    try {
+  const loginMutation = useMutation({
+    mutationFn: async (credentials: { email: string; password: string }) => {
       const response = await fetch('/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify(credentials),
       });
-
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || 'Login failed');
       }
-
-      const userData = await response.json();
-      queryClient.setQueryData(['auth-user'], userData);
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData(['auth-user'], data);
       setError(null);
-    } catch (e) {
-      const error = e as Error;
+    },
+    onError: (error: Error) => {
       setError(error);
       toast({
         title: 'Login failed',
         description: error.message,
         variant: 'destructive',
       });
-      throw error;
-    }
-  };
+    },
+  });
 
-  const logout = async () => {
-    try {
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
       const response = await fetch('/api/logout', { method: 'POST' });
       if (!response.ok) {
         throw new Error('Logout failed');
       }
-      // Clear all queries from the cache
+    },
+    onSuccess: () => {
       queryClient.removeQueries();
-      // Set auth user to null
       queryClient.setQueryData(['auth-user'], null);
       setError(null);
-    } catch (e) {
-      const error = e as Error;
+    },
+    onError: (error: Error) => {
       setError(error);
       toast({
         title: 'Logout failed',
         description: error.message,
         variant: 'destructive',
       });
-      throw error;
-    }
-  };
+    },
+  });
 
-  const register = async (data: { email: string; password: string; name: string; role: string }) => {
-    try {
+  const registerMutation = useMutation({
+    mutationFn: async (data: { email: string; password: string; name: string; role: string }) => {
       const response = await fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
-
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || 'Registration failed');
       }
-
-      const userData = await response.json();
-      queryClient.setQueryData(['auth-user'], userData);
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData(['auth-user'], data);
       setError(null);
-    } catch (e) {
-      const error = e as Error;
+    },
+    onError: (error: Error) => {
       setError(error);
       toast({
         title: 'Registration failed',
         description: error.message,
         variant: 'destructive',
       });
-      throw error;
-    }
-  };
+    },
+  });
 
   return (
     <AuthContext.Provider
@@ -135,9 +132,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         user: user || null,
         isLoading,
         error,
-        login,
-        logout,
-        register,
+        loginMutation,
+        logoutMutation,
+        registerMutation
       }}
     >
       {children}
