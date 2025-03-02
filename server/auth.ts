@@ -9,31 +9,43 @@ import { User } from "@shared/schema";
 
 const scryptAsync = promisify(scrypt);
 
-async function hashPassword(password: string) {
-  const salt = randomBytes(16).toString("hex");
-  const buf = (await scryptAsync(password, salt, 64)) as Buffer;
-  return `${buf.toString("hex")}.${salt}`;
+async function hashPassword(password: string): Promise<string> {
+  try {
+    const salt = randomBytes(16).toString('hex');
+    const derivedKey = (await scryptAsync(password, salt, 64)) as Buffer;
+    return `${derivedKey.toString('hex')}.${salt}`;
+  } catch (error) {
+    console.error('Error hashing password:', error);
+    throw error;
+  }
 }
 
-async function comparePasswords(supplied: string, stored: string) {
+async function comparePasswords(supplied: string, stored: string): Promise<boolean> {
   try {
-    const [hashedStored, salt] = stored.split(".");
-    if (!hashedStored || !salt) {
-      console.error('Invalid stored password format:', { hashedStored: !!hashedStored, salt: !!salt });
+    // Split stored hash and salt
+    const [storedHash, salt] = stored.split('.');
+
+    if (!storedHash || !salt) {
+      console.error('Invalid password format:', { hasHash: !!storedHash, hasSalt: !!salt });
       return false;
     }
 
-    const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
-    const storedBuf = Buffer.from(hashedStored, "hex");
+    // Hash the supplied password with the same salt
+    const suppliedBuffer = (await scryptAsync(supplied, salt, 64)) as Buffer;
+    const storedBuffer = Buffer.from(storedHash, 'hex');
 
-    console.log('Comparing passwords:', {
-      suppliedLength: suppliedBuf.length,
-      storedLength: storedBuf.length
+    // Debug logging
+    console.log('Password comparison:', {
+      suppliedLength: suppliedBuffer.length,
+      storedLength: storedBuffer.length,
+      suppliedHash: suppliedBuffer.toString('hex'),
+      storedHash: storedHash
     });
 
-    return timingSafeEqual(storedBuf, suppliedBuf);
+    // Compare the two buffers
+    return timingSafeEqual(suppliedBuffer, storedBuffer);
   } catch (error) {
-    console.error('Password comparison error:', error);
+    console.error('Password comparison failed:', error);
     return false;
   }
 }
@@ -62,19 +74,19 @@ export function setupAuth(app: Express) {
       },
       async (email, password, done) => {
         try {
-          console.log('Login attempt for email:', email);
-          const user = await storage.getUserByEmail(email);
+          console.log('Login attempt for:', email);
 
+          const user = await storage.getUserByEmail(email);
           if (!user) {
-            console.log('User not found:', email);
+            console.log('User not found');
             return done(null, false, { message: "Invalid email or password" });
           }
 
-          console.log('Found user, comparing passwords');
+          console.log('User found, validating password');
           const isValid = await comparePasswords(password, user.password);
 
           if (!isValid) {
-            console.log('Password comparison failed');
+            console.log('Password validation failed');
             return done(null, false, { message: "Invalid email or password" });
           }
 
@@ -115,8 +127,9 @@ export function setupAuth(app: Express) {
         return res.status(400).json({ message: "Email already registered" });
       }
 
+      console.log('Creating new user with email:', email);
       const hashedPassword = await hashPassword(password);
-      console.log('Created hashed password:', hashedPassword.split('.')[0].length);
+      console.log('Password hashed successfully');
 
       const user = await storage.createUser({
         email,
@@ -125,12 +138,15 @@ export function setupAuth(app: Express) {
         role,
       });
 
+      console.log('User created successfully');
       const { password: _, ...userWithoutPassword } = user;
+
       req.login(userWithoutPassword, (err) => {
         if (err) return next(err);
         res.status(201).json(userWithoutPassword);
       });
     } catch (error) {
+      console.error('Registration error:', error);
       next(error);
     }
   });
@@ -141,12 +157,14 @@ export function setupAuth(app: Express) {
         console.error('Authentication error:', err);
         return next(err);
       }
+
       if (!user) {
-        return res.status(401).json({ message: info?.message || "Invalid credentials" });
+        return res.status(401).json({ message: info?.message || "Invalid email or password" });
       }
+
       req.login(user, (err) => {
         if (err) {
-          console.error('Login session error:', err);
+          console.error('Session error:', err);
           return next(err);
         }
         res.json(user);
