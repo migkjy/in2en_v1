@@ -36,7 +36,7 @@ import {
 import { useLocation } from "wouter";
 import type { Assignment, Branch, Class } from "@shared/schema";
 import { format } from "date-fns";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { EditAssignmentDialog } from "./edit-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -193,6 +193,40 @@ export default function AssignmentList() {
     }
   };
 
+  // Filter assignments based on selected filters
+  const filteredAssignments = useMemo(() => {
+    if (!assignments) return [];
+
+    return assignments.filter((assignment) => {
+      // For students, only show published and completed assignments
+      if (user?.role === "STUDENT" && 
+          !["published", "completed"].includes(assignment.status.toLowerCase())) {
+        return false;
+      }
+
+      // Filter by branch
+      if (selectedBranch !== "all") {
+        const cls = assignmentClasses.data?.[assignment.classId!];
+        if (!cls || cls.branchId !== Number(selectedBranch)) {
+          return false;
+        }
+      }
+
+      // Filter by class
+      if (selectedClass !== "all" && assignment.classId !== Number(selectedClass)) {
+        return false;
+      }
+
+      // Filter by status
+      if (selectedStatus !== "all" && assignment.status.toLowerCase() !== selectedStatus) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [assignments, selectedBranch, selectedClass, selectedStatus, assignmentClasses.data, user?.role]);
+
+
   return (
     <div className="flex h-screen">
       <Sidebar className="w-64" />
@@ -249,24 +283,27 @@ export default function AssignmentList() {
                     </div>
                   </>
                 )}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Status</label>
-                  <Select
-                    value={selectedStatus}
-                    onValueChange={setSelectedStatus}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="All Statuses" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {STATUS_OPTIONS.map((status) => (
-                        <SelectItem key={status.value} value={status.value}>
-                          {status.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                {/* Status Filter - Only for Admin and Teacher */}
+                {user?.role !== "STUDENT" && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Status</label>
+                    <Select
+                      value={selectedStatus}
+                      onValueChange={setSelectedStatus}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="All Statuses" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {STATUS_OPTIONS.map((status) => (
+                          <SelectItem key={status.value} value={status.value}>
+                            {status.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
               </div>
 
               <Table>
@@ -285,14 +322,14 @@ export default function AssignmentList() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {!loadingAssignments && assignments?.length === 0 ? (
+                  {!loadingAssignments && filteredAssignments.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={6} className="text-center py-8 text-gray-500">
                         No assignments found
                       </TableCell>
                     </TableRow>
                   ) : (
-                    assignments?.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+                    filteredAssignments.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
                       .map((assignment) => {
                         const assignmentClass = assignmentClasses.data?.[assignment.classId!];
                         const branch = branches?.find(b => b.id === assignmentClass?.branchId);
@@ -356,20 +393,24 @@ export default function AssignmentList() {
                               >
                                 View
                               </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setEditingAssignment(assignment)}
-                              >
-                                Edit
-                              </Button>
-                              <Button
-                                variant="destructive"
-                                size="sm"
-                                onClick={() => setDeleteAssignment(assignment)}
-                              >
-                                Delete
-                              </Button>
+                              {user?.role !== "STUDENT" && (
+                                <>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setEditingAssignment(assignment)}
+                                  >
+                                    Edit
+                                  </Button>
+                                  <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    onClick={() => setDeleteAssignment(assignment)}
+                                  >
+                                    Delete
+                                  </Button>
+                                </>
+                              )}
                             </TableCell>
                           </TableRow>
                         );
@@ -378,7 +419,7 @@ export default function AssignmentList() {
                 </TableBody>
               </Table>
 
-              {assignments && assignments.length > itemsPerPage && (
+              {filteredAssignments && filteredAssignments.length > itemsPerPage && (
                 <div className="mt-4 flex justify-between items-center">
                   <Button
                     variant="outline"
@@ -389,7 +430,7 @@ export default function AssignmentList() {
                     Previous
                   </Button>
                   <div className="flex gap-2">
-                    {Array.from({ length: Math.ceil(assignments.length / itemsPerPage) }).map((_, index) => (
+                    {Array.from({ length: Math.ceil(filteredAssignments.length / itemsPerPage) }).map((_, index) => (
                       <Button
                         key={index + 1}
                         variant={currentPage === index + 1 ? "default" : "outline"}
@@ -403,8 +444,8 @@ export default function AssignmentList() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setCurrentPage(page => Math.min(Math.ceil(assignments.length / itemsPerPage), page + 1))}
-                    disabled={currentPage >= Math.ceil(assignments.length / itemsPerPage)}
+                    onClick={() => setCurrentPage(page => Math.min(Math.ceil(filteredAssignments.length / itemsPerPage), page + 1))}
+                    disabled={currentPage >= Math.ceil(filteredAssignments.length / itemsPerPage)}
                   >
                     Next
                   </Button>
