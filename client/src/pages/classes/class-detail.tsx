@@ -357,7 +357,11 @@ export default function ClassDetail() {
               open={isAssignTeacherDialogOpen}
               onOpenChange={setIsAssignTeacherDialogOpen}
             >
-              <DialogContent className="sm:max-w-[625px] max-h-[80vh]">
+              <DialogContent
+                className="sm:max-w-[625px] max-h-[80vh]"
+                onPointerDownOutside={(e) => e.preventDefault()} // Prevent closing on outside click
+                onInteractOutside={(e) => e.preventDefault()} // Prevent closing on outside interaction
+              >
                 <DialogHeader>
                   <DialogTitle>Assign Teachers to {classData.name}</DialogTitle>
                   <p className="text-sm text-muted-foreground">
@@ -375,7 +379,7 @@ export default function ClassDetail() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {teachers.map((teacher) => {
+                      {teachers?.map((teacher) => {
                         const assignedTeacher = assignedTeachers.find(
                           (at) => at.id === teacher.id
                         );
@@ -393,6 +397,7 @@ export default function ClassDetail() {
                                     assignedTeacher?.hasAccess || false
                                   );
                                 }}
+                                onClick={(e) => e.stopPropagation()} // Stop event propagation
                               />
                             </TableCell>
                             <TableCell className="text-center">
@@ -405,6 +410,7 @@ export default function ClassDetail() {
                                     checked as boolean
                                   );
                                 }}
+                                onClick={(e) => e.stopPropagation()} // Stop event propagation
                               />
                             </TableCell>
                           </TableRow>
