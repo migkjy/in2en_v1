@@ -3,44 +3,44 @@ import { Switch, Route, Redirect } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/hooks/use-auth";
-import NotFound from "@/pages/not-found";
-import AuthPage from "@/pages/auth-page";
-import { ProtectedRoute } from "./lib/protected-route";
 import React, { lazy, Suspense } from 'react';
 
-// Lazy loading components
-const LazyComponent = (Component) => (props) => (
-  <Suspense fallback={<div>Loading...</div>}>
-    <Component {...props} />
-  </Suspense>
-);
+// Lazy loading components - these are not needed anymore as we are using the new import method in the edited code
+//const LazyComponent = (Component) => (props) => (
+//  <Suspense fallback={<div>Loading...</div>}>
+//    <Component {...props} />
+//  </Suspense>
+//);
 
-const LazyAdminDashboard = lazy(() => import(/* webpackChunkName: "admin-dashboard" */ "@/pages/dashboard/admin"));
-const LazyTeacherDashboard = lazy(() => import(/* webpackChunkName: "teacher-dashboard" */ "@/pages/dashboard/teacher"));
-const LazyStudentDashboard = lazy(() => import(/* webpackChunkName: "student-dashboard" */ "@/pages/dashboard/student"));
-const LazyCreateAssignment = lazy(() => import(/* webpackChunkName: "create-assignment" */ "@/pages/assignments/create"));
-const LazyReviewAssignment = lazy(() => import(/* webpackChunkName: "review-assignment" */ "@/pages/assignments/review"));
-const LazyAssignmentList = lazy(() => import(/* webpackChunkName: "assignment-list" */ "@/pages/assignments/list"));
-const LazyAssignmentDetail = lazy(() => import(/* webpackChunkName: "assignment-detail" */ "@/pages/assignments/assignment-detail"));
-const LazyUploadAssignment = lazy(() => import(/* webpackChunkName: "upload-assignment" */ "@/pages/assignments/upload"));
-const LazySubmissionDetail = lazy(() => import(/* webpackChunkName: "submission-detail" */ "@/pages/submissions/submission-detail"));
-const LazyClassList = lazy(() => import(/* webpackChunkName: "class-list" */ "@/pages/classes/list"));
-const LazyClassDetail = lazy(() => import(/* webpackChunkName: "class-detail" */ "@/pages/classes/class-detail"));
-const LazyBranchList = lazy(() => import(/* webpackChunkName: "branch-list" */ "@/pages/branches/list"));
-const LazyBranchDetail = lazy(() => import(/* webpackChunkName: "branch-detail" */ "@/pages/branches/branch-detail"));
-const LazyTeacherList = lazy(() => import(/* webpackChunkName: "teacher-list" */ "@/pages/teachers/list"));
-const LazyTeacherDetail = lazy(() => import(/* webpackChunkName: "teacher-detail" */ "@/pages/teachers/teacher-detail"));
-const LazyStudentList = lazy(() => import(/* webpackChunkName: "student-list" */ "@/pages/students/list"));
-const LazyProfile = lazy(() => import(/* webpackChunkName: "profile" */ "@/pages/profile"));
+//Lazy loading components are handled differently in the edited code.
+import { LazyComponent } from "@/lib/lazy-component";
+import { ProtectedRoute } from "@/lib/protected-route";
+
+const LazyAdminDashboard = () => import("@/pages/dashboard/admin");
+const LazyTeacherDashboard = () => import("@/pages/dashboard/teacher");
+const LazyStudentDashboard = () => import("@/pages/dashboard/student");
+const LazyProfile = () => import("@/pages/profile");
+const LazyAssignmentList = () => import("@/pages/assignments/list");
+const LazyCreateAssignment = () => import("@/pages/assignments/create");
+const LazyAssignmentDetail = () => import("@/pages/assignments/assignment-detail");
+const LazyReviewAssignment = () => import("@/pages/assignments/review");
+const LazyUploadAssignment = () => import("@/pages/assignments/upload");
+const LazySubmissionDetail = () => import("@/pages/submissions/submission-detail");
+const LazyClassList = () => import("@/pages/classes/list");
+const LazyClassDetail = () => import("@/pages/classes/class-detail");
+const LazyBranchList = () => import("@/pages/branches/list");
+const LazyBranchDetail = () => import("@/pages/branches/detail");
+const LazyTeacherList = () => import("@/pages/teachers/list");
+const LazyTeacherDetail = () => import("@/pages/teachers/detail");
+const LazyStudentList = () => import("@/pages/students/list");
+const AuthPage = () => import("@/pages/auth-page");
+const NotFound = () => import("@/pages/not-found");
 
 
 function Router() {
   return (
     <Switch>
       <Route path="/auth" component={AuthPage} />
-      
-      {/* Admin Routes - make sure these are implemented */}
-      <ProtectedRoute path="/admin" component={LazyComponent(LazyAdminDashboard)} allowedRole="ADMIN" />
 
       {/* Admin Routes */}
       <ProtectedRoute path="/admin" component={LazyComponent(LazyAdminDashboard)} allowedRole="ADMIN" />
@@ -78,23 +78,12 @@ function Router() {
       <ProtectedRoute path="/student/submissions/:id" component={LazyComponent(LazySubmissionDetail)} allowedRole="STUDENT" />
       <ProtectedRoute path="/student/classes" component={LazyComponent(LazyClassList)} allowedRole="STUDENT" />
       <ProtectedRoute path="/student/classes/:id" component={LazyComponent(LazyClassDetail)} allowedRole="STUDENT" />
-      
-      {/* Default route - redirect to appropriate dashboard based on role */}
-      <Route path="/">
-        <Redirect to="/auth" />
-      </Route>
-      
-      {/* Not found route */}
-      <Route component={NotFound} />
-    </Switch>
-  );
-}
 
       {/* Common Routes - Accessible by all authenticated users */}
       <ProtectedRoute path="/submissions/:id" component={LazyComponent(LazySubmissionDetail)} />
       <ProtectedRoute path="/assignments/:id/upload" component={LazyComponent(LazyUploadAssignment)} allowedRole={["TEACHER", "ADMIN"]} />
 
-      {/* Redirect to auth by default */}
+      {/* Default route - redirect to appropriate dashboard based on role */}
       <Route path="/">
         {() => {
           const role = localStorage.getItem("userRole");
@@ -113,6 +102,7 @@ function Router() {
         }}
       </Route>
 
+      {/* Not found route */}
       <Route component={NotFound} />
     </Switch>
   );
