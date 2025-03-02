@@ -38,6 +38,9 @@ function Router() {
   return (
     <Switch>
       <Route path="/auth" component={AuthPage} />
+      
+      {/* Admin Routes - make sure these are implemented */}
+      <ProtectedRoute path="/admin" component={LazyComponent(LazyAdminDashboard)} allowedRole="ADMIN" />
 
       {/* Admin Routes */}
       <ProtectedRoute path="/admin" component={LazyComponent(LazyAdminDashboard)} allowedRole="ADMIN" />
@@ -69,6 +72,23 @@ function Router() {
       {/* Student Routes */}
       <ProtectedRoute path="/student" component={LazyComponent(LazyStudentDashboard)} allowedRole="STUDENT" />
       <ProtectedRoute path="/student/profile" component={LazyComponent(LazyProfile)} allowedRole="STUDENT" />
+      <ProtectedRoute path="/student/assignments" component={LazyComponent(LazyAssignmentList)} allowedRole="STUDENT" />
+      <ProtectedRoute path="/student/assignments/:id" component={LazyComponent(LazyAssignmentDetail)} allowedRole="STUDENT" />
+      <ProtectedRoute path="/student/assignments/upload/:id" component={LazyComponent(LazyUploadAssignment)} allowedRole="STUDENT" />
+      <ProtectedRoute path="/student/submissions/:id" component={LazyComponent(LazySubmissionDetail)} allowedRole="STUDENT" />
+      <ProtectedRoute path="/student/classes" component={LazyComponent(LazyClassList)} allowedRole="STUDENT" />
+      <ProtectedRoute path="/student/classes/:id" component={LazyComponent(LazyClassDetail)} allowedRole="STUDENT" />
+      
+      {/* Default route - redirect to appropriate dashboard based on role */}
+      <Route path="/">
+        <Redirect to="/auth" />
+      </Route>
+      
+      {/* Not found route */}
+      <Route component={NotFound} />
+    </Switch>
+  );
+}
 
       {/* Common Routes - Accessible by all authenticated users */}
       <ProtectedRoute path="/submissions/:id" component={LazyComponent(LazySubmissionDetail)} />
