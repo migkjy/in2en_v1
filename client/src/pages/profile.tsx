@@ -14,6 +14,13 @@ export default function ProfilePage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    phone_number: "",
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
 
   // Get user details
   const { data: userDetails, isLoading } = useQuery({
@@ -28,38 +35,22 @@ export default function ProfilePage() {
         return response.json();
       } catch (error) {
         console.error("Error fetching user details:", error);
-        // If user details fetch fails, use the current user data as fallback
         return user;
       }
     },
     enabled: !!user?.id,
   });
 
-  const [formData, setFormData] = useState({
-    name: "",
-    phone_number: "",
-    currentPassword: "",
-    newPassword: "",
-    confirmPassword: "",
-  });
-
-  // Update form data when userDetails changes
+  // Update form data only when userDetails or user changes, and not during editing
   useEffect(() => {
-    if (userDetails) {
+    if (!isEditing && (userDetails || user)) {
       setFormData(prev => ({
         ...prev,
-        name: userDetails.name || user?.name || "",
-        phone_number: userDetails.phone_number || "",
-      }));
-    } else if (user) {
-      // Fallback to current user data if userDetails is not available
-      setFormData(prev => ({
-        ...prev,
-        name: user.name || "",
-        phone_number: user.phone_number || "",
+        name: userDetails?.name || user?.name || "",
+        phone_number: userDetails?.phone_number || "",
       }));
     }
-  }, [userDetails, user]);
+  }, [userDetails, user, isEditing]);
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: { name: string; phone_number: string }) => {
@@ -79,16 +70,9 @@ export default function ProfilePage() {
       return response.json();
     },
     onSuccess: (updatedUser) => {
-      // Update the form data with the new values
-      setFormData(prev => ({
-        ...prev,
-        name: updatedUser.name || "",
-        phone_number: updatedUser.phone_number || "",
-      }));
-
       // Update the React Query cache with the new user data
       queryClient.setQueryData([`/api/users/${user?.id}`], updatedUser);
-      
+
       toast({
         title: "Success",
         description: "Profile updated successfully",
@@ -164,7 +148,7 @@ export default function ProfilePage() {
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate the new password
     const validation = validatePassword(formData.newPassword);
     if (!validation.isValid) {
@@ -175,7 +159,7 @@ export default function ProfilePage() {
       });
       return;
     }
-    
+
     if (formData.newPassword !== formData.confirmPassword) {
       toast({
         title: "Error",
@@ -184,7 +168,7 @@ export default function ProfilePage() {
       });
       return;
     }
-    
+
     if (!formData.currentPassword) {
       toast({
         title: "Error",
@@ -193,11 +177,21 @@ export default function ProfilePage() {
       });
       return;
     }
-    
+
     await changePasswordMutation.mutate({
       currentPassword: formData.currentPassword,
       newPassword: formData.newPassword,
     });
+  };
+
+  const handleCancel = () => {
+    setIsEditing(false);
+    // Reset form data to current user details
+    setFormData(prev => ({
+      ...prev,
+      name: userDetails?.name || user?.name || "",
+      phone_number: userDetails?.phone_number || "",
+    }));
   };
 
   if (isLoading) {
@@ -238,7 +232,7 @@ export default function ProfilePage() {
                   <Input
                     value={formData.name}
                     onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
+                      setFormData(prev => ({ ...prev, name: e.target.value }))
                     }
                     disabled={!isEditing}
                   />
@@ -248,7 +242,7 @@ export default function ProfilePage() {
                   <Input
                     value={formData.phone_number}
                     onChange={(e) =>
-                      setFormData({ ...formData, phone_number: e.target.value })
+                      setFormData(prev => ({ ...prev, phone_number: e.target.value }))
                     }
                     disabled={!isEditing}
                   />
@@ -263,7 +257,7 @@ export default function ProfilePage() {
                       <Button
                         type="button"
                         variant="outline"
-                        onClick={() => setIsEditing(false)}
+                        onClick={handleCancel}
                       >
                         Cancel
                       </Button>
@@ -297,10 +291,10 @@ export default function ProfilePage() {
                     type="password"
                     value={formData.currentPassword}
                     onChange={(e) =>
-                      setFormData({
-                        ...formData,
+                      setFormData(prev => ({
+                        ...prev,
                         currentPassword: e.target.value,
-                      })
+                      }))
                     }
                   />
                 </div>
@@ -310,7 +304,7 @@ export default function ProfilePage() {
                     type="password"
                     value={formData.newPassword}
                     onChange={(e) =>
-                      setFormData({ ...formData, newPassword: e.target.value })
+                      setFormData(prev => ({ ...prev, newPassword: e.target.value }))
                     }
                   />
                 </div>
@@ -320,10 +314,10 @@ export default function ProfilePage() {
                     type="password"
                     value={formData.confirmPassword}
                     onChange={(e) =>
-                      setFormData({
-                        ...formData,
+                      setFormData(prev => ({
+                        ...prev,
                         confirmPassword: e.target.value,
-                      })
+                      }))
                     }
                   />
                 </div>
