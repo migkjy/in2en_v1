@@ -8,22 +8,41 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Lock, User } from "lucide-react";
+import { useLocation } from "wouter";
 
 export default function ProfilePage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
+  const [, navigate] = useLocation();
+
+  // Redirect if not authenticated
+  if (!user) {
+    navigate("/auth");
+    return null;
+  }
 
   // Get user details based on role
   const { data: userDetails, isLoading, error } = useQuery({
-    queryKey: [`/api/${user?.role === 'TEACHER' ? 'teachers' : 'users'}/${user?.id}`],
+    queryKey: [`/api/teachers/${user.id}`],
     queryFn: async () => {
-      if (!user?.id) throw new Error("User ID is required");
-      const response = await fetch(`/api/${user?.role === 'TEACHER' ? 'teachers' : 'users'}/${user.id}`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch user details");
+      try {
+        console.log('Fetching profile for user:', user.id, 'role:', user.role);
+        const response = await fetch(`/api/teachers/${user.id}`, {
+          credentials: 'include' // Ensure cookies are sent
+        });
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Profile fetch error:', response.status, errorText);
+          throw new Error(`Failed to fetch profile: ${errorText}`);
+        }
+        const data = await response.json();
+        console.log('Profile data received:', data);
+        return data;
+      } catch (err) {
+        console.error('Profile fetch error:', err);
+        throw err;
       }
-      return response.json();
     },
     enabled: !!user?.id,
   });
@@ -49,12 +68,12 @@ export default function ProfilePage() {
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: { name: string; phone_number: string }) => {
-      const endpoint = user?.role === 'TEACHER' ? 'teachers' : 'users';
-      const response = await fetch(`/api/${endpoint}/${user?.id}/profile`, {
+      const response = await fetch(`/api/teachers/${user.id}/profile`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: 'include', // Ensure cookies are sent
         body: JSON.stringify(data),
       });
 
@@ -83,12 +102,12 @@ export default function ProfilePage() {
 
   const changePasswordMutation = useMutation({
     mutationFn: async (data: { currentPassword: string; newPassword: string }) => {
-      const endpoint = user?.role === 'TEACHER' ? 'teachers' : 'users';
-      const response = await fetch(`/api/${endpoint}/${user?.id}/password`, {
+      const response = await fetch(`/api/teachers/${user.id}/password`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: 'include', // Ensure cookies are sent
         body: JSON.stringify(data),
       });
 
@@ -168,13 +187,14 @@ export default function ProfilePage() {
         <Sidebar className="w-64" />
         <main className="flex-1 p-8">
           <div className="flex items-center justify-center h-full">
-            <p className="text-red-500">Failed to load profile information</p>
+            <p className="text-red-500">
+              {error instanceof Error ? error.message : "Failed to load profile information"}
+            </p>
           </div>
         </main>
       </div>
     );
   }
-
 
   return (
     <div className="flex h-screen">
