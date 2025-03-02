@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from "react";
+import { useCallback } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -27,24 +27,7 @@ export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
   const [, setLocation] = useLocation();
 
-  // Memoize the navigation callback
-  const navigateToHome = useCallback(() => {
-    if (!user) return;
-
-    const homePath = 
-      user.role === "ADMIN" 
-        ? "/admin" 
-        : user.role === "TEACHER" 
-          ? "/teacher" 
-          : "/student";
-
-    setLocation(homePath);
-  }, [user, setLocation]);
-
-  useEffect(() => {
-    navigateToHome();
-  }, [navigateToHome]);
-
+  // Initialize form state
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -63,7 +46,19 @@ export default function AuthPage() {
     },
   });
 
-  // Memoize form submission handlers
+  // Handle navigation based on user role
+  if (user) {
+    const homePath = 
+      user.role === "ADMIN" 
+        ? "/admin" 
+        : user.role === "TEACHER" 
+          ? "/teacher" 
+          : "/student";
+    setLocation(homePath);
+    return null;
+  }
+
+  // Memoized form handlers
   const handleLogin = useCallback(
     (data: LoginFormData) => {
       loginMutation.mutate(data);
