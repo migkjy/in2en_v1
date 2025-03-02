@@ -122,37 +122,23 @@ export default function ProfilePage() {
       return response.json();
     },
     onSuccess: () => {
-      // Use a timeout to ensure React doesn't batch the state updates with the toast
-      const currentFormData = {...formData};
-      
       toast({
         title: "Success",
         description: "Password changed successfully",
       });
-      
-      setTimeout(() => {
-        setFormData(prev => ({
-          ...prev,
-          currentPassword: "",
-          newPassword: "",
-          confirmPassword: "",
-        }));
-      }, 100);
+      setFormData(prev => ({
+        ...prev,
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      }));
     },
     onError: (error: Error) => {
-      // Create a stable reference to the current form data
-      const currentFormData = {...formData};
-      
       toast({
         title: "Error",
         description: error.message || "Failed to change password",
         variant: "destructive",
       });
-      
-      // Ensure form data is preserved
-      setTimeout(() => {
-        setFormData(currentFormData);
-      }, 100);
     },
   });
 
