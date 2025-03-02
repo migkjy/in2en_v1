@@ -8,36 +8,11 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Lock, User, Loader2 } from "lucide-react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-
-const PASSWORD_PATTERN = /^[A-Za-z0-9!@#$%^&*()_+\-=\[\]{};:'",.<>/?]+$/;
-
-// Define schema for password change form
-const passwordChangeSchema = z.object({
-  currentPassword: z.string().min(1, "현재 비밀번호를 입력해주세요."),
-  newPassword: z.string()
-    .min(1, "새 비밀번호를 입력해주세요.")
-    .regex(PASSWORD_PATTERN, "비밀번호는 영문, 숫자, 특수문자만 사용 가능합니다."),
-  confirmPassword: z.string().min(1, "새 비밀번호 확인을 입력해주세요."),
-}).refine((data) => data.newPassword === data.confirmPassword, {
-  message: "새 비밀번호가 일치하지 않습니다.",
-  path: ["confirmPassword"],
-});
-
-type PasswordChangeForm = z.infer<typeof passwordChangeSchema>;
 
 export default function ProfilePage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
-  const [serverError, setServerError] = useState<string | null>(null);
-
-  const [formData, setFormData] = useState({
-    name: "",
-    phone_number: "",
-  });
 
   // Get user details
   const { data: userDetails, isLoading, error } = useQuery({
@@ -54,15 +29,12 @@ export default function ProfilePage() {
     enabled: !!user?.id,
   });
 
-  // Password change form
-  const {
-    register,
-    handleSubmit: handlePasswordSubmit,
-    formState: { errors },
-    reset: resetPasswordForm,
-    setError,
-  } = useForm<PasswordChangeForm>({
-    resolver: zodResolver(passwordChangeSchema),
+  const [formData, setFormData] = useState({
+    name: "",
+    phone_number: "",
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
   });
 
   // Update form data when userDetails changes
@@ -109,54 +81,43 @@ export default function ProfilePage() {
   });
 
   const changePasswordMutation = useMutation({
-    mutationFn: async (data: PasswordChangeForm) => {
+    mutationFn: async (data: { currentPassword: string; newPassword: string }) => {
       const response = await fetch(`/api/users/${user?.id}/password`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          currentPassword: data.currentPassword,
-          newPassword: data.newPassword,
-        }),
+        body: JSON.stringify(data),
       });
 
-      const responseData = await response.json();
       if (!response.ok) {
-        // 필드별로 오류 메시지 설정
-        if (responseData.field === "currentPassword") {
-          setError("currentPassword", {
-            type: "manual",
-            message: responseData.message,
-          });
-        } else if (responseData.field === "newPassword") {
-          setError("newPassword", {
-            type: "manual",
-            message: responseData.message,
-          });
-        } else {
-          // 일반적인 오류는 서버 오류로 표시
-          setServerError(responseData.message);
-        }
-        throw new Error(responseData.message);
+        throw new Error("비밀번호 변경에 실패했습니다.");
       }
 
-      return responseData;
+      return response.json();
     },
     onSuccess: () => {
       toast({
         title: "성공",
         description: "비밀번호가 변경되었습니다.",
       });
-      resetPasswordForm();
-      setServerError(null);
+      setFormData(prev => ({
+        ...prev,
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      }));
     },
     onError: () => {
-      // 오류는 mutationFn에서 처리됨
+      toast({
+        title: "오류",
+        description: "비밀번호 변경에 실패했습니다.",
+        variant: "destructive",
+      });
     },
   });
 
-  const handleProfileSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isEditing) {
       await updateProfileMutation.mutate({
@@ -166,10 +127,21 @@ export default function ProfilePage() {
     }
   };
 
-  const onPasswordSubmit = handlePasswordSubmit(async (data) => {
-    setServerError(null);
-    await changePasswordMutation.mutate(data);
-  });
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (formData.newPassword !== formData.confirmPassword) {
+      toast({
+        title: "오류",
+        description: "새 비밀번호가 일치하지 않습니다.",
+        variant: "destructive",
+      });
+      return;
+    }
+    await changePasswordMutation.mutate({
+      currentPassword: formData.currentPassword,
+      newPassword: formData.newPassword,
+    });
+  };
 
   if (isLoading) {
     return (
@@ -214,7 +186,7 @@ export default function ProfilePage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleProfileSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
                   <Label>ID</Label>
                   <Input value={userDetails.email || ""} disabled />
@@ -280,48 +252,43 @@ export default function ProfilePage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <form onSubmit={onPasswordSubmit} className="space-y-4">
+              <form onSubmit={handlePasswordChange} className="space-y-4">
                 <div className="space-y-2">
                   <Label>현재 비밀번호</Label>
                   <Input
                     type="password"
-                    {...register("currentPassword")}
+                    value={formData.currentPassword}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        currentPassword: e.target.value,
+                      })
+                    }
                   />
-                  {errors.currentPassword && (
-                    <p className="text-sm text-red-500 mt-1">
-                      {errors.currentPassword.message}
-                    </p>
-                  )}
                 </div>
                 <div className="space-y-2">
                   <Label>새 비밀번호</Label>
                   <Input
                     type="password"
-                    {...register("newPassword")}
+                    value={formData.newPassword}
+                    onChange={(e) =>
+                      setFormData({ ...formData, newPassword: e.target.value })
+                    }
                   />
-                  {errors.newPassword && (
-                    <p className="text-sm text-red-500 mt-1">
-                      {errors.newPassword.message}
-                    </p>
-                  )}
                 </div>
                 <div className="space-y-2">
                   <Label>새 비밀번호 확인</Label>
                   <Input
                     type="password"
-                    {...register("confirmPassword")}
+                    value={formData.confirmPassword}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        confirmPassword: e.target.value,
+                      })
+                    }
                   />
-                  {errors.confirmPassword && (
-                    <p className="text-sm text-red-500 mt-1">
-                      {errors.confirmPassword.message}
-                    </p>
-                  )}
                 </div>
-                {serverError && (
-                  <p className="text-sm text-red-500 mt-1">
-                    {serverError}
-                  </p>
-                )}
                 <div className="flex justify-end">
                   <Button
                     type="submit"

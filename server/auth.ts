@@ -6,7 +6,6 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
 import { UserRole } from "@shared/schema";
-import type { User } from "@shared/schema";
 
 // Define a base type for the user to avoid circular reference
 type AuthUser = {
@@ -22,38 +21,17 @@ declare global {
 
 const scryptAsync = promisify(scrypt);
 
-export async function hashPassword(password: string) {
-  try {
-    if (!password) {
-      throw new Error("Password is required");
-    }
-    const salt = randomBytes(16).toString("hex");
-    const buf = (await scryptAsync(password, salt, 64)) as Buffer;
-    return `${buf.toString("hex")}.${salt}`;
-  } catch (error) {
-    console.error("Error hashing password:", error);
-    throw error;
-  }
+async function hashPassword(password: string) {
+  const salt = randomBytes(16).toString("hex");
+  const buf = (await scryptAsync(password, salt, 64)) as Buffer;
+  return `${buf.toString("hex")}.${salt}`;
 }
 
-export async function comparePasswords(supplied: string, stored: string) {
-  try {
-    if (!stored || !stored.includes('.')) {
-      return false;
-    }
-
-    const [hashed, salt] = stored.split(".");
-    if (!hashed || !salt) {
-      return false;
-    }
-
-    const hashedBuf = Buffer.from(hashed, "hex");
-    const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
-    return timingSafeEqual(hashedBuf, suppliedBuf);
-  } catch (error) {
-    console.error("Error comparing passwords:", error);
-    return false;
-  }
+async function comparePasswords(supplied: string, stored: string) {
+  const [hashed, salt] = stored.split(".");
+  const hashedBuf = Buffer.from(hashed, "hex");
+  const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
+  return timingSafeEqual(hashedBuf, suppliedBuf);
 }
 
 export function setupAuth(app: Express) {
@@ -88,7 +66,7 @@ export function setupAuth(app: Express) {
           if (!user || !(await comparePasswords(password, user.password))) {
             return done(null, false, { message: "Invalid credentials" });
           }
-          return done(null, { id: user.id, role: user.role as UserRole });
+          return done(null, { id: user.id, role: user.role });
         } catch (error) {
           return done(error);
         }
@@ -106,7 +84,7 @@ export function setupAuth(app: Express) {
       if (!user) {
         return done(new Error("User not found"));
       }
-      done(null, { id: user.id, role: user.role as UserRole });
+      done(null, { id: user.id, role: user.role });
     } catch (error) {
       done(error);
     }
@@ -129,7 +107,7 @@ export function setupAuth(app: Express) {
         role: role as UserRole
       });
 
-      req.login({ id: user.id, role: user.role as UserRole }, (err) => {
+      req.login({ id: user.id, role: user.role }, (err) => {
         if (err) return next(err);
         // Remove password from response
         const { password, ...userWithoutPassword } = user;
