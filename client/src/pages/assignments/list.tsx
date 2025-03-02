@@ -197,7 +197,16 @@ export default function AssignmentList() {
   const filteredAssignments = useMemo(() => {
     if (!assignments) return [];
 
-    return assignments.filter((assignment) => {
+    // Sort assignments by due date (closest due date first)
+    const sortedAssignments = [...assignments].sort((a, b) => {
+      // Handle assignments without due dates (push them to the end)
+      if (!a.dueDate) return 1;
+      if (!b.dueDate) return -1;
+      return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+    });
+
+
+    return sortedAssignments.filter((assignment) => {
       // For students, only show published and completed assignments
       if (user?.role === "STUDENT" && 
           !["published", "completed"].includes(assignment.status.toLowerCase())) {
