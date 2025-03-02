@@ -126,10 +126,6 @@ export default function ClassDetail() {
       }
 
       queryClient.invalidateQueries({ queryKey: ["/api/classes", classId, "teachers"] });
-      toast({
-        title: "Success",
-        description: "Teacher roles updated successfully",
-      });
     } catch (error) {
       toast({
         title: "Error",
