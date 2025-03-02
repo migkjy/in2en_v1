@@ -351,6 +351,12 @@ export class DatabaseStorage implements IStorage {
     }).returning();
     return submission;
   }
+  
+  // List submissions for a specific student
+  async listUserSubmissions(studentId: number): Promise<Submission[]> {
+    console.log("Listing submissions for student:", studentId);
+    return await db.select().from(submissions).where(eq(submissions.studentId, studentId));
+  }
 
   async getSubmission(id: number): Promise<Submission | undefined> {
     const [submission] = await db.select().from(submissions).where(eq(submissions.id, id));

@@ -11,6 +11,20 @@ export default function StudentDashboard() {
 
   const { data: submissions } = useQuery<Submission[]>({
     queryKey: ["/api/submissions", user?.id],
+    queryFn: async () => {
+      try {
+        const response = await fetch(`/api/submissions`);
+        if (!response.ok) {
+          console.error("Error fetching submissions:", await response.text());
+          return [];
+        }
+        return response.json();
+      } catch (error) {
+        console.error("Error fetching student submissions:", error);
+        return [];
+      }
+    },
+    enabled: !!user?.id
   });
 
   return (
