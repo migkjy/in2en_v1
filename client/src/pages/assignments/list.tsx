@@ -195,15 +195,18 @@ export default function AssignmentList() {
 
   // Filter assignments based on selected filters
   // Query to get all student submissions
-  const { data: studentSubmissions } = useQuery({
+  const { data: studentSubmissions, isLoading: submissionsLoading } = useQuery({
     queryKey: ["/api/submissions", "student"],
     queryFn: async () => {
       // Student role needs to check their own submissions
       if (user?.role === "STUDENT") {
         try {
-          // Getting all submissions with status parameter to satisfy API requirement
-          const response = await fetch(`/api/submissions?status=all`);
-          if (!response.ok) return [];
+          // Get the student's submissions without needing a status param
+          const response = await fetch(`/api/submissions`);
+          if (!response.ok) {
+            console.error("Error fetching submissions:", await response.text());
+            return [];
+          }
           return await response.json();
         } catch (error) {
           console.error("Error fetching student submissions:", error);

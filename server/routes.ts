@@ -893,7 +893,16 @@ export function registerRoutes(app: Express): Server {
     const { assignmentId, status } = req.query;
 
     try {
-      // Validate parameters
+      // Special case for students
+      if (req.isAuthenticated() && req.user?.role === "STUDENT") {
+        // Get all submissions for the authenticated student regardless of query params
+        const studentSubmissions = await db.select()
+          .from(submissions)
+          .where(eq(submissions.studentId, req.user.id));
+        return res.json(studentSubmissions);
+      }
+
+      // For non-students or unauthenticated users, continue with normal flow
       if (assignmentId) {
         const id = parseInt(assignmentId as string, 10);
         if (isNaN(id)) {
@@ -910,15 +919,6 @@ export function registerRoutes(app: Express): Server {
           return res.status(400).json({
             message: "Invalid status parameter",
           });
-        }
-        
-        // Special case for students requesting their submissions with status=all
-        if (status === "all" && req.isAuthenticated() && req.user?.role === "STUDENT") {
-          // Get all submissions for the authenticated student
-          const studentSubmissions = await db.select()
-            .from(submissions)
-            .where(eq(submissions.studentId, req.user.id));
-          return res.json(studentSubmissions);
         }
         
         const submissions = await storage.listAllSubmissions(status);
