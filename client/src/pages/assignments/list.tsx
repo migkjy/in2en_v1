@@ -207,44 +207,48 @@ export default function AssignmentList() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-3 gap-4 mb-6">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Branch</label>
-                  <Select
-                    value={selectedBranch}
-                    onValueChange={setSelectedBranch}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="All Branches" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Branches</SelectItem>
-                      {branches?.map((branch) => (
-                        <SelectItem key={branch.id} value={branch.id.toString()}>
-                          {branch.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Class</label>
-                  <Select
-                    value={selectedClass}
-                    onValueChange={setSelectedClass}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="All Classes" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Classes</SelectItem>
-                      {classes?.map((cls) => (
-                        <SelectItem key={cls.id} value={cls.id.toString()}>
-                          {cls.name} - {cls.englishLevel}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                {user?.role !== "STUDENT" && (
+                  <>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Branch</label>
+                      <Select
+                        value={selectedBranch}
+                        onValueChange={setSelectedBranch}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="All Branches" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Branches</SelectItem>
+                          {branches?.map((branch) => (
+                            <SelectItem key={branch.id} value={branch.id.toString()}>
+                              {branch.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Class</label>
+                      <Select
+                        value={selectedClass}
+                        onValueChange={setSelectedClass}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="All Classes" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Classes</SelectItem>
+                          {classes?.map((cls) => (
+                            <SelectItem key={cls.id} value={cls.id.toString()}>
+                              {cls.name} - {cls.englishLevel}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </>
+                )}
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Status</label>
                   <Select
@@ -269,11 +273,15 @@ export default function AssignmentList() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Title</TableHead>
-                    <TableHead>Branch</TableHead>
-                    <TableHead>Class</TableHead>
+                    {user?.role !== "STUDENT" && (
+                      <>
+                        <TableHead>Branch</TableHead>
+                        <TableHead>Class</TableHead>
+                      </>
+                    )}
                     <TableHead>Due Date</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -292,11 +300,15 @@ export default function AssignmentList() {
                         return (
                           <TableRow key={assignment.id}>
                             <TableCell>{assignment.title}</TableCell>
-                            <TableCell>{branch?.name || "-"}</TableCell>
-                            <TableCell>
-                              {assignmentClass?.name || "-"} -{" "}
-                              {assignmentClass?.englishLevel || ""}
-                            </TableCell>
+                            {user?.role !== "STUDENT" && (
+                              <>
+                                <TableCell>{branch?.name || "-"}</TableCell>
+                                <TableCell>
+                                  {assignmentClass?.name || "-"} -{" "}
+                                  {assignmentClass?.englishLevel || ""}
+                                </TableCell>
+                              </>
+                            )}
                             <TableCell>
                               {assignment.dueDate
                                 ? format(new Date(assignment.dueDate), "MM/dd/yyyy")
