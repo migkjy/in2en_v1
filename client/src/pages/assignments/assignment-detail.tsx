@@ -60,19 +60,36 @@ export default function AssignmentDetail() {
 
   // Get submissions
   const { data: submissions } = useQuery<Submission[]>({
-    queryKey: ["/api/submissions", assignmentId],
+    queryKey: ["/api/submissions", assignmentId, user?.role],
     queryFn: async () => {
       if (!assignmentId) throw new Error("Assignment ID is required");
-      const response = await fetch(
-        `/api/submissions?assignmentId=${assignmentId}`,
-      );
-      if (!response.ok) {
-        throw new Error("Failed to fetch submissions");
+      
+      // For students, we need to fetch all of their submissions first
+      // and then filter for the current assignment
+      if (user?.role === "STUDENT") {
+        const response = await fetch(`/api/submissions`);
+        if (!response.ok) {
+          throw new Error("Failed to fetch submissions");
+        }
+        const allSubmissions = await response.json();
+        // Filter submissions for this assignment only
+        return allSubmissions.filter(
+          (sub: Submission) => sub.assignmentId === Number(assignmentId)
+        );
+      } else {
+        // For teachers and admins, fetch by assignment ID
+        const response = await fetch(
+          `/api/submissions?assignmentId=${assignmentId}`,
+        );
+        if (!response.ok) {
+          throw new Error("Failed to fetch submissions");
+        }
+        return response.json();
       }
-      return response.json();
     },
-    enabled: !!assignmentId,
+    enabled: !!assignmentId && !!user,
   });
+</old_str>
 
   // Sort submissions by student name
   const sortedSubmissions = useMemo(() => {
@@ -245,20 +262,22 @@ export default function AssignmentDetail() {
                     <p className="text-gray-600">{assignment.description}</p>
                   </div>
 
-                  {/* Students List */}
-                  <div>
-                    <h3 className="text-sm font-medium mb-4">Class Students</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {students?.map((student) => (
-                        <div
-                          key={student.id}
-                          className="flex items-center gap-1 px-3 py-1 bg-gray-100 rounded-full text-sm"
-                        >
-                          {student.name}
-                        </div>
-                      ))}
+                  {/* Students List - only visible for teachers and admins */}
+                  {isTeacherOrAdmin && (
+                    <div>
+                      <h3 className="text-sm font-medium mb-4">Class Students</h3>
+                      <div className="flex flex-wrap gap-2">
+                        {students?.map((student) => (
+                          <div
+                            key={student.id}
+                            className="flex items-center gap-1 px-3 py-1 bg-gray-100 rounded-full text-sm"
+                          >
+                            {student.name}
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Action Buttons for Teachers/Admins */}
                   {isTeacherOrAdmin && (
