@@ -911,6 +911,16 @@ export function registerRoutes(app: Express): Server {
             message: "Invalid status parameter",
           });
         }
+        
+        // Special case for students requesting their submissions with status=all
+        if (status === "all" && req.isAuthenticated() && req.user?.role === "STUDENT") {
+          // Get all submissions for the authenticated student
+          const studentSubmissions = await db.select()
+            .from(submissions)
+            .where(eq(submissions.studentId, req.user.id));
+          return res.json(studentSubmissions);
+        }
+        
         const submissions = await storage.listAllSubmissions(status);
         return res.json(submissions);
       }

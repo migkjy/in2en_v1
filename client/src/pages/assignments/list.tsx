@@ -194,6 +194,27 @@ export default function AssignmentList() {
   };
 
   // Filter assignments based on selected filters
+  // Query to get all student submissions
+  const { data: studentSubmissions } = useQuery({
+    queryKey: ["/api/submissions", "student"],
+    queryFn: async () => {
+      // Student role needs to check their own submissions
+      if (user?.role === "STUDENT") {
+        try {
+          // Getting all submissions with status parameter to satisfy API requirement
+          const response = await fetch(`/api/submissions?status=all`);
+          if (!response.ok) return [];
+          return await response.json();
+        } catch (error) {
+          console.error("Error fetching student submissions:", error);
+          return [];
+        }
+      }
+      return [];
+    },
+    enabled: user?.role === "STUDENT"
+  });
+
   const filteredAssignments = useMemo(() => {
     if (!assignments) return [];
 
@@ -206,12 +227,22 @@ export default function AssignmentList() {
       return new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime();
     });
 
-
     return sortedAssignments.filter((assignment) => {
       // For students, only show published and completed assignments
-      if (user?.role === "STUDENT" && 
-          !["published", "completed"].includes(assignment.status.toLowerCase())) {
-        return false;
+      if (user?.role === "STUDENT") {
+        // First check status
+        if (!["published", "completed"].includes(assignment.status.toLowerCase())) {
+          return false;
+        }
+        
+        // Then check if student has a submission for this assignment
+        if (studentSubmissions && studentSubmissions.length > 0) {
+          const hasSubmission = studentSubmissions.some(
+            submission => submission.assignmentId === assignment.id
+          );
+          return hasSubmission;
+        }
+        return false; // No submissions available
       }
 
       // Filter by branch
