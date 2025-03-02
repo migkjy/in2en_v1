@@ -19,11 +19,17 @@ export default function ProfilePage() {
     queryKey: [`/api/users/${user?.id}`],
     queryFn: async () => {
       if (!user?.id) throw new Error("User ID is required");
-      const response = await fetch(`/api/users/${user.id}`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch user details");
+      try {
+        const response = await fetch(`/api/users/${user.id}`);
+        if (!response.ok) {
+          throw new Error("Failed to fetch user details");
+        }
+        return response.json();
+      } catch (error) {
+        console.error("Error fetching user details:", error);
+        // If user details fetch fails, use the current user data as fallback
+        return user;
       }
-      return response.json();
     },
     enabled: !!user?.id,
   });
@@ -41,11 +47,18 @@ export default function ProfilePage() {
     if (userDetails) {
       setFormData(prev => ({
         ...prev,
-        name: userDetails.name || "",
+        name: userDetails.name || user?.name || "",
         phone_number: userDetails.phone_number || "",
       }));
+    } else if (user) {
+      // Fallback to current user data if userDetails is not available
+      setFormData(prev => ({
+        ...prev,
+        name: user.name || "",
+        phone_number: user.phone_number || "",
+      }));
     }
-  }, [userDetails]);
+  }, [userDetails, user]);
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: { name: string; phone_number: string }) => {

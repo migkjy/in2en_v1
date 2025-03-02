@@ -974,7 +974,7 @@ export function registerRoutes(app: Express): Server {
         role: UserRole.TEACHER,
       });
       res.status(201).json(teacher);
-    } catch (error) {
+    } catch(error) {
       if (error instanceof Error) {
         res.status(400).json({ message: error.message });
       } else {
@@ -1348,6 +1348,44 @@ export function registerRoutes(app: Express): Server {
       }
     },
   );
+
+  app.get("/api/user", (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+    res.json(req.user);
+  });
+
+  // Get user by ID (for profile page)
+  app.get("/api/users/:id", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+
+      // Allow access only to current user's own profile or admin access
+      if (req.user?.id !== id && req.user?.role !== "ADMIN") {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const user = await storage.getUser(id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Remove sensitive information
+      const { password, ...userWithoutPassword } = user;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ message: "An error occurred" });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;
