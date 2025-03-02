@@ -195,7 +195,7 @@ export default function AssignmentList() {
 
   // Filter assignments based on selected filters
   // Query to get all student submissions
-  const { data: studentSubmissions } = useQuery({
+  const { data: studentSubmissions, isLoading: submissionsLoading } = useQuery({
     queryKey: ["/api/submissions", "student"],
     queryFn: async () => {
       // Student role needs to check their own submissions
