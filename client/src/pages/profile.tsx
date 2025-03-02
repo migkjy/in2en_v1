@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,15 +29,15 @@ export default function ProfilePage() {
   });
 
   const [formData, setFormData] = useState({
-    name: userDetails?.name || "",
-    phone_number: userDetails?.phone_number || "",
+    name: "",
+    phone_number: "",
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
   });
 
-  // Update when userDetails changes
-  useState(() => {
+  // Update form data when userDetails changes
+  useEffect(() => {
     if (userDetails) {
       setFormData(prev => ({
         ...prev,
@@ -58,22 +58,23 @@ export default function ProfilePage() {
       });
 
       if (!response.ok) {
-        throw new Error("프로필 업데이트에 실패했습니다.");
+        const error = await response.text();
+        throw new Error(error || "Failed to update profile");
       }
 
       return response.json();
     },
     onSuccess: () => {
       toast({
-        title: "성공",
-        description: "프로필이 업데이트되었습니다.",
+        title: "Success",
+        description: "Profile updated successfully",
       });
       setIsEditing(false);
     },
-    onError: () => {
+    onError: (error: Error) => {
       toast({
-        title: "오류",
-        description: "프로필 업데이트에 실패했습니다.",
+        title: "Error",
+        description: error.message || "Failed to update profile",
         variant: "destructive",
       });
     },
@@ -90,15 +91,16 @@ export default function ProfilePage() {
       });
 
       if (!response.ok) {
-        throw new Error("비밀번호 변경에 실패했습니다.");
+        const error = await response.text();
+        throw new Error(error || "Failed to change password");
       }
 
       return response.json();
     },
     onSuccess: () => {
       toast({
-        title: "성공",
-        description: "비밀번호가 변경되었습니다.",
+        title: "Success",
+        description: "Password changed successfully",
       });
       setFormData(prev => ({
         ...prev,
@@ -107,10 +109,10 @@ export default function ProfilePage() {
         confirmPassword: "",
       }));
     },
-    onError: () => {
+    onError: (error: Error) => {
       toast({
-        title: "오류",
-        description: "비밀번호 변경에 실패했습니다.",
+        title: "Error",
+        description: error.message || "Failed to change password",
         variant: "destructive",
       });
     },
@@ -130,8 +132,8 @@ export default function ProfilePage() {
     e.preventDefault();
     if (formData.newPassword !== formData.confirmPassword) {
       toast({
-        title: "오류",
-        description: "새 비밀번호가 일치하지 않습니다.",
+        title: "Error",
+        description: "New passwords do not match",
         variant: "destructive",
       });
       return;
@@ -158,29 +160,25 @@ export default function ProfilePage() {
       <Sidebar className="w-64" />
       <main className="flex-1 p-8 overflow-auto">
         <div className="max-w-2xl mx-auto">
-          <h1 className="text-2xl font-bold mb-6">마이페이지</h1>
+          <h1 className="text-2xl font-bold mb-6">My Profile</h1>
 
           <Card className="mb-6">
             <CardHeader>
               <CardTitle>
                 <div className="flex items-center">
                   <User className="w-5 h-5 mr-2" />
-                  프로필 정보
+                  Profile Information
                 </div>
               </CardTitle>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label>ID</Label>
-                  <Input value={userDetails?.email || ""} disabled />
-                </div>
-                <div className="space-y-2">
                   <Label>Email</Label>
                   <Input value={userDetails?.email || ""} disabled />
                 </div>
                 <div className="space-y-2">
-                  <Label>이름</Label>
+                  <Label>Name</Label>
                   <Input
                     value={formData.name}
                     onChange={(e) =>
@@ -190,7 +188,7 @@ export default function ProfilePage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>전화번호</Label>
+                  <Label>Phone Number</Label>
                   <Input
                     value={formData.phone_number}
                     onChange={(e) =>
@@ -202,7 +200,7 @@ export default function ProfilePage() {
                 <div className="flex justify-end space-x-2">
                   {!isEditing ? (
                     <Button type="button" onClick={() => setIsEditing(true)}>
-                      수정하기
+                      Edit
                     </Button>
                   ) : (
                     <>
@@ -211,13 +209,13 @@ export default function ProfilePage() {
                         variant="outline"
                         onClick={() => setIsEditing(false)}
                       >
-                        취소
+                        Cancel
                       </Button>
                       <Button
                         type="submit"
                         disabled={updateProfileMutation.isPending}
                       >
-                        저장하기
+                        Save
                       </Button>
                     </>
                   )}
@@ -231,14 +229,14 @@ export default function ProfilePage() {
               <CardTitle>
                 <div className="flex items-center">
                   <Lock className="w-5 h-5 mr-2" />
-                  비밀번호 변경
+                  Change Password
                 </div>
               </CardTitle>
             </CardHeader>
             <CardContent>
               <form onSubmit={handlePasswordChange} className="space-y-4">
                 <div className="space-y-2">
-                  <Label>현재 비밀번호</Label>
+                  <Label>Current Password</Label>
                   <Input
                     type="password"
                     value={formData.currentPassword}
@@ -251,7 +249,7 @@ export default function ProfilePage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>새 비밀번호</Label>
+                  <Label>New Password</Label>
                   <Input
                     type="password"
                     value={formData.newPassword}
@@ -261,7 +259,7 @@ export default function ProfilePage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>새 비밀번호 확인</Label>
+                  <Label>Confirm New Password</Label>
                   <Input
                     type="password"
                     value={formData.confirmPassword}
@@ -278,7 +276,7 @@ export default function ProfilePage() {
                     type="submit"
                     disabled={changePasswordMutation.isPending}
                   >
-                    비밀번호 변경
+                    Change Password
                   </Button>
                 </div>
               </form>
