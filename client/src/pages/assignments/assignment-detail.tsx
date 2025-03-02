@@ -74,6 +74,17 @@ export default function AssignmentDetail() {
     enabled: !!assignmentId,
   });
 
+  // Sort submissions by student name
+  const sortedSubmissions = useMemo(() => {
+    if (!submissions || !students) return [];
+    
+    return [...submissions].sort((a, b) => {
+      const studentA = students.find(s => s.id === a.studentId)?.name || '';
+      const studentB = students.find(s => s.id === b.studentId)?.name || '';
+      return studentA.localeCompare(studentB);
+    });
+  }, [submissions, students]);
+
   // Add mutation for AI review
   const aiReviewMutation = useMutation({
     mutationFn: async () => {
@@ -305,14 +316,14 @@ export default function AssignmentDetail() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {submissions?.length === 0 ? (
+                        {!sortedSubmissions || sortedSubmissions.length === 0 ? (
                           <TableRow>
                             <TableCell colSpan={3} className="text-center py-4">
                               No submissions yet
                             </TableCell>
                           </TableRow>
                         ) : (
-                          submissions?.map((submission) => (
+                          sortedSubmissions.map((submission) => (
                             <TableRow key={submission.id}>
                               <TableCell>
                                 {
