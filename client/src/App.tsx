@@ -1,110 +1,118 @@
 import { QueryClientProvider } from "@tanstack/react-query";
-import { Switch, Route, Redirect } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
-import { AuthProvider } from "@/hooks/use-auth";
-import React, { lazy, Suspense } from 'react';
+import { AuthProvider, useAuth } from "@/hooks/use-auth";
+import { Suspense, lazy, useEffect } from 'react';
 
-// Lazy loading components - these are not needed anymore as we are using the new import method in the edited code
-//const LazyComponent = (Component) => (props) => (
-//  <Suspense fallback={<div>Loading...</div>}>
-//    <Component {...props} />
-//  </Suspense>
-//);
+// Lazy loading components
+const AuthPage = lazy(() => import("@/pages/auth-page"));
+const AdminDashboard = lazy(() => import("@/pages/dashboard/admin"));
+const TeacherDashboard = lazy(() => import("@/pages/dashboard/teacher"));
+const StudentDashboard = lazy(() => import("@/pages/dashboard/student"));
+const Profile = lazy(() => import("@/pages/profile"));
+const AssignmentList = lazy(() => import("@/pages/assignments/list"));
+const CreateAssignment = lazy(() => import("@/pages/assignments/create"));
+const AssignmentDetail = lazy(() => import("@/pages/assignments/assignment-detail"));
+const ReviewAssignment = lazy(() => import("@/pages/assignments/review"));
+const UploadAssignment = lazy(() => import("@/pages/assignments/upload"));
+const SubmissionDetail = lazy(() => import("@/pages/submissions/submission-detail"));
+const ClassList = lazy(() => import("@/pages/classes/list"));
+const ClassDetail = lazy(() => import("@/pages/classes/class-detail"));
+const BranchList = lazy(() => import("@/pages/branches/list"));
+const BranchDetail = lazy(() => import("@/pages/branches/detail"));
+const TeacherList = lazy(() => import("@/pages/teachers/list"));
+const TeacherDetail = lazy(() => import("@/pages/teachers/detail"));
+const StudentList = lazy(() => import("@/pages/students/list"));
+const NotFound = lazy(() => import("@/pages/not-found"));
 
-//Lazy loading components are handled differently in the edited code.
-import { LazyComponent } from "@/lib/lazy-component";
-import { ProtectedRoute } from "@/lib/protected-route";
+// Protected Route Component
+function ProtectedRoute({ component: Component, ...rest }) {
+  const { user, isLoading } = useAuth();
+  const [, setLocation] = useLocation();
 
-const LazyAdminDashboard = () => import("@/pages/dashboard/admin");
-const LazyTeacherDashboard = () => import("@/pages/dashboard/teacher");
-const LazyStudentDashboard = () => import("@/pages/dashboard/student");
-const LazyProfile = () => import("@/pages/profile");
-const LazyAssignmentList = () => import("@/pages/assignments/list");
-const LazyCreateAssignment = () => import("@/pages/assignments/create");
-const LazyAssignmentDetail = () => import("@/pages/assignments/assignment-detail");
-const LazyReviewAssignment = () => import("@/pages/assignments/review");
-const LazyUploadAssignment = () => import("@/pages/assignments/upload");
-const LazySubmissionDetail = () => import("@/pages/submissions/submission-detail");
-const LazyClassList = () => import("@/pages/classes/list");
-const LazyClassDetail = () => import("@/pages/classes/class-detail");
-const LazyBranchList = () => import("@/pages/branches/list");
-const LazyBranchDetail = () => import("@/pages/branches/detail");
-const LazyTeacherList = () => import("@/pages/teachers/list");
-const LazyTeacherDetail = () => import("@/pages/teachers/detail");
-const LazyStudentList = () => import("@/pages/students/list");
-const AuthPage = () => import("@/pages/auth-page");
-const NotFound = () => import("@/pages/not-found");
+  useEffect(() => {
+    if (!isLoading && !user) {
+      setLocation('/auth');
+    }
+  }, [user, isLoading, setLocation]);
 
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  return user ? <Component {...rest} /> : null;
+}
 
 function Router() {
+  const { user } = useAuth();
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (user) {
+      const homePath = 
+        user.role === "ADMIN" ? "/admin" :
+        user.role === "TEACHER" ? "/teacher" : "/student";
+      setLocation(homePath);
+    }
+  }, [user, setLocation]);
+
   return (
-    <Switch>
-      <Route path="/auth" component={AuthPage} />
+    <Suspense fallback={<div>Loading...</div>}>
+      <Switch>
+        <Route path="/auth" component={AuthPage} />
 
-      {/* Admin Routes */}
-      <ProtectedRoute path="/admin" component={LazyComponent(LazyAdminDashboard)} allowedRole="ADMIN" />
-      <ProtectedRoute path="/admin/profile" component={LazyComponent(LazyProfile)} allowedRole="ADMIN" />
-      <ProtectedRoute path="/admin/assignments" component={LazyComponent(LazyAssignmentList)} allowedRole="ADMIN" />
-      <ProtectedRoute path="/admin/assignments/create" component={LazyComponent(LazyCreateAssignment)} allowedRole="ADMIN" />
-      <ProtectedRoute path="/admin/assignments/:id" component={LazyComponent(LazyAssignmentDetail)} allowedRole="ADMIN" />
-      <ProtectedRoute path="/admin/assignments/review/:id/edit" component={LazyComponent(LazyReviewAssignment)} allowedRole="ADMIN" />
-      <ProtectedRoute path="/admin/assignments/review/:id" component={LazyComponent(LazyReviewAssignment)} allowedRole="ADMIN" />
-      <ProtectedRoute path="/admin/classes" component={LazyComponent(LazyClassList)} allowedRole="ADMIN" />
-      <ProtectedRoute path="/admin/classes/:id" component={LazyComponent(LazyClassDetail)} allowedRole="ADMIN" />
-      <ProtectedRoute path="/admin/branches" component={LazyComponent(LazyBranchList)} allowedRole="ADMIN" />
-      <ProtectedRoute path="/admin/branches/:id" component={LazyComponent(LazyBranchDetail)} allowedRole="ADMIN" />
-      <ProtectedRoute path="/admin/teachers" component={LazyComponent(LazyTeacherList)} allowedRole="ADMIN" />
-      <ProtectedRoute path="/admin/teachers/:id" component={LazyComponent(LazyTeacherDetail)} allowedRole="ADMIN" />
-      <ProtectedRoute path="/admin/students" component={LazyComponent(LazyStudentList)} allowedRole="ADMIN" />
+        {/* Admin Routes */}
+        <Route path="/admin" component={(props) => <ProtectedRoute component={AdminDashboard} {...props} />} />
+        <Route path="/admin/profile" component={(props) => <ProtectedRoute component={Profile} {...props} />} />
+        <Route path="/admin/assignments" component={(props) => <ProtectedRoute component={AssignmentList} {...props} />} />
+        <Route path="/admin/assignments/create" component={(props) => <ProtectedRoute component={CreateAssignment} {...props} />} />
+        <Route path="/admin/assignments/:id" component={(props) => <ProtectedRoute component={AssignmentDetail} {...props} />} />
+        <Route path="/admin/assignments/review/:id" component={(props) => <ProtectedRoute component={ReviewAssignment} {...props} />} />
+        <Route path="/admin/classes" component={(props) => <ProtectedRoute component={ClassList} {...props} />} />
+        <Route path="/admin/classes/:id" component={(props) => <ProtectedRoute component={ClassDetail} {...props} />} />
+        <Route path="/admin/branches" component={(props) => <ProtectedRoute component={BranchList} {...props} />} />
+        <Route path="/admin/branches/:id" component={(props) => <ProtectedRoute component={BranchDetail} {...props} />} />
+        <Route path="/admin/teachers" component={(props) => <ProtectedRoute component={TeacherList} {...props} />} />
+        <Route path="/admin/teachers/:id" component={(props) => <ProtectedRoute component={TeacherDetail} {...props} />} />
+        <Route path="/admin/students" component={(props) => <ProtectedRoute component={StudentList} {...props} />} />
 
-      {/* Teacher Routes */}
-      <ProtectedRoute path="/teacher" component={LazyComponent(LazyTeacherDashboard)} allowedRole="TEACHER" />
-      <ProtectedRoute path="/teacher/profile" component={LazyComponent(LazyProfile)} allowedRole="TEACHER" />
-      <ProtectedRoute path="/teacher/assignments" component={LazyComponent(LazyAssignmentList)} allowedRole="TEACHER" />
-      <ProtectedRoute path="/teacher/assignments/create" component={LazyComponent(LazyCreateAssignment)} allowedRole="TEACHER" />
-      <ProtectedRoute path="/teacher/assignments/:id" component={LazyComponent(LazyAssignmentDetail)} allowedRole="TEACHER" />
-      <ProtectedRoute path="/teacher/assignments/review/:id/edit" component={LazyComponent(LazyReviewAssignment)} allowedRole="TEACHER" />
-      <ProtectedRoute path="/teacher/assignments/review/:id" component={LazyComponent(LazyReviewAssignment)} allowedRole="TEACHER" />
-      <ProtectedRoute path="/teacher/classes" component={LazyComponent(LazyClassList)} allowedRole="TEACHER" />
-      <ProtectedRoute path="/teacher/classes/:id" component={LazyComponent(LazyClassDetail)} allowedRole="TEACHER" />
+        {/* Teacher Routes */}
+        <Route path="/teacher" component={(props) => <ProtectedRoute component={TeacherDashboard} {...props} />} />
+        <Route path="/teacher/profile" component={(props) => <ProtectedRoute component={Profile} {...props} />} />
+        <Route path="/teacher/assignments" component={(props) => <ProtectedRoute component={AssignmentList} {...props} />} />
+        <Route path="/teacher/assignments/create" component={(props) => <ProtectedRoute component={CreateAssignment} {...props} />} />
+        <Route path="/teacher/assignments/:id" component={(props) => <ProtectedRoute component={AssignmentDetail} {...props} />} />
+        <Route path="/teacher/assignments/review/:id" component={(props) => <ProtectedRoute component={ReviewAssignment} {...props} />} />
+        <Route path="/teacher/classes" component={(props) => <ProtectedRoute component={ClassList} {...props} />} />
+        <Route path="/teacher/classes/:id" component={(props) => <ProtectedRoute component={ClassDetail} {...props} />} />
 
-      {/* Student Routes */}
-      <ProtectedRoute path="/student" component={LazyComponent(LazyStudentDashboard)} allowedRole="STUDENT" />
-      <ProtectedRoute path="/student/profile" component={LazyComponent(LazyProfile)} allowedRole="STUDENT" />
-      <ProtectedRoute path="/student/assignments" component={LazyComponent(LazyAssignmentList)} allowedRole="STUDENT" />
-      <ProtectedRoute path="/student/assignments/:id" component={LazyComponent(LazyAssignmentDetail)} allowedRole="STUDENT" />
-      <ProtectedRoute path="/student/assignments/upload/:id" component={LazyComponent(LazyUploadAssignment)} allowedRole="STUDENT" />
-      <ProtectedRoute path="/student/submissions/:id" component={LazyComponent(LazySubmissionDetail)} allowedRole="STUDENT" />
-      <ProtectedRoute path="/student/classes" component={LazyComponent(LazyClassList)} allowedRole="STUDENT" />
-      <ProtectedRoute path="/student/classes/:id" component={LazyComponent(LazyClassDetail)} allowedRole="STUDENT" />
+        {/* Student Routes */}
+        <Route path="/student" component={(props) => <ProtectedRoute component={StudentDashboard} {...props} />} />
+        <Route path="/student/profile" component={(props) => <ProtectedRoute component={Profile} {...props} />} />
+        <Route path="/student/assignments" component={(props) => <ProtectedRoute component={AssignmentList} {...props} />} />
+        <Route path="/student/assignments/:id" component={(props) => <ProtectedRoute component={AssignmentDetail} {...props} />} />
+        <Route path="/student/assignments/upload/:id" component={(props) => <ProtectedRoute component={UploadAssignment} {...props} />} />
+        <Route path="/student/submissions/:id" component={(props) => <ProtectedRoute component={SubmissionDetail} {...props} />} />
+        <Route path="/student/classes" component={(props) => <ProtectedRoute component={ClassList} {...props} />} />
+        <Route path="/student/classes/:id" component={(props) => <ProtectedRoute component={ClassDetail} {...props} />} />
 
-      {/* Common Routes - Accessible by all authenticated users */}
-      <ProtectedRoute path="/submissions/:id" component={LazyComponent(LazySubmissionDetail)} />
-      <ProtectedRoute path="/assignments/:id/upload" component={LazyComponent(LazyUploadAssignment)} allowedRole={["TEACHER", "ADMIN"]} />
+        {/* Common Routes */}
+        <Route path="/submissions/:id" component={(props) => <ProtectedRoute component={SubmissionDetail} {...props} />} />
 
-      {/* Default route - redirect to appropriate dashboard based on role */}
-      <Route path="/">
-        {() => {
-          const role = localStorage.getItem("userRole");
-          if (!role) return <Redirect to="/auth" />;
-
-          switch (role) {
-            case "ADMIN":
-              return <Redirect to="/admin" />;
-            case "TEACHER":
-              return <Redirect to="/teacher" />;
-            case "STUDENT":
-              return <Redirect to="/student" />;
-            default:
-              return <Redirect to="/auth" />;
+        {/* Root Route */}
+        <Route path="/" component={() => {
+          if (!user) {
+            setLocation('/auth');
+            return null;
           }
-        }}
-      </Route>
+          return null;
+        }} />
 
-      {/* Not found route */}
-      <Route component={NotFound} />
-    </Switch>
+        {/* Not found route */}
+        <Route component={NotFound} />
+      </Switch>
+    </Suspense>
   );
 }
 
