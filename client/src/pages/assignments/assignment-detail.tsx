@@ -336,13 +336,17 @@ export default function AssignmentDetail() {
                                 }
                                 return true;
                               })
-                              .sort((a, b) =>
-                                (a.studentName || "").localeCompare(b.studentName || "")
-                              )
-                              .map((submission) => (
+                              .sort((a, b) => {
+                                const studentA = students?.find(s => s.id === a.studentId)?.name || "";
+                                const studentB = students?.find(s => s.id === b.studentId)?.name || "";
+                                return studentA.localeCompare(studentB);
+                              })
+                              .map((submission) => {
+                                const studentName = students?.find(s => s.id === submission.studentId)?.name;
+                                return (
                                 <tr key={submission.id}>
                                   <td className="px-6 py-4 whitespace-nowrap">
-                                    {submission.studentName || "Unknown"}
+                                    {studentName || (user?.role === "STUDENT" ? user.name : "Unknown")}
                                   </td>
                                   <td className="px-6 py-4 whitespace-nowrap">
                                     <span
@@ -401,7 +405,8 @@ export default function AssignmentDetail() {
                                     )}
                                   </td>
                                 </tr>
-                              ))
+                              );
+                              })
                           ) : (
                             <tr>
                               <td
