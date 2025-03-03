@@ -51,7 +51,7 @@ function Router() {
     if (user) {
       const homePath = 
         user.role === "ADMIN" ? "/admin" :
-        user.role === "TEACHER" ? "/teacher" : "/student";
+        user.role === "TEACHER" ? "/teacher" : "/student/assignments";
       setLocation(homePath);
     }
   }, [user, setLocation]);
@@ -94,7 +94,6 @@ function Router() {
         <Route path="/teacher/classes" component={(props) => <ProtectedRoute component={ClassList} {...props} />} />
 
         {/* Student Routes */}
-        <Route path="/student" component={(props) => <ProtectedRoute component={StudentDashboard} {...props} />} />
         <Route path="/student/profile" component={(props) => <ProtectedRoute component={Profile} {...props} />} />
         <Route path="/student/assignments/:id/upload" component={(props) => <ProtectedRoute component={UploadAssignment} {...props} />} />
         <Route path="/student/assignments/:id" component={(props) => <ProtectedRoute component={AssignmentDetail} {...props} />} />

@@ -43,8 +43,7 @@ export function Sidebar({ className }: SidebarProps) {
   ];
 
   const studentLinks = [
-    { href: "/student", icon: LayoutDashboard, label: "Dashboard" },
-    { href: "/student/assignments", icon: BookOpen, label: "My Assignments" },
+    { href: "/student/assignments", icon: BookOpen, label: "Assignments" },
   ];
 
   const links = user?.role === "ADMIN"
