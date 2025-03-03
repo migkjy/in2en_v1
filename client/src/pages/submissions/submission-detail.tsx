@@ -277,6 +277,7 @@ export default function SubmissionDetail() {
                   </div>
                 )}
 
+                {/* OCR Text section commented out (주석 처리됨)
                 {submissionData.ocrText && (
                   <div>
                     <h3 className="section-title mb-2">OCR Text</h3>
@@ -287,6 +288,7 @@ export default function SubmissionDetail() {
                     </div>
                   </div>
                 )}
+                */}
 
                 {(submissionData.correctedText || submissionData.overallAssessment || isTeacherOrAdmin) && (
                   <div className="space-y-4">
