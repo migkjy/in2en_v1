@@ -246,19 +246,21 @@ export default function AssignmentDetail() {
                   </div>
 
                   {/* Students List */}
-                  <div>
-                    <h3 className="text-sm font-medium mb-4">Class Students</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {students?.map((student) => (
-                        <div
-                          key={student.id}
-                          className="flex items-center gap-1 px-3 py-1 bg-gray-100 rounded-full text-sm"
-                        >
-                          {student.name}
-                        </div>
-                      ))}
+                  {user?.role !== "STUDENT" && (
+                    <div>
+                      <h3 className="text-sm font-medium mb-4">Class Students</h3>
+                      <div className="flex flex-wrap gap-2">
+                        {students?.map((student) => (
+                          <div
+                            key={student.id}
+                            className="flex items-center gap-1 px-3 py-1 bg-gray-100 rounded-full text-sm"
+                          >
+                            {student.name}
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Action Buttons for Teachers/Admins */}
                   {isTeacherOrAdmin && (
