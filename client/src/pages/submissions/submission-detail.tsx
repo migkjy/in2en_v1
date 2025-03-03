@@ -735,8 +735,7 @@ const CommentsSection = ({ submissionId }: { submissionId: number }) => {
             <div key={comment.id} className="flex gap-3 p-3 rounded-lg bg-gray-50">
               <Avatar className="h-10 w-10">
                 <AvatarFallback className={
-                  comment.user.role === 'TEACHER' ? 'bg-blue-100 text-blue-800' :
-                  comment.user.role === 'ADMIN' ? 'bg-purple-100 text-purple-800' :
+                  comment.user.role === 'TEACHER' || comment.user.role === 'ADMIN' ? 'bg-blue-100 text-blue-800' :
                   'bg-green-100 text-green-800'
                 }>
                   {getInitials(comment.user.name)}
@@ -746,11 +745,10 @@ const CommentsSection = ({ submissionId }: { submissionId: number }) => {
                 <div className="flex items-center gap-2 mb-1">
                   <span className="font-medium text-gray-900">{comment.user.name}</span>
                   <span className="text-xs px-2 py-0.5 rounded-full 
-                    ${comment.user.role === 'TEACHER' ? 'bg-blue-100 text-blue-800' :
-                    comment.user.role === 'ADMIN' ? 'bg-purple-100 text-purple-800' :
+                    ${comment.user.role === 'TEACHER' || comment.user.role === 'ADMIN' ? 'bg-blue-100 text-blue-800' :
                     'bg-green-100 text-green-800'}"
                   >
-                    {comment.user.role}
+                    {comment.user.role === 'ADMIN' ? 'TEACHER' : comment.user.role}
                   </span>
                   <span className="text-xs text-gray-500">
                     {format(new Date(comment.createdAt), 'MMM d, yyyy • h:mm a')}
