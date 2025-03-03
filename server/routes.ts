@@ -940,15 +940,67 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // File upload endpoint for comments
+  app.post("/api/upload", upload.single("file"), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      // Convert file to base64
+      const base64Data = req.file.buffer.toString("base64");
+      const fileUrl = `data:${req.file.mimetype};base64,${base64Data}`;
+      
+      res.json({ url: fileUrl });
+    } catch (error) {
+      console.error("Error processing file upload:", error);
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "An unknown error occurred" });
+      }
+    }
+  });
+
   // Comment routes
   app.post("/api/comments", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user) {
+      return res.status(401).json({ message: "You must be logged in to comment" });
+    }
+    
     try {
+      const { submissionId, content, imageUrl, parentId } = req.body;
+      
+      if (!submissionId) {
+        return res.status(400).json({ message: "Submission ID is required" });
+      }
+      
+      if (!content && !imageUrl) {
+        return res.status(400).json({ message: "Comment must contain text or an image" });
+      }
+      
       const comment = await storage.createComment({
-        ...req.body,
-        userId: req.user?.id,
+        submissionId: Number(submissionId),
+        userId: req.user.id,
+        content: content || "",
+        imageUrl: imageUrl || null,
+        parentId: parentId ? Number(parentId) : null,
+        createdAt: new Date(),
       });
-      res.status(201).json(comment);
+      
+      // Fetch the user data to include with the response
+      const commentUser = await storage.getUser(req.user.id);
+      
+      res.status(201).json({
+        ...comment,
+        user: {
+          id: commentUser?.id,
+          name: commentUser?.name,
+          role: commentUser?.role,
+        },
+      });
     } catch (error) {
+      console.error("Error creating comment:", error);
       if (error instanceof Error) {
         res.status(400).json({ message: error.message });
       } else {
@@ -958,10 +1010,33 @@ export function registerRoutes(app: Express): Server {
   });
 
   app.get("/api/comments/:submissionId", async (req, res) => {
-    const comments = await storage.listComments(
-      Number(req.params.submissionId),
-    );
-    res.json(comments);
+    try {
+      const comments = await storage.listComments(Number(req.params.submissionId));
+      
+      // Fetch user info for each comment
+      const commentsWithUserData = await Promise.all(
+        comments.map(async (comment) => {
+          const user = await storage.getUser(comment.userId);
+          return {
+            ...comment,
+            user: user ? {
+              id: user.id,
+              name: user.name,
+              role: user.role,
+            } : undefined,
+          };
+        })
+      );
+      
+      res.json(commentsWithUserData);
+    } catch (error) {
+      console.error("Error fetching comments:", error);
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(500).json({ message: "An unknown error occurred" });
+      }
+    }
   });
 
   // Teacher routes

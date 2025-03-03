@@ -406,6 +406,8 @@ export default function SubmissionDetail() {
                     </div>
                   </div>
                 )}
+                
+                <CommentsSection submissionId={submissionId} />
               </div>
             </CardContent>
           </Card>
@@ -414,3 +416,374 @@ export default function SubmissionDetail() {
     </div>
   );
 }
+
+// Comment component types
+interface Comment {
+  id: number;
+  submissionId: number;
+  userId: number;
+  content: string;
+  imageUrl?: string;
+  createdAt: string;
+  user?: {
+    id: number;
+    name: string;
+    role: string;
+  };
+}
+
+interface CommentFormProps {
+  submissionId: number;
+  onCommentAdded: () => void;
+  replyToId?: number;
+  onCancelReply?: () => void;
+}
+
+// Comment form component with image upload
+const CommentForm = ({ submissionId, onCommentAdded, replyToId, onCancelReply }: CommentFormProps) => {
+  const { toast } = useToast();
+  const [content, setContent] = useState("");
+  const [image, setImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImageChange = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    
+    const selectedFile = files[0];
+    // Check file size (limit to 1MB)
+    if (selectedFile.size > 1024 * 1024) {
+      toast({
+        title: "Error",
+        description: "Image must be less than 1MB in size",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setImagePreview(e.target?.result as string);
+    };
+    reader.readAsDataURL(selectedFile);
+    setImage(selectedFile);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    handleImageChange(e.dataTransfer.files);
+  };
+
+  const removeImage = () => {
+    setImage(null);
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!content.trim() && !image) {
+      toast({
+        title: "Error",
+        description: "Please enter a comment or attach an image",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      
+      // Prepare data
+      let imageUrl = null;
+      
+      // If there's an image, upload it first
+      if (image) {
+        const formData = new FormData();
+        formData.append("file", image);
+        
+        const uploadResponse = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+        });
+        
+        if (!uploadResponse.ok) {
+          throw new Error("Failed to upload image");
+        }
+        
+        const uploadResult = await uploadResponse.json();
+        imageUrl = uploadResult.url;
+      }
+      
+      // Create the comment
+      const commentData = {
+        submissionId,
+        content: content.trim(),
+        imageUrl,
+        parentId: replyToId || null,
+      };
+      
+      const response = await apiRequest("POST", "/api/comments", commentData);
+      
+      if (!response.ok) {
+        throw new Error("Failed to post comment");
+      }
+      
+      // Reset form
+      setContent("");
+      setImage(null);
+      setImagePreview(null);
+      if (onCancelReply) onCancelReply();
+      onCommentAdded();
+      
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to post comment",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="mt-4 p-4 border rounded-lg">
+      <div className="space-y-4">
+        {replyToId && (
+          <div className="flex justify-between bg-slate-100 p-2 rounded">
+            <span className="text-sm text-slate-500">Replying to comment</span>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={onCancelReply}
+              className="h-6 p-0 text-slate-500"
+            >
+              Cancel
+            </Button>
+          </div>
+        )}
+        
+        <textarea
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          placeholder="Write your comment here..."
+          className="w-full p-3 border rounded-md"
+          rows={4}
+        />
+        
+        <div
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={handleDrop}
+          className={`border-2 border-dashed rounded-md p-4 text-center ${
+            imagePreview ? "border-green-400" : "border-gray-300"
+          }`}
+        >
+          {imagePreview ? (
+            <div className="relative">
+              <img 
+                src={imagePreview} 
+                alt="Preview" 
+                className="max-h-40 mx-auto rounded" 
+              />
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                className="absolute top-0 right-0 rounded-full w-6 h-6 p-0"
+                onClick={removeImage}
+              >
+                ×
+              </Button>
+            </div>
+          ) : (
+            <>
+              <p className="text-sm text-gray-500 mb-2">
+                Drag and drop an image here, or{" "}
+                <label className="text-blue-500 cursor-pointer">
+                  browse
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    className="hidden"
+                    accept="image/*"
+                    onChange={(e) => handleImageChange(e.target.files)}
+                  />
+                </label>
+              </p>
+              <p className="text-xs text-gray-400">Max file size: 1MB</p>
+            </>
+          )}
+        </div>
+        
+        <div className="flex justify-end">
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+            className="flex items-center"
+          >
+            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Post Comment
+          </Button>
+        </div>
+      </div>
+    </form>
+  );
+};
+
+// Comment component
+const CommentItem = ({ 
+  comment, 
+  onReply, 
+  isTeacherOrAdmin 
+}: { 
+  comment: Comment; 
+  onReply: (commentId: number) => void;
+  isTeacherOrAdmin: boolean;
+}) => {
+  return (
+    <div className="border-b pb-4 mb-4 last:border-0">
+      <div className="flex justify-between">
+        <div className="flex items-center mb-2">
+          <div className="font-medium">{comment.user?.name || "Unknown"}</div>
+          <div className="text-xs px-2 py-0.5 bg-gray-100 rounded ml-2">
+            {comment.user?.role || ""}
+          </div>
+        </div>
+        <div className="text-xs text-gray-500">
+          {new Date(comment.createdAt).toLocaleString()}
+        </div>
+      </div>
+      
+      <div className="mt-2 text-sm whitespace-pre-wrap">{comment.content}</div>
+      
+      {comment.imageUrl && (
+        <div className="mt-3">
+          <a href={comment.imageUrl} target="_blank" rel="noopener noreferrer">
+            <img
+              src={comment.imageUrl}
+              alt="Comment attachment"
+              className="max-h-32 rounded border"
+            />
+          </a>
+        </div>
+      )}
+      
+      {(isTeacherOrAdmin || !comment.user?.role?.includes("STUDENT")) && (
+        <div className="mt-2 flex justify-end">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="text-xs"
+            onClick={() => onReply(comment.id)}
+          >
+            Reply
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Comments section component
+const CommentsSection = ({ submissionId }: { submissionId: number }) => {
+  const { user } = useAuth();
+  const [replyToId, setReplyToId] = useState<number | null>(null);
+  const [showAllComments, setShowAllComments] = useState(false);
+  const isTeacherOrAdmin = user?.role === "TEACHER" || user?.role === "ADMIN";
+  const commentsRef = useRef<HTMLDivElement>(null);
+  
+  // Fetch comments
+  const {
+    data: comments = [],
+    isLoading,
+    refetch,
+  } = useQuery<Comment[]>({
+    queryKey: [`/api/comments/${submissionId}`],
+    queryFn: async () => {
+      const response = await fetch(`/api/comments/${submissionId}`, {
+        credentials: "include",
+      });
+      if (!response.ok) {
+        throw new Error("Failed to fetch comments");
+      }
+      return response.json();
+    },
+  });
+  
+  const handleCommentAdded = useCallback(() => {
+    refetch();
+    // Scroll to bottom of comments after a short delay
+    setTimeout(() => {
+      if (commentsRef.current) {
+        commentsRef.current.scrollTop = commentsRef.current.scrollHeight;
+      }
+    }, 300);
+  }, [refetch]);
+  
+  const displayedComments = showAllComments ? comments : comments.slice(-3);
+  const hasMoreComments = comments.length > 3;
+
+  return (
+    <div className="mt-6 border rounded-lg p-4 bg-white">
+      <h3 className="section-title mb-4">Comments</h3>
+      
+      {isLoading ? (
+        <div className="flex justify-center p-4">
+          <Loader2 className="h-6 w-6 animate-spin" />
+        </div>
+      ) : (
+        <>
+          {comments.length === 0 ? (
+            <p className="text-center text-gray-500 py-4">No comments yet</p>
+          ) : (
+            <>
+              {hasMoreComments && !showAllComments && (
+                <Button
+                  variant="ghost"
+                  className="w-full text-sm mb-2"
+                  onClick={() => setShowAllComments(true)}
+                >
+                  Show all {comments.length} comments
+                </Button>
+              )}
+              
+              <div 
+                ref={commentsRef}
+                className="space-y-4 max-h-96 overflow-y-auto pr-2"
+              >
+                {displayedComments.map((comment) => (
+                  <CommentItem
+                    key={comment.id}
+                    comment={comment}
+                    onReply={setReplyToId}
+                    isTeacherOrAdmin={isTeacherOrAdmin}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+          
+          {replyToId ? (
+            <CommentForm
+              submissionId={submissionId}
+              onCommentAdded={handleCommentAdded}
+              replyToId={replyToId}
+              onCancelReply={() => setReplyToId(null)}
+            />
+          ) : (
+            <CommentForm
+              submissionId={submissionId}
+              onCommentAdded={handleCommentAdded}
+            />
+          )}
+        </>
+      )}
+    </div>
+  );
+};
