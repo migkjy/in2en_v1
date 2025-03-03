@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { Sidebar } from "@/components/layout/sidebar";
+import { MobileLayout } from "@/components/layout/mobile-layout";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -205,12 +206,12 @@ export default function ProfilePage() {
     );
   }
 
+  const isMobile = useIsMobile();
+  
   return (
-    <div className="flex h-screen">
-      <Sidebar className="w-64" />
-      <main className="flex-1 p-8 overflow-auto">
-        <div className="max-w-2xl mx-auto">
-          <h1 className="text-2xl font-bold mb-6">My Profile</h1>
+    <MobileLayout title="My Profile">
+      <div className={`${isMobile ? 'max-w-full' : 'max-w-2xl'} mx-auto`}>
+        {!isMobile && <h1 className="text-2xl font-bold mb-6">My Profile</h1>}
 
           <Card className="mb-6">
             <CardHeader>

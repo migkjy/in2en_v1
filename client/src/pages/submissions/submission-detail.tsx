@@ -1,7 +1,8 @@
 import "./submission-detail.css";
 
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Sidebar } from "@/components/layout/sidebar";
+import { MobileLayout } from "@/components/layout/mobile-layout";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useRoute, useLocation } from "wouter";
@@ -228,19 +229,20 @@ export default function SubmissionDetail() {
     }
   };
 
+  const isMobile = useIsMobile();
+  
   return (
-    <div className="flex h-screen">
-      <Sidebar className="w-64" />
-      <main className="flex-1 p-8 overflow-auto">
-        <div className="max-w-6xl mx-auto">
-          <Button
-            variant="outline"
-            className="mb-4"
-            onClick={() => navigate(`${basePath}/${assignment.id}`)}
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Assignment Detail
-          </Button>
+    <MobileLayout title={`${assignment.title} - ${student.name}`}>
+      <div className={`${isMobile ? 'max-w-full' : 'max-w-6xl'} mx-auto`}>
+        <Button
+          variant="outline"
+          className="mb-4"
+          size={isMobile ? "sm" : "default"}
+          onClick={() => navigate(`${basePath}/${assignment.id}`)}
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          {isMobile ? 'Back' : 'Back to Assignment Detail'}
+        </Button>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
@@ -276,7 +278,8 @@ export default function SubmissionDetail() {
                       <img
                         src={submissionData.imageUrl}
                         alt="Submitted homework"
-                        className="w-full rounded-lg shadow-md group-hover:shadow-lg transition-shadow"
+                        className="w-full rounded-lg shadow-md group-hover:shadow-lg transition-shadow object-contain max-h-[70vh]"
+                        loading="lazy"
                       />
                       <div 
                         className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 flex items-center justify-center rounded-lg transition-opacity"
@@ -700,7 +703,8 @@ const CommentsSection = ({ submissionId }: { submissionId: number }) => {
                   <img 
                     src={url} 
                     alt={`Image ${index + 1}`} 
-                    className="max-h-40 rounded shadow-sm group-hover:shadow-md transition-shadow" 
+                    className="max-h-40 w-auto max-w-[calc(100vw-4rem)] rounded shadow-sm group-hover:shadow-md transition-shadow object-contain"
+                    loading="lazy"
                   />
                   <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-opacity flex items-center justify-center">
                     <span className="text-transparent group-hover:text-white text-sm font-medium transition-colors">
@@ -733,7 +737,7 @@ const CommentsSection = ({ submissionId }: { submissionId: number }) => {
         ) : (
           comments.map((comment) => (
             <div key={comment.id} className="flex gap-3 p-3 rounded-lg bg-gray-50">
-              <Avatar className="h-10 w-10">
+              <Avatar className="h-10 w-10 flex-shrink-0">
                 <AvatarFallback className={
                   comment.user.role === 'TEACHER' || comment.user.role === 'ADMIN' ? 'bg-blue-100 text-blue-800' :
                   'bg-green-100 text-green-800'
@@ -741,18 +745,20 @@ const CommentsSection = ({ submissionId }: { submissionId: number }) => {
                   {getInitials(comment.user.name)}
                 </AvatarFallback>
               </Avatar>
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="font-medium text-gray-900">{comment.user.name}</span>
-                  <span className="text-xs px-2 py-0.5 rounded-full 
-                    ${comment.user.role === 'TEACHER' || comment.user.role === 'ADMIN' ? 'bg-blue-100 text-blue-800' :
-                    'bg-green-100 text-green-800'}"
-                  >
-                    {comment.user.role === 'ADMIN' ? 'TEACHER' : comment.user.role}
-                  </span>
-                  <span className="text-xs text-gray-500">
-                    {format(new Date(comment.createdAt), 'MMM d, yyyy • h:mm a')}
-                  </span>
+              <div className="flex-1 min-w-0">
+                <div className={`${isMobile ? 'flex flex-col' : 'flex items-center'} gap-2 mb-1`}>
+                  <span className="font-medium text-gray-900 truncate">{comment.user.name}</span>
+                  <div className={`${isMobile ? '' : ''} flex items-center gap-2`}>
+                    <span className="text-xs px-2 py-0.5 rounded-full whitespace-nowrap
+                      ${comment.user.role === 'TEACHER' || comment.user.role === 'ADMIN' ? 'bg-blue-100 text-blue-800' :
+                      'bg-green-100 text-green-800'}"
+                    >
+                      {comment.user.role === 'ADMIN' ? 'TEACHER' : comment.user.role}
+                    </span>
+                    <span className="text-xs text-gray-500 whitespace-nowrap">
+                      {format(new Date(comment.createdAt), isMobile ? 'MM/dd h:mm a' : 'MMM d, yyyy • h:mm a')}
+                    </span>
+                  </div>
                 </div>
                 {renderCommentContent(comment.content)}
               </div>
@@ -826,7 +832,7 @@ const CommentsSection = ({ submissionId }: { submissionId: number }) => {
           />
         </div>
         
-        <div className="flex gap-2">
+        <div className={`${isMobile ? 'flex flex-col' : 'flex'} gap-2`}>
           <Textarea
             value={commentText}
             onChange={(e) => setCommentText(e.target.value)}
@@ -835,7 +841,7 @@ const CommentsSection = ({ submissionId }: { submissionId: number }) => {
           />
           <Button 
             type="submit" 
-            className="self-end"
+            className={isMobile ? "mt-2 w-full" : "self-end"}
             disabled={postCommentMutation.isPending || (commentText.trim() === '' && images.length === 0)}
           >
             {postCommentMutation.isPending ? (
