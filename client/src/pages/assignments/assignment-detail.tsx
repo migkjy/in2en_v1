@@ -303,87 +303,51 @@ export default function AssignmentDetail() {
                   <div className="mt-8">
                     <h2 className="text-lg font-semibold">Submissions</h2>
                     <div className="mt-4 overflow-x-auto">
-                      <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
+                      <Table>
+                        <TableHeader>
                           <tr>
-                            <th
-                              scope="col"
-                              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                            >
-                              Student Name
-                            </th>
-                            <th
-                              scope="col"
-                              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                            >
-                              Status
-                            </th>
-                            <th
-                              scope="col"
-                              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                            >
-                              Actions
-                            </th>
+                            <TableHeader.Cell>Student Name</TableHeader.Cell>
+                            <TableHeader.Cell>Status</TableHeader.Cell>
+                            <TableHeader.Cell>Actions</TableHeader.Cell>
                           </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
+                        </TableHeader>
+                        <TableBody>
                           {submissions && submissions.length > 0 ? (
-                            submissions
-                              .filter(submission => {
-                                // For students, only show their own submissions
-                                if (user?.role === "STUDENT") {
-                                  return submission.studentId === user.id;
-                                }
-                                return true;
-                              })
-                              .sort((a, b) =>
-                                (a.studentName || "").localeCompare(b.studentName || "")
-                              )
-                              .map((submission) => (
-                                <tr key={submission.id}>
-                                  <td className="px-6 py-4 whitespace-nowrap">
-                                    {submission.studentName || "Unknown"}
-                                  </td>
-                                  <td className="px-6 py-4 whitespace-nowrap">
+                            submissions.map((submission) => {
+                              const isCurrentUser = submission.studentId === user?.id;
+                              return (
+                                <TableRow key={submission.id}>
+                                  <TableCell>{isCurrentUser ? user?.name : (submission.student?.name || "Unknown")}</TableCell>
+                                  <TableCell>
                                     <span
-                                      className={`px-2 py-1 text-xs rounded-full ${
-                                        submission.status === "pending"
-                                          ? "bg-yellow-100 text-yellow-800"
-                                          : submission.status === "reviewed"
+                                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                        submission.status === "completed"
                                           ? "bg-green-100 text-green-800"
-                                          : submission.status === "uploaded"
-                                          ? "bg-blue-100 text-blue-800"
                                           : submission.status === "ai-reviewed"
-                                          ? "bg-purple-100 text-purple-800"
+                                          ? "bg-blue-100 text-blue-800"
+                                          : submission.status === "teacher-reviewed"
+                                          ? "bg-indigo-100 text-indigo-800"
                                           : submission.status === "processing"
-                                          ? "bg-gray-100 text-gray-800"
-                                          : submission.status === "failed"
-                                          ? "bg-red-100 text-red-800"
+                                          ? "bg-yellow-100 text-yellow-800"
                                           : "bg-gray-100 text-gray-800"
                                       }`}
                                     >
-                                      {submission.status === "pending"
-                                        ? "Pending"
-                                        : submission.status === "reviewed"
-                                        ? "Reviewed"
-                                        : submission.status === "uploaded"
-                                        ? "Uploaded"
-                                        : submission.status === "ai-reviewed"
+                                      {submission.status === "ai-reviewed"
                                         ? "AI Reviewed"
+                                        : submission.status === "teacher-reviewed"
+                                        ? "Teacher Reviewed"
+                                        : submission.status === "completed"
+                                        ? "Completed"
                                         : submission.status === "processing"
                                         ? "Processing"
-                                        : submission.status === "failed"
-                                        ? "Failed"
-                                        : submission.status}
+                                        : "Uploaded"}
                                     </span>
-                                  </td>
-                                  <td className="px-6 py-4 whitespace-nowrap">
+                                  </TableCell>
+                                  <TableCell>
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      onClick={() =>
-                                        handleViewSubmission(submission.id)
-                                      }
+                                      onClick={() => handleViewSubmission(submission.id)}
                                     >
                                       View
                                     </Button>
@@ -391,29 +355,25 @@ export default function AssignmentDetail() {
                                       <Button
                                         variant="outline"
                                         size="sm"
-                                        onClick={() =>
-                                          setDeleteSubmissionId(submission.id)
-                                        }
+                                        onClick={() => setDeleteSubmissionId(submission.id)}
                                         className="ml-2 text-red-600 hover:text-red-800"
                                       >
                                         Delete
                                       </Button>
                                     )}
-                                  </td>
-                                </tr>
-                              ))
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            })
                           ) : (
-                            <tr>
-                              <td
-                                colSpan={3}
-                                className="px-6 py-4 text-center text-sm text-gray-500"
-                              >
+                            <TableRow>
+                              <TableCell colSpan={3} className="text-center text-sm text-gray-500">
                                 No submissions yet
-                              </td>
-                            </tr>
+                              </TableCell>
+                            </TableRow>
                           )}
-                        </tbody>
-                      </table>
+                        </TableBody>
+                      </Table>
                     </div>
 
                     {/* Submit work button for students - hidden for now */}
