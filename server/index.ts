@@ -3,8 +3,8 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
 const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -62,7 +62,7 @@ app.use((req, res, next) => {
     server.listen(PORT, "0.0.0.0", () => {
       log(`serving on port ${PORT}`);
     });
-    
+
     // Handle termination signals
     process.on('SIGINT', () => {
       log('Shutting down server...');
@@ -70,7 +70,7 @@ app.use((req, res, next) => {
         process.exit(0);
       });
     });
-    
+
     process.on('uncaughtException', (err) => {
       console.error('Uncaught exception:', err);
       server.close(() => {

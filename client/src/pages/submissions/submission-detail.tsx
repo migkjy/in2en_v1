@@ -13,7 +13,7 @@ import { Loader2, ArrowLeft, Edit2 as Edit, Save, Send, Upload, X, Image as Imag
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import MDEditor from '@uiw/react-md-editor';
-import { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { format } from "date-fns";
@@ -561,13 +561,77 @@ const CommentsSection = ({ submissionId }: { submissionId: number }) => {
       return;
     }
     
-    const newImages = imageFiles.map(file => ({
-      id: Math.random().toString(36).substring(2),
-      file,
-      preview: URL.createObjectURL(file)
-    }));
-    
-    setImages(prev => [...prev, ...newImages]);
+    // Process and compress each image before adding to state
+    imageFiles.forEach(file => {
+      compressImage(file).then(compressedFile => {
+        const newImage = {
+          id: Math.random().toString(36).substring(2),
+          file: compressedFile,
+          preview: URL.createObjectURL(compressedFile)
+        };
+        setImages(prev => [...prev, newImage]);
+      }).catch(err => {
+        console.error("Error compressing image:", err);
+        toast({
+          title: 'Error',
+          description: 'Failed to process image',
+          variant: 'destructive',
+        });
+      });
+    });
+  };
+  
+  // Function to compress images before upload
+  const compressImage = (file: File): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          // Create canvas for resizing
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          
+          // Calculate new dimensions (max 800px width or height)
+          let width = img.width;
+          let height = img.height;
+          const maxSize = 800;
+          
+          if (width > height && width > maxSize) {
+            height = Math.round((height * maxSize) / width);
+            width = maxSize;
+          } else if (height > maxSize) {
+            width = Math.round((width * maxSize) / height);
+            height = maxSize;
+          }
+          
+          // Resize image
+          canvas.width = width;
+          canvas.height = height;
+          ctx?.drawImage(img, 0, 0, width, height);
+          
+          // Convert to blob with reduced quality
+          canvas.toBlob((blob) => {
+            if (!blob) {
+              reject(new Error('Failed to compress image'));
+              return;
+            }
+            
+            // Create new file from blob
+            const compressedFile = new File(
+              [blob], 
+              file.name, 
+              { type: 'image/jpeg', lastModified: Date.now() }
+            );
+            resolve(compressedFile);
+          }, 'image/jpeg', 0.7); // 70% quality JPEG
+        };
+        img.onerror = () => reject(new Error('Failed to load image'));
+        img.src = event.target?.result as string;
+      };
+      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.readAsDataURL(file);
+    });
   };
   
   const removeImage = (id: string) => {
