@@ -9,8 +9,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { Lock, User } from "lucide-react";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { MobileLayout } from "@/components/layout/mobile-layout";
 
 export default function ProfilePage() {
   const { user } = useAuth();
@@ -207,22 +205,23 @@ export default function ProfilePage() {
     );
   }
 
-  const isMobile = useIsMobile();
+  return (
+    <div className="flex h-screen">
+      <Sidebar className="w-64" />
+      <main className="flex-1 p-8 overflow-auto">
+        <div className="max-w-2xl mx-auto">
+          <h1 className="text-2xl font-bold mb-6">My Profile</h1>
 
-  const renderContent = () => (
-    <div className={isMobile ? "p-4" : "max-w-2xl mx-auto"}>
-      {!isMobile && <h1 className="text-2xl font-bold mb-6">My Profile</h1>}
-
-      <Card className="mb-6">
-        <CardHeader className={isMobile ? "pb-3" : ""}>
-          <CardTitle>
-            <div className="flex items-center">
-              <User className="w-5 h-5 mr-2" />
-              Profile Information
-            </div>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>
+                <div className="flex items-center">
+                  <User className="w-5 h-5 mr-2" />
+                  Profile Information
+                </div>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
                   <Label>Email</Label>
@@ -342,22 +341,7 @@ export default function ProfilePage() {
             </CardContent>
           </Card>
         </div>
-    );
-
-    if (isMobile) {
-      return (
-        <MobileLayout title="My Profile">
-          {renderContent()}
-        </MobileLayout>
-      );
-    }
-
-    return (
-      <div className="flex h-screen">
-        <Sidebar className="w-64" />
-        <main className="flex-1 p-8 overflow-auto">
-          {renderContent()}
-        </main>
-      </div>
-    );
+      </main>
+    </div>
+  );
 }
