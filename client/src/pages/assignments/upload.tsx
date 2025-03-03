@@ -1,6 +1,5 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { MobileLayout } from "@/components/layout/mobile-layout";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { Sidebar } from "@/components/layout/sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useRoute, useLocation } from "wouter";
@@ -124,11 +123,11 @@ export default function UploadAssignment() {
     setFiles((prev) => prev.filter((file) => file.id !== fileId));
   };
 
-  const isMobile = useIsMobile();
-  
   return (
-    <MobileLayout title="Upload Assignment">
-      <div className={`${isMobile ? 'max-w-full' : 'max-w-4xl'} mx-auto`}>
+    <div className="flex h-screen">
+      <Sidebar className="w-64" />
+      <main className="flex-1 p-8 overflow-auto">
+        <div className="max-w-4xl mx-auto">
           <Card>
             <CardHeader>
               <CardTitle>
@@ -170,7 +169,7 @@ export default function UploadAssignment() {
                 </div>
 
                 {files.length > 0 && (
-                  <div className={`grid ${isMobile ? 'grid-cols-2' : 'grid-cols-3'} gap-4`}>
+                  <div className="grid grid-cols-3 gap-4">
                     {files.map((file) => (
                       <div
                         key={file.id}

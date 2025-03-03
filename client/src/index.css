@@ -2,9 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Import mobile-specific styles */
-@import './styles/mobile.css';
-
 @layer base {
   * {
     @apply border-border;
