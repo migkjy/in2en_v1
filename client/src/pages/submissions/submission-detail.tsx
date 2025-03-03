@@ -272,11 +272,28 @@ export default function SubmissionDetail() {
                 {submissionData.imageUrl && (
                   <div>
                     <h3 className="section-title mb-2">Submitted Work</h3>
-                    <img
-                      src={submissionData.imageUrl}
-                      alt="Submitted homework"
-                      className="w-full max-w-2xl mx-auto rounded-lg shadow-md"
-                    />
+                    <div className="relative group cursor-pointer w-full max-w-2xl mx-auto">
+                      <img
+                        src={submissionData.imageUrl}
+                        alt="Submitted homework"
+                        className="w-full rounded-lg shadow-md group-hover:shadow-lg transition-shadow"
+                      />
+                      <div 
+                        className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 flex items-center justify-center rounded-lg transition-opacity"
+                        onClick={() => {
+                          const link = document.createElement('a');
+                          link.href = submissionData.imageUrl!;
+                          link.download = `submission-${submissionData.id}.jpg`;
+                          document.body.appendChild(link);
+                          link.click();
+                          document.body.removeChild(link);
+                        }}
+                      >
+                        <span className="bg-black bg-opacity-60 text-white px-3 py-1 rounded-full text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                          Click to download
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 )}
 
@@ -671,19 +688,30 @@ const CommentsSection = ({ submissionId }: { submissionId: number }) => {
           {parsedContent.imageUrls && parsedContent.imageUrls.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-2">
               {parsedContent.imageUrls.map((url: string, index: number) => (
-                <a 
+                <div 
                   key={index} 
-                  href={url} 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  className="block"
+                  className="relative group cursor-pointer"
+                  onClick={() => {
+                    // Handle image download
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `comment-image-${index + 1}.jpg`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                  }}
                 >
                   <img 
                     src={url} 
                     alt={`Image ${index + 1}`} 
-                    className="max-h-40 rounded shadow-sm hover:shadow-md transition-shadow" 
+                    className="max-h-40 rounded shadow-sm group-hover:shadow-md transition-shadow" 
                   />
-                </a>
+                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-opacity flex items-center justify-center">
+                    <span className="text-transparent group-hover:text-white text-sm font-medium transition-colors">
+                      Click to download
+                    </span>
+                  </div>
+                </div>
               ))}
             </div>
           )}
@@ -762,6 +790,22 @@ const CommentsSection = ({ submissionId }: { submissionId: number }) => {
                   >
                     <X className="h-4 w-4" />
                   </button>
+                  <div
+                    className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-opacity flex items-center justify-center"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const link = document.createElement('a');
+                      link.href = img.preview;
+                      link.download = img.file.name || `preview-image-${img.id}.jpg`;
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                    }}
+                  >
+                    <span className="text-transparent group-hover:text-white text-xs font-medium transition-colors">
+                      Click to download
+                    </span>
+                  </div>
                 </div>
               ))}
             </div>
