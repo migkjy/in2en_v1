@@ -277,16 +277,7 @@ export default function SubmissionDetail() {
                   </div>
                 )}
 
-                {submissionData.ocrText && (
-                  <div>
-                    <h3 className="section-title mb-2">OCR Text</h3>
-                    <div className="bg-gray-50 p-4 rounded prose prose-sm max-w-none">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {submissionData.ocrText}
-                      </ReactMarkdown>
-                    </div>
-                  </div>
-                )}
+                {/* OCR Text hidden as requested */}
 
                 {(submissionData.correctedText || submissionData.overallAssessment || isTeacherOrAdmin) && (
                   <div className="space-y-4">
