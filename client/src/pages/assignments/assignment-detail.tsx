@@ -301,32 +301,17 @@ export default function AssignmentDetail() {
                   <div className="mt-8">
                     <h2 className="text-lg font-semibold">Submissions</h2>
                     <div className="mt-4 overflow-x-auto">
-                      <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            <th
-                              scope="col"
-                              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                            >
-                              Student Name
-                            </th>
-                            <th
-                              scope="col"
-                              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                            >
-                              Status
-                            </th>
-                            <th
-                              scope="col"
-                              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                            >
-                              Actions
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                          {submissions && submissions.length > 0 ? (
-                            submissions
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            {user?.role !== "STUDENT" && <TableHead>Student Name</TableHead>}
+                            <TableHead>Status</TableHead>
+                            <TableHead>Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {sortedSubmissions && sortedSubmissions.length > 0 ? (
+                            sortedSubmissions
                               .filter(submission => {
                                 // For students, only show their own submissions
                                 if (user?.role === "STUDENT") {
@@ -334,48 +319,19 @@ export default function AssignmentDetail() {
                                 }
                                 return true;
                               })
-                              .sort((a, b) =>
-                                (a.studentName || "").localeCompare(b.studentName || "")
-                              )
                               .map((submission) => (
-                                <tr key={submission.id}>
-                                  <td className="px-6 py-4 whitespace-nowrap">
-                                    {submission.studentName || "Unknown"}
-                                  </td>
-                                  <td className="px-6 py-4 whitespace-nowrap">
+                                <TableRow key={submission.id}>
+                                  {user?.role !== "STUDENT" && <TableCell>{students?.find(s => s.id === submission.studentId)?.name || "Unknown"}</TableCell>}
+                                  <TableCell>
                                     <span
                                       className={`px-2 py-1 text-xs rounded-full ${
-                                        submission.status === "pending"
-                                          ? "bg-yellow-100 text-yellow-800"
-                                          : submission.status === "reviewed"
-                                          ? "bg-green-100 text-green-800"
-                                          : submission.status === "uploaded"
-                                          ? "bg-blue-100 text-blue-800"
-                                          : submission.status === "ai-reviewed"
-                                          ? "bg-purple-100 text-purple-800"
-                                          : submission.status === "processing"
-                                          ? "bg-gray-100 text-gray-800"
-                                          : submission.status === "failed"
-                                          ? "bg-red-100 text-red-800"
-                                          : "bg-gray-100 text-gray-800"
+                                        getStatusBadgeStyle(submission.status)
                                       }`}
                                     >
-                                      {submission.status === "pending"
-                                        ? "Pending"
-                                        : submission.status === "reviewed"
-                                        ? "Reviewed"
-                                        : submission.status === "uploaded"
-                                        ? "Uploaded"
-                                        : submission.status === "ai-reviewed"
-                                        ? "AI Reviewed"
-                                        : submission.status === "processing"
-                                        ? "Processing"
-                                        : submission.status === "failed"
-                                        ? "Failed"
-                                        : submission.status}
+                                      {getStatusText(submission.status)}
                                     </span>
-                                  </td>
-                                  <td className="px-6 py-4 whitespace-nowrap">
+                                  </TableCell>
+                                  <TableCell>
                                     <Button
                                       variant="outline"
                                       size="sm"
@@ -397,21 +353,18 @@ export default function AssignmentDetail() {
                                         Delete
                                       </Button>
                                     )}
-                                  </td>
-                                </tr>
+                                  </TableCell>
+                                </TableRow>
                               ))
                           ) : (
-                            <tr>
-                              <td
-                                colSpan={3}
-                                className="px-6 py-4 text-center text-sm text-gray-500"
-                              >
+                            <TableRow>
+                              <TableCell colSpan={3} className="text-center text-sm text-gray-500">
                                 No submissions yet
-                              </td>
-                            </tr>
+                              </TableCell>
+                            </TableRow>
                           )}
-                        </tbody>
-                      </table>
+                        </TableBody>
+                      </Table>
                     </div>
 
                     {/* Submit work button for students - hidden for now */}
