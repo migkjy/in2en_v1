@@ -43,7 +43,7 @@ export default function AssignmentDetail() {
     });
 
   // Get students list
-  const { data: students, isLoading: isStudentsLoading } = useQuery<User[]>({
+  const { data: students } = useQuery<User[]>({
     queryKey: ["/api/classes", assignment?.classId, "students"],
     queryFn: async () => {
       if (!assignment?.classId) throw new Error("Class ID is required");
@@ -58,11 +58,14 @@ export default function AssignmentDetail() {
     enabled: !!assignment?.classId,
   });
 
-  // Fetch submissions for this assignment
-  const { data: submissions, isLoading: isSubmissionsLoading } = useQuery<Submission[]>({
+  // Get submissions
+  const { data: submissions } = useQuery<Submission[]>({
     queryKey: ["/api/submissions", assignmentId],
     queryFn: async () => {
-      const response = await fetch(`/api/submissions?assignmentId=${assignmentId}`);
+      if (!assignmentId) throw new Error("Assignment ID is required");
+      const response = await fetch(
+        `/api/submissions?assignmentId=${assignmentId}`,
+      );
       if (!response.ok) {
         throw new Error("Failed to fetch submissions");
       }
@@ -193,7 +196,7 @@ export default function AssignmentDetail() {
   };
 
   const handleViewSubmission = (submissionId: number) => {
-    navigate(`/${user?.role.toLowerCase()}/submissions/${submissionId}`);
+    navigate(`/submissions/${submissionId}`);
   };
 
 
@@ -242,30 +245,20 @@ export default function AssignmentDetail() {
                     <p className="text-gray-600">{assignment.description}</p>
                   </div>
 
-                  {/* Class Students Section - Hidden for students */}
-                  {isTeacherOrAdmin && (
-                    <div className="mt-8">
-                      <h3 className="text-lg font-medium mb-4">Class Students</h3>
-                      {isStudentsLoading ? (
-                        <div className="flex justify-center p-4">
-                          <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                  {/* Students List */}
+                  <div>
+                    <h3 className="text-sm font-medium mb-4">Class Students</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {students?.map((student) => (
+                        <div
+                          key={student.id}
+                          className="flex items-center gap-1 px-3 py-1 bg-gray-100 rounded-full text-sm"
+                        >
+                          {student.name}
                         </div>
-                      ) : !students || students.length === 0 ? (
-                        <p className="text-gray-500">No students in this class</p>
-                      ) : (
-                        <div className="flex flex-wrap gap-2">
-                          {students?.map((student) => (
-                            <div
-                              key={student.id}
-                              className="flex items-center gap-1 px-3 py-1 bg-gray-100 rounded-full text-sm"
-                            >
-                              {student.name}
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                      ))}
                     </div>
-                  )}
+                  </div>
 
                   {/* Action Buttons for Teachers/Admins */}
                   {isTeacherOrAdmin && (
@@ -304,103 +297,122 @@ export default function AssignmentDetail() {
                     </div>
                   )}
 
-                  {/* Submissions Section */}
+                  {/* Submissions Table */}
                   <div className="mt-8">
-                    <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-lg font-medium">Submissions</h3>
-                      {isTeacherOrAdmin && (
-                        <Button onClick={() => navigate(`${basePath}/${assignmentId}/upload`)}>
-                          Upload Work
-                        </Button>
-                      )}
+                    <h2 className="text-lg font-semibold">Submissions</h2>
+                    <div className="mt-4 overflow-x-auto">
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th
+                              scope="col"
+                              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                              Student Name
+                            </th>
+                            <th
+                              scope="col"
+                              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                              Status
+                            </th>
+                            <th
+                              scope="col"
+                              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                              Actions
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {submissions && submissions.length > 0 ? (
+                            submissions
+                              .filter(submission => {
+                                // For students, only show their own submissions
+                                if (user?.role === "STUDENT") {
+                                  return submission.studentId === user.id;
+                                }
+                                return true;
+                              })
+                              .sort((a, b) =>
+                                (a.studentName || "").localeCompare(b.studentName || "")
+                              )
+                              .map((submission) => (
+                                <tr key={submission.id}>
+                                  <td className="px-6 py-4 whitespace-nowrap">
+                                    {submission.studentName || "Unknown"}
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap">
+                                    <span
+                                      className={`px-2 py-1 text-xs rounded-full ${
+                                        submission.status === "pending"
+                                          ? "bg-yellow-100 text-yellow-800"
+                                          : submission.status === "reviewed"
+                                          ? "bg-green-100 text-green-800"
+                                          : submission.status === "uploaded"
+                                          ? "bg-blue-100 text-blue-800"
+                                          : submission.status === "ai-reviewed"
+                                          ? "bg-purple-100 text-purple-800"
+                                          : submission.status === "processing"
+                                          ? "bg-gray-100 text-gray-800"
+                                          : submission.status === "failed"
+                                          ? "bg-red-100 text-red-800"
+                                          : "bg-gray-100 text-gray-800"
+                                      }`}
+                                    >
+                                      {submission.status === "pending"
+                                        ? "Pending"
+                                        : submission.status === "reviewed"
+                                        ? "Reviewed"
+                                        : submission.status === "uploaded"
+                                        ? "Uploaded"
+                                        : submission.status === "ai-reviewed"
+                                        ? "AI Reviewed"
+                                        : submission.status === "processing"
+                                        ? "Processing"
+                                        : submission.status === "failed"
+                                        ? "Failed"
+                                        : submission.status}
+                                    </span>
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() =>
+                                        handleViewSubmission(submission.id)
+                                      }
+                                    >
+                                      View
+                                    </Button>
+                                    {isTeacherOrAdmin && (
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() =>
+                                          setDeleteSubmissionId(submission.id)
+                                        }
+                                        className="ml-2 text-red-600 hover:text-red-800"
+                                      >
+                                        Delete
+                                      </Button>
+                                    )}
+                                  </td>
+                                </tr>
+                              ))
+                          ) : (
+                            <tr>
+                              <td
+                                colSpan={3}
+                                className="px-6 py-4 text-center text-sm text-gray-500"
+                              >
+                                No submissions yet
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
                     </div>
-                    {isSubmissionsLoading ? (
-                      <div className="flex justify-center p-4">
-                        <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-                      </div>
-                    ) : !submissions || submissions.length === 0 ? (
-                      <div className="text-center p-4 bg-gray-50 rounded-md">
-                        <p className="text-gray-500">No submissions yet</p>
-                      </div>
-                    ) : (
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>{user?.role === "STUDENT" ? "My Submissions" : "Student Name"}</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead>Submitted</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {(user?.role === "STUDENT" 
-                            ? submissions.filter(sub => sub.studentId === user.id)
-                            : submissions
-                          ).map((submission) => (
-                            <TableRow key={submission.id}>
-                              <TableCell>{submission.studentName || "Unknown"}</TableCell>
-                              <TableCell>
-                                <span
-                                  className={`px-2 py-1 text-xs rounded-full ${
-                                    submission.status === "pending"
-                                      ? "bg-yellow-100 text-yellow-800"
-                                      : submission.status === "reviewed"
-                                      ? "bg-green-100 text-green-800"
-                                      : submission.status === "uploaded"
-                                      ? "bg-blue-100 text-blue-800"
-                                      : submission.status === "ai-reviewed"
-                                      ? "bg-purple-100 text-purple-800"
-                                      : submission.status === "processing"
-                                      ? "bg-gray-100 text-gray-800"
-                                      : submission.status === "failed"
-                                      ? "bg-red-100 text-red-800"
-                                      : "bg-gray-100 text-gray-800"
-                                  }`}
-                                >
-                                  {submission.status === "pending"
-                                    ? "Pending"
-                                    : submission.status === "reviewed"
-                                    ? "Reviewed"
-                                    : submission.status === "uploaded"
-                                    ? "Uploaded"
-                                    : submission.status === "ai-reviewed"
-                                    ? "AI Reviewed"
-                                    : submission.status === "processing"
-                                    ? "Processing"
-                                    : submission.status === "failed"
-                                    ? "Failed"
-                                    : submission.status}
-                                </span>
-                              </TableCell>
-                              <TableCell>{format(new Date(submission.submittedAt), "MM/dd/yy")}</TableCell>
-                              <TableCell className="text-right">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() =>
-                                    handleViewSubmission(submission.id)
-                                  }
-                                >
-                                  View
-                                </Button>
-                                {isTeacherOrAdmin && (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() =>
-                                      setDeleteSubmissionId(submission.id)
-                                    }
-                                    className="ml-2 text-red-600 hover:text-red-800"
-                                  >
-                                    Delete
-                                  </Button>
-                                )}
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    )}
 
                     {/* Submit work button for students - hidden for now */}
                     {/* {user?.role === "STUDENT" && (
