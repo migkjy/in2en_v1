@@ -406,6 +406,12 @@ export default function SubmissionDetail() {
                     </div>
                   </div>
                 )}
+
+                {/* Comments Section */}
+                <div className="mt-8">
+                  <h3 className="section-title mb-4">Discussion</h3>
+                  <CommentsSection submissionId={submissionId} />
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -414,3 +420,258 @@ export default function SubmissionDetail() {
     </div>
   );
 }
+
+// Comments Section Component
+const CommentsSection = ({ submissionId }: { submissionId: number }) => {
+  const { toast } = useToast();
+  const { user } = useAuth();
+  const [commentText, setCommentText] = useState("");
+  const [images, setImages] = useState<{ preview: string; file: File }[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Query to get comments
+  const { data: comments = [], refetch: refetchComments } = useQuery({
+    queryKey: ["/api/comments", submissionId],
+    queryFn: async () => {
+      const response = await fetch(`/api/comments/${submissionId}`, {
+        credentials: "include",
+      });
+      if (!response.ok) {
+        throw new Error("Failed to fetch comments");
+      }
+      return response.json();
+    },
+  });
+
+  // Mutation to add a comment
+  const addCommentMutation = useMutation({
+    mutationFn: async (data: { content: string; images?: File[] }) => {
+      const formData = new FormData();
+      formData.append("submissionId", submissionId.toString());
+      formData.append("content", data.content);
+      
+      if (data.images && data.images.length > 0) {
+        data.images.forEach((image, index) => {
+          formData.append(`images`, image);
+        });
+      }
+      
+      const response = await fetch('/api/comments', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to add comment");
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      setCommentText("");
+      setImages([]);
+      refetchComments();
+      toast({
+        title: "Success",
+        description: "Comment added successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to add comment",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleImageDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const droppedFiles = Array.from(e.dataTransfer.files).filter(file => 
+      file.type.startsWith('image/')
+    );
+    
+    if (droppedFiles.length > 0) {
+      const newImages = droppedFiles.map(file => ({
+        preview: URL.createObjectURL(file),
+        file
+      }));
+      setImages(prev => [...prev, ...newImages]);
+    }
+  };
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const selectedFiles = Array.from(e.target.files).filter(file => 
+        file.type.startsWith('image/')
+      );
+      
+      const newImages = selectedFiles.map(file => ({
+        preview: URL.createObjectURL(file),
+        file
+      }));
+      setImages(prev => [...prev, ...newImages]);
+    }
+  };
+
+  const removeImage = (index: number) => {
+    setImages(prev => {
+      const updated = [...prev];
+      // Revoke object URL to avoid memory leaks
+      URL.revokeObjectURL(updated[index].preview);
+      updated.splice(index, 1);
+      return updated;
+    });
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!commentText.trim() && images.length === 0) {
+      toast({
+        title: "Error",
+        description: "Please enter a comment or attach an image",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    addCommentMutation.mutate({ 
+      content: commentText,
+      images: images.map(img => img.file)
+    });
+  };
+
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleString();
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="space-y-4">
+        {comments.length > 0 ? (
+          comments.map((comment: any) => (
+            <div key={comment.id} className="border rounded-lg p-4 bg-gray-50">
+              <div className="flex justify-between items-start">
+                <div className="flex items-center">
+                  <div className="font-medium">{comment.userName}</div>
+                  <div className="text-gray-500 text-sm ml-2">
+                    {formatDate(comment.createdAt)}
+                  </div>
+                </div>
+                <div className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                  {comment.userRole}
+                </div>
+              </div>
+              
+              <div className="mt-2">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {comment.content}
+                </ReactMarkdown>
+              </div>
+              
+              {comment.imageUrls && comment.imageUrls.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {comment.imageUrls.map((url: string, i: number) => (
+                    <a 
+                      key={i} 
+                      href={url} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="block"
+                    >
+                      <img 
+                        src={url} 
+                        alt={`Comment attachment ${i+1}`} 
+                        className="h-24 w-auto rounded border object-cover"
+                      />
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))
+        ) : (
+          <p className="text-gray-500 text-center py-4">No comments yet. Start the conversation!</p>
+        )}
+      </div>
+
+      <div className="border rounded-lg p-4">
+        <h4 className="text-sm font-medium mb-3">Add Your Comment</h4>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <textarea
+            value={commentText}
+            onChange={(e) => setCommentText(e.target.value)}
+            className="w-full p-2 border rounded-md min-h-[100px]"
+            placeholder="Write your comment here..."
+          />
+
+          {/* Image upload area */}
+          <div 
+            className="border-2 border-dashed rounded-lg p-4 text-center"
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={handleImageDrop}
+          >
+            <p className="text-sm text-gray-600 mb-2">
+              Drag and drop images here, or{" "}
+              <button 
+                type="button"
+                className="text-blue-500"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                browse
+              </button>
+            </p>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={handleImageSelect}
+            />
+          </div>
+
+          {/* Image previews */}
+          {images.length > 0 && (
+            <div className="grid grid-cols-3 gap-2 mt-2">
+              {images.map((image, index) => (
+                <div key={index} className="relative">
+                  <img
+                    src={image.preview}
+                    alt={`Preview ${index}`}
+                    className="h-24 w-full object-cover rounded border"
+                  />
+                  <button
+                    type="button"
+                    className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full text-xs"
+                    onClick={() => removeImage(index)}
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="flex justify-end">
+            <Button 
+              type="submit" 
+              disabled={addCommentMutation.isPending || (!commentText.trim() && images.length === 0)}
+            >
+              {addCommentMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Posting...
+                </>
+              ) : (
+                "Post Comment"
+              )}
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};

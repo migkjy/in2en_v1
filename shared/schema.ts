@@ -90,6 +90,7 @@ export const comments = pgTable("comments", {
   submissionId: integer("submission_id").references(() => submissions.id),
   userId: integer("user_id").references(() => users.id),
   content: text("content").notNull(),
+  imageUrls: text("image_urls"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

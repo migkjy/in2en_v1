@@ -389,8 +389,8 @@ export class DatabaseStorage implements IStorage {
 
   // Comment operations
   async createComment(data: Partial<Comment>): Promise<Comment> {
-    if (!data.content) {
-      throw new Error("Comment content is required");
+    if (!data.content && !data.imageUrls) {
+      throw new Error("Comment content or images are required");
     }
 
     const [comment] = await db.insert(comments).values({
