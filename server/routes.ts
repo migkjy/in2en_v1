@@ -941,40 +941,14 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Comment routes
-  app.post("/api/comments", upload.array("images"), async (req, res) => {
-    if (!req.isAuthenticated() || !req.user) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-
+  app.post("/api/comments", async (req, res) => {
     try {
-      const { submissionId, content } = req.body;
-      
-      if (!submissionId) {
-        return res.status(400).json({ message: "Submission ID is required" });
-      }
-
-      // Process uploaded images if any
-      const imageUrls: string[] = [];
-      if (req.files && Array.isArray(req.files)) {
-        for (const file of req.files) {
-          const base64Image = file.buffer.toString("base64");
-          const imageUrl = `data:${file.mimetype};base64,${base64Image}`;
-          imageUrls.push(imageUrl);
-        }
-      }
-
-      // Create comment data
-      const commentData = {
-        submissionId: Number(submissionId),
-        userId: req.user.id,
-        content: content || "",
-        imageUrls: imageUrls.length > 0 ? JSON.stringify(imageUrls) : null,
-      };
-
-      const comment = await storage.createComment(commentData);
+      const comment = await storage.createComment({
+        ...req.body,
+        userId: req.user?.id,
+      });
       res.status(201).json(comment);
     } catch (error) {
-      console.error("Error creating comment:", error);
       if (error instanceof Error) {
         res.status(400).json({ message: error.message });
       } else {
@@ -984,52 +958,10 @@ export function registerRoutes(app: Express): Server {
   });
 
   app.get("/api/comments/:submissionId", async (req, res) => {
-    try {
-      if (!req.isAuthenticated() || !req.user) {
-        return res.status(401).json({ message: "Unauthorized" });
-      }
-
-      const submissionId = Number(req.params.submissionId);
-      if (isNaN(submissionId)) {
-        return res.status(400).json({ message: "Invalid submission ID" });
-      }
-
-      // Get the submission to check permissions
-      const submission = await storage.getSubmission(submissionId);
-      if (!submission) {
-        return res.status(404).json({ message: "Submission not found" });
-      }
-
-      // Students can only view comments on their own submissions
-      if (req.user.role === UserRole.STUDENT && submission.studentId !== req.user.id) {
-        return res.status(403).json({ message: "Access denied" });
-      }
-
-      // Get comments for this submission
-      const comments = await storage.listComments(submissionId);
-      
-      // Get user details for each comment
-      const commentsWithUserDetails = await Promise.all(
-        comments.map(async (comment) => {
-          const user = await storage.getUser(comment.userId!);
-          return {
-            ...comment,
-            userName: user?.name || "Unknown User",
-            userRole: user?.role || "UNKNOWN",
-            imageUrls: comment.imageUrls ? JSON.parse(comment.imageUrls) : [],
-          };
-        })
-      );
-
-      res.json(commentsWithUserDetails);
-    } catch (error) {
-      console.error("Error fetching comments:", error);
-      if (error instanceof Error) {
-        res.status(400).json({ message: error.message });
-      } else {
-        res.status(500).json({ message: "An unknown error occurred" });
-      }
-    }
+    const comments = await storage.listComments(
+      Number(req.params.submissionId),
+    );
+    res.json(comments);
   });
 
   // Teacher routes
