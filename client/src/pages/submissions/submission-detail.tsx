@@ -535,10 +535,6 @@ const CommentsSection = ({ submissionId }: { submissionId: number }) => {
       setCommentText('');
       setImages([]);
       refetch();
-      toast({
-        title: 'Success',
-        description: 'Comment posted successfully',
-      });
     },
     onError: (error) => {
       toast({
