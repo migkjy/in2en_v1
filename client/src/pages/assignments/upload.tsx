@@ -18,8 +18,7 @@ interface UploadFile extends File {
 
 export default function UploadAssignment() {
   const { user } = useAuth();
-  const basePath = user?.role === "STUDENT" ? "student" : 
-                  user?.role === "TEACHER" ? "teacher" : "admin";
+  const basePath = user?.role.toLowerCase();
   const [, params] = useRoute("/assignments/:id/upload") || useRoute(`/${basePath}/assignments/:id/upload`);
   const assignmentId = params?.id;
   const [, navigate] = useLocation();
