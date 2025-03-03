@@ -426,7 +426,7 @@ export default function SubmissionDetail() {
                     </div>
                   </div>
                 )}
-                
+
                 {/* Comments Section */}
                 <CommentsSection submissionId={submissionData.id} />
               </div>
@@ -492,22 +492,22 @@ const CommentsSection = ({ submissionId }: { submissionId: number }) => {
 
       // First upload all images if any
       const imageUrls: string[] = [];
-      
+
       if (images.length > 0) {
         for (const image of images) {
           const formData = new FormData();
           formData.append('file', image.file);
-          
+
           const response = await fetch('/api/upload', {
             method: 'POST',
             body: formData,
             credentials: 'include',
           });
-          
+
           if (!response.ok) {
             throw new Error('Failed to upload image');
           }
-          
+
           const result = await response.json();
           imageUrls.push(result.url);
         }
@@ -548,7 +548,7 @@ const CommentsSection = ({ submissionId }: { submissionId: number }) => {
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       handleFiles(e.dataTransfer.files);
     }
@@ -559,12 +559,12 @@ const CommentsSection = ({ submissionId }: { submissionId: number }) => {
       handleFiles(e.target.files);
     }
   };
-  
+
   const handleFiles = (files: FileList) => {
     const imageFiles = Array.from(files).filter(file => 
       file.type.startsWith('image/')
     );
-    
+
     if (imageFiles.length === 0) {
       toast({
         title: 'Invalid Files',
@@ -573,7 +573,7 @@ const CommentsSection = ({ submissionId }: { submissionId: number }) => {
       });
       return;
     }
-    
+
     // Process and compress each image before adding to state
     imageFiles.forEach(file => {
       compressImage(file).then(compressedFile => {
@@ -593,7 +593,7 @@ const CommentsSection = ({ submissionId }: { submissionId: number }) => {
       });
     });
   };
-  
+
   // Function to compress images before upload
   const compressImage = (file: File): Promise<File> => {
     return new Promise((resolve, reject) => {
@@ -604,12 +604,12 @@ const CommentsSection = ({ submissionId }: { submissionId: number }) => {
           // Create canvas for resizing
           const canvas = document.createElement('canvas');
           const ctx = canvas.getContext('2d');
-          
+
           // Calculate new dimensions (max 800px width or height)
           let width = img.width;
           let height = img.height;
           const maxSize = 800;
-          
+
           if (width > height && width > maxSize) {
             height = Math.round((height * maxSize) / width);
             width = maxSize;
@@ -617,19 +617,19 @@ const CommentsSection = ({ submissionId }: { submissionId: number }) => {
             width = Math.round((width * maxSize) / height);
             height = maxSize;
           }
-          
+
           // Resize image
           canvas.width = width;
           canvas.height = height;
           ctx?.drawImage(img, 0, 0, width, height);
-          
+
           // Convert to blob with reduced quality
           canvas.toBlob((blob) => {
             if (!blob) {
               reject(new Error('Failed to compress image'));
               return;
             }
-            
+
             // Create new file from blob
             const compressedFile = new File(
               [blob], 
@@ -646,7 +646,7 @@ const CommentsSection = ({ submissionId }: { submissionId: number }) => {
       reader.readAsDataURL(file);
     });
   };
-  
+
   const removeImage = (id: string) => {
     setImages(prev => {
       const updated = prev.filter(img => img.id !== id);
@@ -722,7 +722,7 @@ const CommentsSection = ({ submissionId }: { submissionId: number }) => {
   return (
     <div className="mt-6">
       <h3 className="text-lg font-medium mb-4">Comments</h3>
-      
+
       <div className="space-y-4 max-h-96 overflow-y-auto mb-4 p-2">
         {isLoading ? (
           <div className="flex justify-center py-4">
@@ -761,49 +761,50 @@ const CommentsSection = ({ submissionId }: { submissionId: number }) => {
         )}
         <div ref={commentsEndRef} />
       </div>
-      
+
       <form onSubmit={handleSubmit} className="mt-4">
         <div 
           className={`p-4 border-2 border-dashed rounded-lg mb-3 ${images.length > 0 ? 'border-gray-300 bg-gray-50' : 'border-gray-200'}`}
           onDragOver={(e) => e.preventDefault()}
           onDrop={handleDrop}
         >
-          {images.length > 0 ? (
-            <div className="grid grid-cols-3 gap-2">
-              {images.map((img) => (
-                <div key={img.id} className="relative group">
-                  <img 
-                    src={img.preview} 
-                    alt="Preview" 
-                    className="h-24 w-full object-cover rounded" 
-                  />
-                  <button
-                    type="button"
-                    className="absolute top-1 right-1 bg-white rounded-full p-1 shadow-sm opacity-80 group-hover:opacity-100"
-                    onClick={() => removeImage(img.id)}
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                  <div
-                    className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-opacity flex items-center justify-center"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      const link = document.createElement('a');
-                      link.href = img.preview;
-                      link.download = img.file.name || `preview-image-${img.id}.jpg`;
-                      document.body.appendChild(link);
-                      link.click();
-                      document.body.removeChild(link);
-                    }}
-                  >
-                    <span className="text-transparent group-hover:text-white text-xs font-medium transition-colors">
-                      Click to download
-                    </span>
+          {images.length > 0 && (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                {images.map((img) => (
+                  <div key={img.id} className="relative group">
+                    <img 
+                      src={img.preview} 
+                      alt="Preview" 
+                      className="h-20 md:h-24 w-full object-cover rounded" 
+                    />
+                    <button
+                      type="button"
+                      className="absolute top-1 right-1 bg-white rounded-full p-1 shadow-sm opacity-80 group-hover:opacity-100"
+                      onClick={() => removeImage(img.id)}
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                    <div
+                      className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-opacity flex items-center justify-center"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const link = document.createElement('a');
+                        link.href = img.preview;
+                        link.download = img.file.name || `preview-image-${img.id}.jpg`;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                      }}
+                    >
+                      <span className="text-transparent group-hover:text-white text-xs font-medium transition-colors">
+                        Click to download
+                      </span>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          ) : (
+                ))}
+              </div>
+            )}
+          {images.length === 0 && (
             <div className="text-center py-6">
               <ImageIcon className="h-10 w-10 text-gray-300 mx-auto mb-2" />
               <p className="text-sm text-gray-500">Drag and drop images here, or</p>
@@ -825,7 +826,7 @@ const CommentsSection = ({ submissionId }: { submissionId: number }) => {
             onChange={handleFileSelect}
           />
         </div>
-        
+
         <div className="flex gap-2">
           <Textarea
             value={commentText}
