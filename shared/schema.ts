@@ -191,6 +191,11 @@ export type Class = typeof classes.$inferSelect;
 export type Assignment = typeof assignments.$inferSelect;
 export type Submission = typeof submissions.$inferSelect;
 export type Comment = typeof comments.$inferSelect;
+
+// Extended types for frontend use
+export type CommentWithUser = Comment & {
+  user: Pick<User, 'id' | 'name' | 'role'>;
+};
 export type TeacherBranchAccess = typeof teacherBranchAccess.$inferSelect;
 export type TeacherClassAccess = typeof teacherClassAccess.$inferSelect;
 export type ClassLeadTeacher = typeof classLeadTeachers.$inferSelect;
