@@ -409,28 +409,6 @@ export class DatabaseStorage implements IStorage {
       .where(eq(comments.submissionId, submissionId))
       .orderBy(comments.createdAt);
   }
-  
-  async listCommentsWithUsers(submissionId: number): Promise<(Comment & { user: Partial<User> })[]> {
-    const result = await db
-      .select({
-        id: comments.id,
-        submissionId: comments.submissionId,
-        userId: comments.userId,
-        content: comments.content,
-        createdAt: comments.createdAt,
-        user: {
-          id: users.id,
-          name: users.name,
-          role: users.role,
-        },
-      })
-      .from(comments)
-      .leftJoin(users, eq(comments.userId, users.id))
-      .where(eq(comments.submissionId, submissionId))
-      .orderBy(comments.createdAt);
-      
-    return result;
-  }
 
   async getTeacherBranches(teacherId: number): Promise<Branch[]> {
     const [user] = await db

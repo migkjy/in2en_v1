@@ -942,14 +942,10 @@ export function registerRoutes(app: Express): Server {
 
   // Comment routes
   app.post("/api/comments", async (req, res) => {
-    if (!req.isAuthenticated() || !req.user) {
-      return res.status(401).json({ message: "You must be logged in to comment" });
-    }
-    
     try {
       const comment = await storage.createComment({
         ...req.body,
-        userId: req.user.id,
+        userId: req.user?.id,
       });
       res.status(201).json(comment);
     } catch (error) {
@@ -962,55 +958,10 @@ export function registerRoutes(app: Express): Server {
   });
 
   app.get("/api/comments/:submissionId", async (req, res) => {
-    try {
-      const submissionId = Number(req.params.submissionId);
-      if (isNaN(submissionId)) {
-        return res.status(400).json({ message: "Invalid submission ID" });
-      }
-      
-      // Get the comments with user information
-      const comments = await storage.listCommentsWithUsers(submissionId);
-      res.json(comments);
-    } catch (error) {
-      console.error("Error fetching comments:", error);
-      if (error instanceof Error) {
-        res.status(500).json({ message: error.message });
-      } else {
-        res.status(500).json({ message: "An unknown error occurred" });
-      }
-    }
-  });
-  
-  // File upload route for comments
-  app.post("/api/upload", upload.single("file"), async (req, res) => {
-    if (!req.isAuthenticated() || !req.user) {
-      return res.status(401).json({ message: "You must be logged in to upload files" });
-    }
-    
-    try {
-      const file = req.file;
-      if (!file) {
-        return res.status(400).json({ message: "No file uploaded" });
-      }
-      
-      // Convert file to base64 data URL
-      const base64Image = file.buffer.toString("base64");
-      const dataUrl = `data:${file.mimetype};base64,${base64Image}`;
-      
-      res.status(200).json({ 
-        url: dataUrl,
-        filename: file.originalname,
-        size: file.size,
-        type: file.mimetype
-      });
-    } catch (error) {
-      console.error("Error uploading file:", error);
-      if (error instanceof Error) {
-        res.status(500).json({ message: error.message });
-      } else {
-        res.status(500).json({ message: "An unknown error occurred" });
-      }
-    }
+    const comments = await storage.listComments(
+      Number(req.params.submissionId),
+    );
+    res.json(comments);
   });
 
   // Teacher routes
