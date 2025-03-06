@@ -40,18 +40,16 @@ export default function AdminDashboard() {
                 ) : (
                   <div className="space-y-3">
                     {branches?.map((branch) => (
-                      <Link key={branch.id} href={`/admin/branches/${branch.id}`}>
-                        <div className="p-4 rounded-lg border border-gray-100 hover:border-gray-200 hover:bg-gray-50/50 transition-colors cursor-pointer group">
-                          <h3 className="font-medium text-gray-900 group-hover:text-primary">
-                            {branch.name}
-                          </h3>
-                          {branch.address && (
-                            <p className="mt-1 text-sm text-gray-500">
-                              {branch.address}
-                            </p>
-                          )}
-                        </div>
-                      </Link>
+                      <div key={branch.id} className="p-4 rounded-lg border border-gray-100">
+                        <h3 className="font-medium text-gray-900">
+                          {branch.name}
+                        </h3>
+                        {branch.address && (
+                          <p className="mt-1 text-sm text-gray-500">
+                            {branch.address}
+                          </p>
+                        )}
+                      </div>
                     ))}
                   </div>
                 )}
