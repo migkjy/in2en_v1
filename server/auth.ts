@@ -43,9 +43,10 @@ export function setupAuth(app: Express) {
       resave: false,
       saveUninitialized: false,
       cookie: {
-        secure: process.env.NODE_ENV === "production",
+        secure: false, // 로컬 환경에서는 HTTP를 사용하므로 false로 설정
         maxAge: 24 * 60 * 60 * 1000, // 24 hours
       },
+      store: storage.sessionStore, // 세션 스토리지 사용
     })
   );
 

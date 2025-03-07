@@ -31,8 +31,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     queryKey: ['auth-user'],
     queryFn: async () => {
       try {
-        const response = await fetch('/api/user');
-        if (response.status === 401) return null;
+        const response = await fetch('/api/user', {
+          credentials: 'include', // 쿠키 포함 설정 추가
+        });
+        if (response.status === 401) {
+          console.log('사용자가 인증되지 않았습니다. 로그인이 필요합니다.');
+          return null;
+        }
         if (!response.ok) throw new Error('Failed to fetch user');
         return response.json();
       } catch (e) {
