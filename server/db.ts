@@ -11,9 +11,5 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-// Log database connection info (safely)
-const dbUrl = new URL(process.env.DATABASE_URL);
-console.log(`Connecting to database: ${dbUrl.hostname} / ${dbUrl.pathname.split('/')[1]}`);
-
 export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 export const db = drizzle({ client: pool, schema });

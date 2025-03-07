@@ -85,7 +85,7 @@ export interface IStorage {
   createAgeGroup(data: { name: string; description?: string }): Promise<AgeGroup>;
   listAgeGroups(): Promise<AgeGroup[]>;
   deleteAgeGroup(id: number): Promise<void>;
-
+  
   // Password operations
   verifyPassword(user: User, password: string): Promise<boolean>;
   updateUserPassword(userId: number, newPassword: string): Promise<boolean>;
@@ -95,15 +95,11 @@ export class DatabaseStorage implements IStorage {
   sessionStore: any;
 
   constructor() {
-    // Initialize PostgreSQL session store with proper configuration
     this.sessionStore = new PostgresSessionStore({
       conObject: {
         connectionString: process.env.DATABASE_URL,
       },
       createTableIfMissing: true,
-      // Add production-specific session settings
-      ttl: 24 * 60 * 60, // Session TTL in seconds (24 hours)
-      pruneSessionInterval: 60 * 60, // Cleanup every hour
     });
   }
 
@@ -125,7 +121,7 @@ export class DatabaseStorage implements IStorage {
       const derivedKey = (await scryptAsync(user.password, salt, 64)) as Buffer;
       user.password = `${derivedKey.toString('hex')}.${salt}`;
     }
-
+    
     const [newUser] = await db.insert(users).values([user]).returning();
     return newUser;
   }
@@ -141,7 +137,7 @@ export class DatabaseStorage implements IStorage {
       const derivedKey = (await scryptAsync(data.password, salt, 64)) as Buffer;
       data.password = `${derivedKey.toString('hex')}.${salt}`;
     }
-
+    
     const [user] = await db
       .update(users)
       .set(data)
@@ -364,7 +360,7 @@ export class DatabaseStorage implements IStorage {
   async listSubmissions(assignmentId: number): Promise<Submission[]> {
     return await db.select().from(submissions).where(eq(submissions.assignmentId, assignmentId));
   }
-
+  
   // List submissions for a specific student
   async listUserSubmissions(studentId: number): Promise<Submission[]> {
     console.log("Listing submissions for student:", studentId);
@@ -413,7 +409,7 @@ export class DatabaseStorage implements IStorage {
       .where(eq(comments.submissionId, submissionId))
       .orderBy(comments.createdAt);
   }
-
+  
   async listCommentsWithUsers(submissionId: number): Promise<(Comment & { user: Partial<User> })[]> {
     const result = await db
       .select({
@@ -432,7 +428,7 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(users, eq(comments.userId, users.id))
       .where(eq(comments.submissionId, submissionId))
       .orderBy(comments.createdAt);
-
+      
     return result;
   }
 
@@ -828,11 +824,11 @@ export class DatabaseStorage implements IStorage {
   async deleteAgeGroup(id: number): Promise<void> {
     await db.delete(ageGroups).where(eq(ageGroups.id, id));
   }
-
+  
   async verifyPassword(user: User, password: string): Promise<boolean> {
     try {
       if (!user.password) return false;
-
+      
       // Check if password has salt (contains a period)
       if (user.password.includes('.')) {
         const [hashedPassword, salt] = user.password.split('.');
@@ -850,17 +846,17 @@ export class DatabaseStorage implements IStorage {
       return false;
     }
   }
-
+  
   async updateUserPassword(userId: number, newPassword: string): Promise<boolean> {
     try {
       const salt = randomBytes(16).toString('hex');
       const derivedKey = await scryptAsync(newPassword, salt, 64) as Buffer;
       const hashedPassword = `${derivedKey.toString('hex')}.${salt}`;
-
+      
       await db.update(users)
         .set({ password: hashedPassword })
         .where(eq(users.id, userId));
-
+        
       return true;
     } catch (error) {
       console.error("Error updating password:", error);
