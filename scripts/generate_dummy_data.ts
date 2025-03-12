@@ -1,8 +1,9 @@
 import { db } from "../server/db";
-import { users, assignments, submissions, UserRole } from "@shared/schema";
+import { users, assignments, submissions, classes, UserRole, branches } from "@shared/schema";
 import { randomBytes, scrypt as _scrypt } from "crypto";
 import { promisify } from "util";
 import { format, addDays } from "date-fns";
+import { eq } from 'drizzle-orm';
 
 const scrypt = promisify(_scrypt);
 
@@ -14,10 +15,33 @@ async function hashPassword(password: string): Promise<string> {
 
 const ENGLISH_LEVELS = ["Beginner", "Intermediate", "Advanced"];
 const AGE_GROUPS = ["Children", "Teenagers", "Adults"];
+const QUARTERS = ["Q1", "Q2", "Q3", "Q4"];
 
 async function main() {
   try {
     console.log("Starting to generate dummy data...");
+
+    // Get the Main Branch ID (created in seed.ts)
+    const [mainBranch] = await db.select().from(branches).where(eq(branches.name, "Main Branch"));
+    if (!mainBranch) throw new Error("Main Branch not found");
+
+    // Generate class data first
+    console.log("Generating classes...");
+    const classData = [];
+    for (let i = 1; i <= 30; i++) {
+      const englishLevel = ENGLISH_LEVELS[Math.floor(Math.random() * ENGLISH_LEVELS.length)];
+      const ageGroup = AGE_GROUPS[Math.floor(Math.random() * AGE_GROUPS.length)];
+      const quarter = QUARTERS[Math.floor(Math.random() * QUARTERS.length)];
+
+      classData.push({
+        name: `${englishLevel} ${ageGroup} ${quarter} Class ${i}`,
+        branchId: mainBranch.id,
+        englishLevel,
+        ageGroup
+      });
+    }
+    const insertedClasses = await db.insert(classes).values(classData).returning();
+    console.log(`Created ${insertedClasses.length} classes`);
 
     // Generate teacher data
     console.log("Generating teachers...");
@@ -56,12 +80,14 @@ async function main() {
     const assignmentData = [];
     for (let i = 1; i <= 100; i++) {
       const teacher = insertedTeachers[Math.floor(Math.random() * insertedTeachers.length)];
+      const classId = insertedClasses[Math.floor(Math.random() * insertedClasses.length)].id;
       const dueDate = addDays(new Date(), Math.floor(Math.random() * 30));
 
       assignmentData.push({
         title: `Assignment ${i}`,
         description: `This is assignment number ${i}. Please complete the following tasks...`,
         teacherId: teacher.id,
+        classId,
         status: ['draft', 'published', 'completed'][Math.floor(Math.random() * 3)],
         dueDate: format(dueDate, 'yyyy-MM-dd'),
         englishLevel: ENGLISH_LEVELS[Math.floor(Math.random() * ENGLISH_LEVELS.length)],
@@ -80,9 +106,6 @@ async function main() {
       for (let i = 0; i < numSubmissions; i++) {
         const student = insertedStudents[Math.floor(Math.random() * insertedStudents.length)];
 
-        // Generate dummy image URL
-        const imageUrl = `https://storage.in2english.com/submissions/dummy-${assignment.id}-${student.id}.jpg`;
-
         submissionData.push({
           assignmentId: assignment.id,
           studentId: student.id,
@@ -91,7 +114,7 @@ async function main() {
           grade: Math.floor(Math.random() * 41) + 60, // Random grade between 60-100
           feedback: `Teacher's feedback for submission...`,
           submittedAt: new Date().toISOString(),
-          imageUrl: imageUrl, // Add dummy image URL
+          imageUrl: `https://storage.in2english.com/submissions/dummy-${assignment.id}-${student.id}.jpg`,
           ocrText: `OCR text for submission from assignment ${assignment.id}...`
         });
       }
