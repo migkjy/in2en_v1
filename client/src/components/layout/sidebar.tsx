@@ -117,11 +117,16 @@ export function Sidebar({ className }: SidebarProps) {
         {/* Mobile Sidebar */}
         <Sheet>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="md:hidden fixed top-4 left-4 z-50">
+            <Button variant="ghost" size="icon" className="md:hidden fixed top-4 right-4 z-50">
               <Menu className="h-6 w-6" />
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="w-[240px] p-0">
+            <div className="p-4 border-b">
+              <Link href="/">
+                <h1 className="text-xl font-bold">In2English</h1>
+              </Link>
+            </div>
             <NavigationLinks />
           </SheetContent>
         </Sheet>
@@ -131,6 +136,11 @@ export function Sidebar({ className }: SidebarProps) {
           "hidden md:flex md:w-64 md:flex-col bg-white border-r shadow-sm",
           className
         )}>
+          <div className="p-4 border-b">
+            <Link href="/">
+              <h1 className="text-xl font-bold">In2English</h1>
+            </Link>
+          </div>
           <NavigationLinks />
         </div>
 
