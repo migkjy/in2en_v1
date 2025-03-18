@@ -137,11 +137,6 @@ export function Sidebar({ className }: SidebarProps) {
           "hidden md:flex md:w-64 md:flex-col bg-white border-r shadow-sm",
           className
         )}>
-          <div className="p-4 border-b">
-            <Link href="/">
-              <h1 className="text-xl font-bold">In2English</h1>
-            </Link>
-          </div>
           <NavigationLinks />
         </div>
 
