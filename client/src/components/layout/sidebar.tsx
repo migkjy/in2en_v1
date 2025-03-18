@@ -14,7 +14,7 @@ import {
   User,
   Users,
   Menu,
-  BookCheck,
+  BookCheck
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { GraduationCap as StudentIcon } from "lucide-react";
@@ -40,35 +40,22 @@ export function Sidebar({ className }: SidebarProps) {
     { href: "/teacher", icon: LayoutDashboard, label: "Dashboard" },
     { href: "/teacher/classes", icon: GraduationCap, label: "My Classes" },
     { href: "/teacher/assignments", icon: BookCheck, label: "Assignments" },
-    {
-      href: "/teacher/assignments/create",
-      icon: BookOpen,
-      label: "Create Assignment",
-    },
-    {
-      href: "/teacher/assignments/upload",
-      icon: Upload,
-      label: "Upload Homework",
-    },
-    {
-      href: "/teacher/assignments/review",
-      icon: ClipboardList,
-      label: "Review",
-    },
+    { href: "/teacher/assignments/create", icon: BookOpen, label: "Create Assignment" },
+    { href: "/teacher/assignments/upload", icon: Upload, label: "Upload Homework" },
+    { href: "/teacher/assignments/review", icon: ClipboardList, label: "Review" },
   ];
 
   const studentLinks = [
     { href: "/student/assignments", icon: BookOpen, label: "Assignments" },
   ];
 
-  const links =
-    user?.role === "ADMIN"
-      ? adminLinks
-      : user?.role === "TEACHER"
-        ? teacherLinks
-        : studentLinks;
+  const links = user?.role === "ADMIN"
+    ? adminLinks
+    : user?.role === "TEACHER"
+    ? teacherLinks
+    : studentLinks;
 
-  const baseRoute = user?.role?.toLowerCase() || "";
+  const baseRoute = user?.role?.toLowerCase() || '';
 
   const NavigationLinks = () => (
     <div className="flex flex-col h-full">
@@ -87,7 +74,7 @@ export function Sidebar({ className }: SidebarProps) {
                     "hover:bg-gray-100/80",
                     isActive(link.href)
                       ? "bg-gray-100/90 text-gray-900"
-                      : "text-gray-600 hover:text-gray-900",
+                      : "text-gray-600 hover:text-gray-900"
                   )}
                 >
                   <link.icon className="mr-3 h-4 w-4" />
@@ -107,7 +94,7 @@ export function Sidebar({ className }: SidebarProps) {
               className="w-full justify-start text-sm hover:bg-gray-100/80"
             >
               <User className="mr-3 h-4 w-4" />
-              {user?.name || "사용자"}
+              {user?.name || '사용자'}
             </Button>
           </Link>
           <Button
@@ -143,18 +130,17 @@ export function Sidebar({ className }: SidebarProps) {
         </Sheet>
       </div>
 
-      <div className="flex h-screen overflow-hidden pt-14 md:pt-0">
+      <div className="flex h-screen overflow-hidden"> {/* Removed top padding */}
         {/* Desktop Sidebar */}
-        <div
-          className={cn(
-            "hidden md:flex md:w-64 md:flex-col bg-white border-r shadow-sm",
-            className,
-          )}
-        >
+        <div className={cn(
+          "hidden md:flex md:w-64 md:flex-col bg-white border-r shadow-sm",
+          className
+        )}>
           <NavigationLinks />
         </div>
+
         {/* Main Content */}
-        <main className="flex-1 px-4 pt-4 md:p-6">
+        <main className="flex-1 px-4 py-20 md:p-6"> {/* Adjusted padding for mobile */}
           {/* Your main content here */}
         </main>
       </div>
