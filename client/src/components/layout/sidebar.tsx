@@ -1,20 +1,23 @@
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
-import { useLocation, Link } from "wouter";
+import { useLocation } from "wouter";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
   School,
   GraduationCap,
+  Users,
+  BookCheck,
   BookOpen,
   Upload,
   ClipboardList,
-  LogOut,
-  User,
-  Users,
-  GraduationCap as StudentIcon,
-  BookCheck
+  Menu,
 } from "lucide-react";
+import { StudentIcon } from "@/components/ui/icons";
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {}
 
@@ -54,64 +57,66 @@ export function Sidebar({ className }: SidebarProps) {
 
   const baseRoute = user?.role?.toLowerCase() || '';
 
-  return (
-    <div className={cn(
-      "flex flex-col h-screen bg-white border-r border-gray-100 shadow-sm",
-      className
-    )}>
-      <div className="flex-1 space-y-2 py-6">
-        <div className="px-3 py-2">
-          <h2 className="mb-6 px-4 text-xl font-semibold tracking-tight text-gray-900">
-            In2English
-          </h2>
-          <div className="space-y-1.5">
-            {links.map((link) => (
-              // Hide upload homework link
-              link.label !== "Upload Homework" && (
-                <Link key={link.href} href={link.href}>
-                  <Button
-                    variant={isActive(link.href) ? "secondary" : "ghost"}
-                    className={cn(
-                      "w-full justify-start text-sm font-medium transition-colors",
-                      "hover:bg-gray-100/80",
-                      isActive(link.href)
-                        ? "bg-gray-100/90 text-gray-900"
-                        : "text-gray-600 hover:text-gray-900"
-                    )}
-                  >
-                    <link.icon className="mr-3 h-4 w-4" />
-                    {link.label}
-                  </Button>
-                </Link>
-              )
-            ))}
-          </div>
+  const NavigationLinks = () => (
+    <div className="space-y-4 py-4">
+      <div className="px-3 py-2">
+        <h2 className="mb-2 px-4 text-lg font-semibold">In2English</h2>
+        <div className="space-y-1">
+          {links.map((link) => {
+            const Icon = link.icon;
+            return (
+              <Button
+                key={link.href}
+                variant={isActive(link.href) ? "secondary" : "ghost"}
+                className={cn(
+                  "w-full justify-start",
+                  isActive(link.href) && "bg-accent"
+                )}
+                onClick={() => window.location.href = link.href}
+              >
+                <Icon className="mr-2 h-4 w-4" />
+                {link.label}
+              </Button>
+            );
+          })}
         </div>
       </div>
-
-      {/* User profile and logout section */}
-      <div className="p-4 border-t border-gray-100 mt-auto bg-gray-50/50">
-        <div className="space-y-2">
-          <Link href={`/${baseRoute}/profile`}>
-            <Button
-              variant="ghost"
-              className="w-full justify-start text-sm hover:bg-gray-100/80"
-            >
-              <User className="mr-3 h-4 w-4" />
-              {user?.name || '사용자'}
-            </Button>
-          </Link>
+      <div className="px-3 py-2">
+        <div className="space-y-1">
           <Button
             variant="ghost"
-            className="w-full justify-start text-sm text-red-600 hover:text-red-700 hover:bg-red-50"
+            className="w-full justify-start"
             onClick={() => logoutMutation.mutate()}
-            disabled={logoutMutation.isPending}
           >
-            <LogOut className="mr-3 h-4 w-4" />
-            {logoutMutation.isPending ? "Logging out..." : "Logout"}
+            Logout
           </Button>
         </div>
       </div>
     </div>
+  );
+
+  return (
+    <>
+      {/* Mobile Sidebar */}
+      <Sheet>
+        <SheetTrigger asChild>
+          <Button variant="ghost" size="icon" className="md:hidden fixed top-4 left-4 z-50">
+            <Menu className="h-6 w-6" />
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="left" className="w-[240px] p-0">
+          <ScrollArea className="h-full">
+            <NavigationLinks />
+          </ScrollArea>
+        </SheetContent>
+      </Sheet>
+
+      {/* Desktop Sidebar */}
+      <div className={cn("hidden md:block border-r h-screen", className)}>
+        <ScrollArea className="h-full">
+          <NavigationLinks />
+        </ScrollArea>
+      </div>
+    </>
   );
 }
