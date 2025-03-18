@@ -1,7 +1,9 @@
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation, Link } from "wouter";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
   LayoutDashboard,
   School,
@@ -12,9 +14,11 @@ import {
   LogOut,
   User,
   Users,
-  GraduationCap as StudentIcon,
+  Menu,
   BookCheck
 } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { StudentIcon } from "@/components/ui/icons";
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {}
 
@@ -54,44 +58,35 @@ export function Sidebar({ className }: SidebarProps) {
 
   const baseRoute = user?.role?.toLowerCase() || '';
 
-  return (
-    <div className={cn(
-      "flex flex-col h-screen bg-white border-r border-gray-100 shadow-sm",
-      className
-    )}>
-      <div className="flex-1 space-y-2 py-6">
-        <div className="px-3 py-2">
-          <h2 className="mb-6 px-4 text-xl font-semibold tracking-tight text-gray-900">
-            In2English
-          </h2>
-          <div className="space-y-1.5">
-            {links.map((link) => (
-              // Hide upload homework link
-              link.label !== "Upload Homework" && (
-                <Link key={link.href} href={link.href}>
-                  <Button
-                    variant={isActive(link.href) ? "secondary" : "ghost"}
-                    className={cn(
-                      "w-full justify-start text-sm font-medium transition-colors",
-                      "hover:bg-gray-100/80",
-                      isActive(link.href)
-                        ? "bg-gray-100/90 text-gray-900"
-                        : "text-gray-600 hover:text-gray-900"
-                    )}
-                  >
-                    <link.icon className="mr-3 h-4 w-4" />
-                    {link.label}
-                  </Button>
-                </Link>
-              )
-            ))}
-          </div>
+  const NavigationLinks = () => (
+    <div className="space-y-4 py-4">
+      <div className="px-3 py-2">
+        <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">
+          In2English
+        </h2>
+        <div className="space-y-1">
+          {links.map((link) => (
+            <Link key={link.href} href={link.href}>
+              <Button
+                variant={isActive(link.href) ? "secondary" : "ghost"}
+                className={cn(
+                  "w-full justify-start text-sm font-medium transition-colors",
+                  "hover:bg-gray-100/80",
+                  isActive(link.href)
+                    ? "bg-gray-100/90 text-gray-900"
+                    : "text-gray-600 hover:text-gray-900"
+                )}
+              >
+                <link.icon className="mr-3 h-4 w-4" />
+                {link.label}
+              </Button>
+            </Link>
+          ))}
         </div>
       </div>
 
-      {/* User profile and logout section */}
-      <div className="p-4 border-t border-gray-100 mt-auto bg-gray-50/50">
-        <div className="space-y-2">
+      <div className="px-3 py-2 border-t">
+        <div className="space-y-1">
           <Link href={`/${baseRoute}/profile`}>
             <Button
               variant="ghost"
@@ -113,5 +108,29 @@ export function Sidebar({ className }: SidebarProps) {
         </div>
       </div>
     </div>
+  );
+
+  return (
+    <>
+      {/* Mobile Sidebar */}
+      <Sheet>
+        <SheetTrigger asChild>
+          <Button variant="ghost" size="icon" className="md:hidden fixed top-4 left-4 z-50">
+            <Menu className="h-6 w-6" />
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="left" className="w-[240px] p-0">
+          <NavigationLinks />
+        </SheetContent>
+      </Sheet>
+
+      {/* Desktop Sidebar */}
+      <div className={cn(
+        "hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 bg-white border-r shadow-sm",
+        className
+      )}>
+        <NavigationLinks />
+      </div>
+    </>
   );
 }
