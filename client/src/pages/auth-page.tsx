@@ -1,47 +1,62 @@
 import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useLocation } from "wouter";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useToast } from "@/hooks/use-toast";
 
 const formSchema = z.object({
-  email: z.string().email("Invalid email format"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  email: z.string().email("유효한 이메일을 입력해주세요"),
+  password: z.string().min(6, "비밀번호는 최소 6자 이상이어야 합니다"),
   name: z.string().optional(),
-  role: z.enum(["STUDENT", "TEACHER"]).optional(),
+  role: z.enum(["ADMIN", "TEACHER", "STUDENT"]).optional(),
 });
 
-export default function AuthPage() {
-  const [isRegistering, setIsRegistering] = useState(false);
-  const { login, register } = useAuth();
-  const isMobile = useIsMobile();
+type FormData = z.infer<typeof formSchema>;
 
-  const form = useForm({
+export default function AuthPage() {
+  const { user, loginMutation, registerMutation } = useAuth();
+  const [isRegistering, setIsRegistering] = useState(false);
+
+  const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       email: "",
       password: "",
       name: "",
-      role: "STUDENT" as const,
+      role: "STUDENT",
     },
   });
 
-  const onSubmit = async (data: z.infer<typeof formSchema>) => {
+  // Redirect if user is already logged in
+  if (user) {
+    const homePath = 
+      user.role === "ADMIN" ? "/admin" :
+      user.role === "TEACHER" ? "/teacher" : "/student";
+    return <h1>Redirecting...</h1>;
+  }
+
+  const onSubmit = async (data: FormData) => {
     if (isRegistering) {
-      await register({
+      registerMutation.mutate({
         email: data.email,
-        name: data.name!,
-        role: data.role!,
         password: data.password,
+        name: data.name || "",
+        role: data.role || "STUDENT",
       });
     } else {
-      await login({
+      loginMutation.mutate({
         email: data.email,
         password: data.password,
       });
@@ -49,9 +64,9 @@ export default function AuthPage() {
   };
 
   return (
-    <div className={`min-h-screen flex flex-col ${!isMobile && "md:flex-row"}`}>
-      <div className={`${isMobile ? "p-4" : "w-1/2 p-8"} flex items-center justify-center order-2 md:order-1`}>
-        <Card className="w-full max-w-[400px]">
+    <div className="min-h-screen flex">
+      <div className="w-1/2 p-8 flex items-center justify-center">
+        <Card className="w-[400px]">
           <CardHeader>
             <CardTitle>In2English Platform</CardTitle>
             <CardDescription>
@@ -82,7 +97,6 @@ export default function AuthPage() {
 
                 <div>
                   <Input
-                    type="email"
                     placeholder="Email"
                     {...form.register("email")}
                   />
@@ -107,26 +121,24 @@ export default function AuthPage() {
                 </div>
 
                 {isRegistering && (
-                  <div>
-                    <Select
-                      onValueChange={(value) =>
-                        form.setValue("role", value as "STUDENT" | "TEACHER")
-                      }
-                      defaultValue="STUDENT"
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select role" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="STUDENT">Student</SelectItem>
-                        <SelectItem value="TEACHER">Teacher</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  <select
+                    {...form.register("role")}
+                    className="w-full p-2 border rounded"
+                  >
+                    <option value="STUDENT">Student</option>
+                    <option value="TEACHER">Teacher</option>
+                    <option value="ADMIN">Admin</option>
+                  </select>
                 )}
 
-                <Button type="submit" className="w-full">
-                  {isRegistering ? "Register" : "Login"}
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={isRegistering ? registerMutation.isPending : loginMutation.isPending}
+                >
+                  {isRegistering
+                    ? (registerMutation.isPending ? "Registering..." : "Register")
+                    : (loginMutation.isPending ? "Logging in..." : "Login")}
                 </Button>
               </form>
             </Tabs>
@@ -134,30 +146,43 @@ export default function AuthPage() {
         </Card>
       </div>
 
-      <div className={`${isMobile ? "p-8" : "w-1/2"} bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white order-1 md:order-2`}>
-        <div className="max-w-lg p-4">
-          <h1 className="text-3xl md:text-4xl font-bold mb-4 md:mb-6">Welcome to In2English</h1>
-          <p className="text-lg md:text-xl mb-6 md:mb-8">
-            A modern platform for English homework management and personalized feedback
+      <div className="w-1/2 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white p-12">
+        <div className="max-w-lg">
+          <h1 className="text-4xl font-bold mb-6">Welcome to In2English</h1>
+          <p className="text-xl mb-8">
+            A modern platform for English homework management and personalized
+            feedback
           </p>
           <ul className="space-y-4">
             <li className="flex items-center">
-              <svg className="w-5 h-5 md:w-6 md:h-6 mr-2" fill="currentColor" viewBox="0 0 20 20">
+              <svg
+                className="w-6 h-6 mr-2"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
                 <path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" />
               </svg>
-              <span className="text-sm md:text-base">Automated text extraction from homework images</span>
+              Automated text extraction from homework images
             </li>
             <li className="flex items-center">
-              <svg className="w-5 h-5 md:w-6 md:h-6 mr-2" fill="currentColor" viewBox="0 0 20 20">
+              <svg
+                className="w-6 h-6 mr-2"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
                 <path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" />
               </svg>
-              <span className="text-sm md:text-base">AI-powered feedback based on student level</span>
+              AI-powered feedback based on student level
             </li>
             <li className="flex items-center">
-              <svg className="w-5 h-5 md:w-6 md:h-6 mr-2" fill="currentColor" viewBox="0 0 20 20">
+              <svg
+                className="w-6 h-6 mr-2"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
                 <path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" />
               </svg>
-              <span className="text-sm md:text-base">Interactive teacher reviews and comments</span>
+              Interactive teacher reviews and comments
             </li>
           </ul>
         </div>
