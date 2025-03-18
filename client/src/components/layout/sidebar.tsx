@@ -113,23 +113,24 @@ export function Sidebar({ className }: SidebarProps) {
 
   return (
     <>
-      <div className="flex h-screen overflow-hidden"> {/* Added overflow-hidden */}
-        {/* Mobile Sidebar */}
+      {/* Mobile Top Bar */}
+      <div className="md:hidden fixed top-0 left-0 right-0 h-14 bg-white border-b z-40 flex items-center px-4">
+        <Link href="/" className="flex-1">
+          <h1 className="text-xl font-bold">In2English</h1>
+        </Link>
         <Sheet>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="md:hidden fixed top-4 right-4 z-50">
+            <Button variant="ghost" size="icon">
               <Menu className="h-6 w-6" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-[240px] p-0">
-            <div className="p-4 border-b">
-              <Link href="/">
-                <h1 className="text-xl font-bold">In2English</h1>
-              </Link>
-            </div>
+          <SheetContent side="left" className="w-[240px] p-0 pt-14">
             <NavigationLinks />
           </SheetContent>
         </Sheet>
+      </div>
+
+      <div className="flex h-screen overflow-hidden pt-14 md:pt-0"> {/* Added top padding for mobile */}
 
         {/* Desktop Sidebar */}
         <div className={cn(
