@@ -270,13 +270,13 @@ export default function AssignmentList() {
   return (
     <div className="flex h-screen">
       <Sidebar className="w-64" />
-      <main className="flex-1 p-8 overflow-auto">
-        <div className="max-w-6xl mx-auto">
+      <main className="flex-1 p-4 md:p-8 overflow-auto pt-20">
+        <div className="max-w-6xl mx-auto w-full">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <CardTitle>Assignments Management</CardTitle>
               {canCreateAssignment && (
-                <Button onClick={handleCreateAssignment}>
+                <Button className="w-full md:w-auto" onClick={handleCreateAssignment}>
                   Create New Assignment
                 </Button>
               )}
