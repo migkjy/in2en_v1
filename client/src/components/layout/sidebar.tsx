@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation, Link } from "wouter";
@@ -114,7 +113,7 @@ export function Sidebar({ className }: SidebarProps) {
 
   return (
     <>
-      <div className="min-h-screen flex">
+      <div className="flex h-screen overflow-hidden"> {/* Added overflow-hidden */}
         {/* Mobile Sidebar */}
         <Sheet>
           <SheetTrigger asChild>
@@ -135,8 +134,10 @@ export function Sidebar({ className }: SidebarProps) {
           <NavigationLinks />
         </div>
 
-        {/* Main Content Padding */}
-        <div className="md:w-64 hidden md:block" />
+        {/* Main Content */}
+        <main className="flex-1 p-6"> {/* Added padding */}
+          {/* Your main content here */}
+        </main>
       </div>
     </>
   );
