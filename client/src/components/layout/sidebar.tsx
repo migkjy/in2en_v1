@@ -143,7 +143,7 @@ export function Sidebar({ className }: SidebarProps) {
         </Sheet>
       </div>
 
-      <div className="flex h-screen overflow-hidden pt-14 md:pt-0">
+      <div className="flex h-screen overflow-hidden">
         {/* Desktop Sidebar */}
         <div
           className={cn(
@@ -154,7 +154,7 @@ export function Sidebar({ className }: SidebarProps) {
           <NavigationLinks />
         </div>
         {/* Main Content */}
-        <main className="flex-1 px-4 pt-4 md:p-6">
+        <main className="flex-1 px-4 pt-[72px] md:pt-6 md:px-6">
           {/* Your main content here */}
         </main>
       </div>
