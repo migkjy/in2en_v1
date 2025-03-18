@@ -59,33 +59,35 @@ export function Sidebar({ className }: SidebarProps) {
   const baseRoute = user?.role?.toLowerCase() || '';
 
   const NavigationLinks = () => (
-    <div className="space-y-4 py-4">
-      <div className="px-3 py-2">
-        <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">
-          In2English
-        </h2>
-        <div className="space-y-1">
-          {links.map((link) => (
-            <Link key={link.href} href={link.href}>
-              <Button
-                variant={isActive(link.href) ? "secondary" : "ghost"}
-                className={cn(
-                  "w-full justify-start text-sm font-medium transition-colors",
-                  "hover:bg-gray-100/80",
-                  isActive(link.href)
-                    ? "bg-gray-100/90 text-gray-900"
-                    : "text-gray-600 hover:text-gray-900"
-                )}
-              >
-                <link.icon className="mr-3 h-4 w-4" />
-                {link.label}
-              </Button>
-            </Link>
-          ))}
+    <div className="flex flex-col h-full">
+      <div className="flex-1 space-y-4 py-4">
+        <div className="px-3 py-2">
+          <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">
+            In2English
+          </h2>
+          <div className="space-y-1">
+            {links.map((link) => (
+              <Link key={link.href} href={link.href}>
+                <Button
+                  variant={isActive(link.href) ? "secondary" : "ghost"}
+                  className={cn(
+                    "w-full justify-start text-sm font-medium transition-colors",
+                    "hover:bg-gray-100/80",
+                    isActive(link.href)
+                      ? "bg-gray-100/90 text-gray-900"
+                      : "text-gray-600 hover:text-gray-900"
+                  )}
+                >
+                  <link.icon className="mr-3 h-4 w-4" />
+                  {link.label}
+                </Button>
+              </Link>
+            ))}
+          </div>
         </div>
       </div>
 
-      <div className="px-3 py-2 border-t">
+      <div className="mt-auto px-3 py-2 border-t">
         <div className="space-y-1">
           <Link href={`/${baseRoute}/profile`}>
             <Button
@@ -112,24 +114,29 @@ export function Sidebar({ className }: SidebarProps) {
 
   return (
     <>
-      {/* Mobile Sidebar */}
-      <Sheet>
-        <SheetTrigger asChild>
-          <Button variant="ghost" size="icon" className="md:hidden fixed top-4 left-4 z-50">
-            <Menu className="h-6 w-6" />
-          </Button>
-        </SheetTrigger>
-        <SheetContent side="left" className="w-[240px] p-0">
-          <NavigationLinks />
-        </SheetContent>
-      </Sheet>
+      <div className="min-h-screen flex">
+        {/* Mobile Sidebar */}
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button variant="ghost" size="icon" className="md:hidden fixed top-4 left-4 z-50">
+              <Menu className="h-6 w-6" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="w-[240px] p-0">
+            <NavigationLinks />
+          </SheetContent>
+        </Sheet>
 
-      {/* Desktop Sidebar */}
-      <div className={cn(
-        "hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 bg-white border-r shadow-sm",
-        className
-      )}>
-        <NavigationLinks />
+        {/* Desktop Sidebar */}
+        <div className={cn(
+          "hidden md:flex md:w-64 md:flex-col bg-white border-r shadow-sm",
+          className
+        )}>
+          <NavigationLinks />
+        </div>
+
+        {/* Main Content Padding */}
+        <div className="md:w-64 hidden md:block" />
       </div>
     </>
   );
