@@ -18,7 +18,7 @@ import {
   BookCheck
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { StudentIcon } from "@/components/ui/icons";
+import { GraduationCap as StudentIcon } from "lucide-react";
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {}
 
