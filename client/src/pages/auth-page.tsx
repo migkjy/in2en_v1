@@ -49,8 +49,8 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen flex">
-      <div className="w-full md:w-1/2 flex items-center justify-center p-4">
+    <div className={`min-h-screen flex flex-col ${!isMobile && "md:flex-row"}`}>
+      <div className={`${isMobile ? "p-4" : "w-1/2 p-8"} flex items-center justify-center order-2 md:order-1`}>
         <Card className="w-full max-w-[400px]">
           <CardHeader>
             <CardTitle>In2English Platform</CardTitle>
@@ -134,7 +134,7 @@ export default function AuthPage() {
         </Card>
       </div>
 
-      <div className="hidden md:flex w-1/2 bg-gradient-to-br from-blue-500 to-purple-600 items-center justify-center text-white">
+      <div className={`${isMobile ? "p-8" : "w-1/2"} bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white order-1 md:order-2`}>
         <div className="max-w-lg p-4">
           <h1 className="text-3xl md:text-4xl font-bold mb-4 md:mb-6">Welcome to In2English</h1>
           <p className="text-lg md:text-xl mb-6 md:mb-8">
