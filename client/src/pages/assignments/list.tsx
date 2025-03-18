@@ -270,7 +270,7 @@ export default function AssignmentList() {
   return (
     <div className="flex h-screen">
       <Sidebar className="w-64" />
-      <main className="flex-1 p-4 overflow-auto pt-20">
+      <main className="flex-1 p-4 md:p-8 overflow-auto pt-20">
         <div className="max-w-6xl mx-auto w-full">
           <Card>
             <CardHeader className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
@@ -282,7 +282,7 @@ export default function AssignmentList() {
               )}
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+              <div className="grid grid-cols-3 gap-4 mb-6">
                 {user?.role !== "STUDENT" && (
                   <>
                     <div className="space-y-2">

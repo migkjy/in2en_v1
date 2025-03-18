@@ -141,7 +141,7 @@ export function Sidebar({ className }: SidebarProps) {
         </div>
 
         {/* Main Content */}
-        <main className="flex-1 p-4 overflow-auto"> {/* Changed padding here */}
+        <main className="flex-1 p-6"> {/* Added padding */}
           {/* Your main content here */}
         </main>
       </div>
