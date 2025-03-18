@@ -130,8 +130,7 @@ export function Sidebar({ className }: SidebarProps) {
         </Sheet>
       </div>
 
-      <div className="flex h-screen overflow-hidden pt-14 md:pt-0"> {/* Added top padding for mobile */}
-
+      <div className="flex h-screen overflow-hidden"> {/* Removed top padding */}
         {/* Desktop Sidebar */}
         <div className={cn(
           "hidden md:flex md:w-64 md:flex-col bg-white border-r shadow-sm",
@@ -141,7 +140,7 @@ export function Sidebar({ className }: SidebarProps) {
         </div>
 
         {/* Main Content */}
-        <main className="flex-1 p-6"> {/* Added padding */}
+        <main className="flex-1 px-4 py-20 md:p-6"> {/* Adjusted padding for mobile */}
           {/* Your main content here */}
         </main>
       </div>
