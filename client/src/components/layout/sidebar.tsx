@@ -1,20 +1,21 @@
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+
 import { useAuth } from "@/hooks/use-auth";
-import { useLocation, Link } from "wouter";
+import { useLocation } from "wouter";
 import {
   LayoutDashboard,
   School,
   GraduationCap,
+  Users,
+  BookCheck,
   BookOpen,
   Upload,
   ClipboardList,
-  LogOut,
-  User,
-  Users,
-  GraduationCap as StudentIcon,
-  BookCheck
+  Menu,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
+import { StudentIcon } from "@/components/ui/icons";
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {}
 
@@ -54,64 +55,67 @@ export function Sidebar({ className }: SidebarProps) {
 
   const baseRoute = user?.role?.toLowerCase() || '';
 
+  const SidebarContent = () => (
+    <div className="flex h-screen flex-col gap-4">
+      <div className="px-6 py-4">
+        <h2 className="text-2xl font-bold">In2English</h2>
+      </div>
+      <nav className="flex-1 space-y-2 px-4">
+        {links.map((link) => {
+          const Icon = link.icon;
+          return (
+            <a
+              key={link.href}
+              href={link.href}
+              className={cn(
+                "flex items-center gap-3 rounded-lg px-3 py-2 text-gray-500 transition-all hover:text-gray-900",
+                isActive(link.href) && "bg-gray-100 text-gray-900"
+              )}
+            >
+              <Icon className="h-4 w-4" />
+              {link.label}
+            </a>
+          );
+        })}
+      </nav>
+      <div className="p-4 border-t">
+        <div className="flex items-center gap-3 px-3 py-2">
+          <span>{user?.name}</span>
+        </div>
+        <Button
+          variant="ghost"
+          className="w-full justify-start gap-3 px-3"
+          onClick={() => logoutMutation.mutate()}
+        >
+          Logout
+        </Button>
+      </div>
+    </div>
+  );
+
   return (
-    <div className={cn(
-      "flex flex-col h-screen bg-white border-r border-gray-100 shadow-sm",
-      className
-    )}>
-      <div className="flex-1 space-y-2 py-6">
-        <div className="px-3 py-2">
-          <h2 className="mb-6 px-4 text-xl font-semibold tracking-tight text-gray-900">
-            In2English
-          </h2>
-          <div className="space-y-1.5">
-            {links.map((link) => (
-              // Hide upload homework link
-              link.label !== "Upload Homework" && (
-                <Link key={link.href} href={link.href}>
-                  <Button
-                    variant={isActive(link.href) ? "secondary" : "ghost"}
-                    className={cn(
-                      "w-full justify-start text-sm font-medium transition-colors",
-                      "hover:bg-gray-100/80",
-                      isActive(link.href)
-                        ? "bg-gray-100/90 text-gray-900"
-                        : "text-gray-600 hover:text-gray-900"
-                    )}
-                  >
-                    <link.icon className="mr-3 h-4 w-4" />
-                    {link.label}
-                  </Button>
-                </Link>
-              )
-            ))}
-          </div>
+    <>
+      {/* Mobile Menu */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-50 flex h-16 items-center border-b bg-white px-4">
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button variant="ghost" size="icon">
+              <Menu className="h-6 w-6" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="w-[300px] p-0">
+            <SidebarContent />
+          </SheetContent>
+        </Sheet>
+        <div className="ml-4">
+          <h2 className="text-lg font-bold">In2English</h2>
         </div>
       </div>
 
-      {/* User profile and logout section */}
-      <div className="p-4 border-t border-gray-100 mt-auto bg-gray-50/50">
-        <div className="space-y-2">
-          <Link href={`/${baseRoute}/profile`}>
-            <Button
-              variant="ghost"
-              className="w-full justify-start text-sm hover:bg-gray-100/80"
-            >
-              <User className="mr-3 h-4 w-4" />
-              {user?.name || '사용자'}
-            </Button>
-          </Link>
-          <Button
-            variant="ghost"
-            className="w-full justify-start text-sm text-red-600 hover:text-red-700 hover:bg-red-50"
-            onClick={() => logoutMutation.mutate()}
-            disabled={logoutMutation.isPending}
-          >
-            <LogOut className="mr-3 h-4 w-4" />
-            {logoutMutation.isPending ? "Logging out..." : "Logout"}
-          </Button>
-        </div>
+      {/* Desktop Sidebar */}
+      <div className={cn("hidden md:block border-r bg-white", className)}>
+        <SidebarContent />
       </div>
-    </div>
+    </>
   );
 }

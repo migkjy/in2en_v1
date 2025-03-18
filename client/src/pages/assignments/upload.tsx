@@ -126,7 +126,7 @@ export default function UploadAssignment() {
   return (
     <div className="flex h-screen">
       <Sidebar className="w-64" />
-      <main className="flex-1 p-8 overflow-auto">
+      <main className="flex-1 p-8 pt-[4.5rem] md:pt-8 overflow-auto">
         <div className="max-w-4xl mx-auto">
           <Card>
             <CardHeader>
