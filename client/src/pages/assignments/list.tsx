@@ -54,15 +54,16 @@ const formatDate = (dateString: string | undefined): string => {
   return format(new Date(dateString), "MM/dd/yyyy");
 };
 
-const navigateToAssignment = (assignmentId: number) => {
-  const { user } = useAuth();
-  const basePath = user?.role === "STUDENT" ? "/student" : user?.role === "TEACHER" ? "/teacher" : "/admin";
-  window.location.href = `${basePath}/assignments/${assignmentId}`;
-};
+//const navigateToAssignment = (assignmentId: number) => { //Removed
+//  const { user } = useAuth();
+//  const basePath = user?.role === "STUDENT" ? "/student" : user?.role === "TEACHER" ? "/teacher" : "/admin";
+//  window.location.href = `${basePath}/assignments/${assignmentId}`;
+//};
 
 export default function AssignmentList() {
   const [, navigate] = useLocation();
   const { user } = useAuth();
+  const basePath = user?.role.toLowerCase() || '';
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedBranch, setSelectedBranch] = useState<string>("all");
@@ -378,7 +379,7 @@ export default function AssignmentList() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => navigateToAssignment(assignment.id)}
+                                onClick={() => navigate(`/${basePath}/assignments/${assignment.id}`)}
                               >
                                 View
                               </Button>
@@ -495,7 +496,7 @@ export default function AssignmentList() {
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  onClick={() => navigateToAssignment(assignment.id)}
+                                  onClick={() => navigate(`/${basePath}/assignments/${assignment.id}`)}
                                 >
                                   View
                                 </Button>
