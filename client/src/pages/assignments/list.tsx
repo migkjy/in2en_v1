@@ -49,6 +49,17 @@ const STATUS_OPTIONS = [
   { value: "completed", label: "Completed" },
 ];
 
+const formatDate = (dateString: string | undefined): string => {
+  if (!dateString) return "-";
+  return format(new Date(dateString), "MM/dd/yyyy");
+};
+
+const navigateToAssignment = (assignmentId: number) => {
+  const { user } = useAuth();
+  const basePath = user?.role === "STUDENT" ? "/student" : user?.role === "TEACHER" ? "/teacher" : "/admin";
+  window.location.href = `${basePath}/assignments/${assignmentId}`;
+};
+
 export default function AssignmentList() {
   const [, navigate] = useLocation();
   const { user } = useAuth();
@@ -348,135 +359,172 @@ export default function AssignmentList() {
                 )}
               </div>
 
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[200px]">Title</TableHead>
-                    {user?.role !== "STUDENT" && (
-                      <>
-                        <TableHead>Branch</TableHead>
-                        <TableHead>Class</TableHead>
-                      </>
-                    )}
-                    <TableHead>Due Date</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Submissions</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {!loadingAssignments && filteredAssignments.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={7} className="text-center py-8 text-gray-500">
-                        No assignments found
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    filteredAssignments.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
-                      .map((assignment) => {
-                        const assignmentClass = assignmentClasses.data?.[assignment.classId!];
-                        const branch = branches?.find(b => b.id === assignmentClass?.branchId);
+              <div className="md:hidden"> {/* Mobile View */}
+                {!loadingAssignments && filteredAssignments.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    No assignments found
+                  </div>
+                ) : (
+                  filteredAssignments.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+                    .map((assignment) => {
+                      const assignmentClass = assignmentClasses.data?.[assignment.classId!];
+                      const branch = branches?.find(b => b.id === assignmentClass?.branchId);
 
-                        return (
-                          <TableRow key={assignment.id}>
-                            <TableCell>{assignment.title}</TableCell>
-                            {user?.role !== "STUDENT" && (
-                              <>
-                                <TableCell>{branch?.name || "-"}</TableCell>
-                                <TableCell>
-                                  {assignmentClass?.name || "-"} -{" "}
-                                  {assignmentClass?.englishLevel || ""}
-                                </TableCell>
-                              </>
-                            )}
-                            <TableCell>
-                              {assignment.dueDate
-                                ? format(new Date(assignment.dueDate), "MM/dd/yyyy")
-                                : "-"}
-                            </TableCell>
-                            <TableCell>
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    className={`px-2 py-1 rounded-full text-xs font-medium h-auto
-                                      ${assignment.status === 'draft' ? 'bg-gray-100 text-gray-800 hover:bg-gray-200' : ''}
-                                      ${assignment.status === 'published' ? 'bg-green-100 text-green-800 hover:bg-green-200' : ''}
-                                      ${assignment.status === 'completed' ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' : ''}
-                                    `}
-                                  >
-                                    {assignment.status?.toUpperCase()}
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent>
-                                  {["draft", "published", "completed"].map((status) => (
-                                    <DropdownMenuItem
-                                      key={status}
-                                      onClick={() => {
-                                        if (assignment.id) {
-                                          updateStatusMutation.mutate({
-                                            id: assignment.id,
-                                            status
-                                          });
-                                        }
-                                      }}
-                                      disabled={status === assignment.status}
-                                    >
-                                      {status.toUpperCase()}
-                                    </DropdownMenuItem>
-                                  ))}
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </TableCell>
-                            <TableCell>
-                              {submissionCounts && submissionCounts[assignment.id] !== undefined ? (
-                                <span className="px-2 py-1 bg-blue-50 text-blue-600 rounded-md font-medium">
-                                  {submissionCounts[assignment.id]}
-                                </span>
-                              ) : (
-                                <span className="px-2 py-1 bg-gray-50 text-gray-400 rounded-md">
-                                  0
-                                </span>
-                              )}
-                            </TableCell>
-                            <TableCell className="text-right">
+                      return (
+                        <div key={assignment.id} className="border rounded-lg p-4 space-y-3 mb-4">
+                          <div className="flex justify-between items-start">
+                            <h3 className="font-medium">{assignment.title}</h3>
+                            <div className="flex gap-2">
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => {
-                                  // Use role-specific routing
-                                  const basePath = user?.role === "STUDENT" ? "/student" : 
-                                    user?.role === "TEACHER" ? "/teacher" : "/admin";
-                                  navigate(`${basePath}/assignments/${assignment.id}`);
-                                }}
+                                onClick={() => navigateToAssignment(assignment.id)}
                               >
                                 View
                               </Button>
+                            </div>
+                          </div>
+                          {user?.role !== "STUDENT" && (
+                            <div className="text-sm text-gray-600">
+                              <div>Branch: {branch?.name || "-"}</div>
+                              <div>Class: {assignmentClass?.name || "-"}</div>
+                            </div>
+                          )}
+                          <div className="text-sm text-gray-600">
+                            <div>Due: {formatDate(assignment.dueDate)}</div>
+                            <div>Status: {assignment.status}</div>
+                            <div>Submissions: {submissionCounts?.[assignment.id] || 0}</div>
+                          </div>
+                        </div>
+                      );
+                    })
+                )}
+              </div>
+
+              <div className="hidden md:block"> {/* Desktop View */}
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[200px]">Title</TableHead>
+                      {user?.role !== "STUDENT" && (
+                        <>
+                          <TableHead>Branch</TableHead>
+                          <TableHead>Class</TableHead>
+                        </>
+                      )}
+                      <TableHead>Due Date</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Submissions</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {!loadingAssignments && filteredAssignments.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                          No assignments found
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      filteredAssignments.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+                        .map((assignment) => {
+                          const assignmentClass = assignmentClasses.data?.[assignment.classId!];
+                          const branch = branches?.find(b => b.id === assignmentClass?.branchId);
+
+                          return (
+                            <TableRow key={assignment.id}>
+                              <TableCell>{assignment.title}</TableCell>
                               {user?.role !== "STUDENT" && (
                                 <>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => setEditingAssignment(assignment)}
-                                  >
-                                    Edit
-                                  </Button>
-                                  <Button
-                                    variant="destructive"
-                                    size="sm"
-                                    onClick={() => setDeleteAssignment(assignment)}
-                                  >
-                                    Delete
-                                  </Button>
+                                  <TableCell>{branch?.name || "-"}</TableCell>
+                                  <TableCell>
+                                    {assignmentClass?.name || "-"} -{" "}
+                                    {assignmentClass?.englishLevel || ""}
+                                  </TableCell>
                                 </>
                               )}
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })
-                  )}
-                </TableBody>
-              </Table>
+                              <TableCell>
+                                {formatDate(assignment.dueDate)}
+                              </TableCell>
+                              <TableCell>
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      className={`px-2 py-1 rounded-full text-xs font-medium h-auto
+                                        ${assignment.status === 'draft' ? 'bg-gray-100 text-gray-800 hover:bg-gray-200' : ''}
+                                        ${assignment.status === 'published' ? 'bg-green-100 text-green-800 hover:bg-green-200' : ''}
+                                        ${assignment.status === 'completed' ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' : ''}
+                                      `}
+                                    >
+                                      {assignment.status?.toUpperCase()}
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent>
+                                    {["draft", "published", "completed"].map((status) => (
+                                      <DropdownMenuItem
+                                        key={status}
+                                        onClick={() => {
+                                          if (assignment.id) {
+                                            updateStatusMutation.mutate({
+                                              id: assignment.id,
+                                              status
+                                            });
+                                          }
+                                        }}
+                                        disabled={status === assignment.status}
+                                      >
+                                        {status.toUpperCase()}
+                                      </DropdownMenuItem>
+                                    ))}
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </TableCell>
+                              <TableCell>
+                                {submissionCounts && submissionCounts[assignment.id] !== undefined ? (
+                                  <span className="px-2 py-1 bg-blue-50 text-blue-600 rounded-md font-medium">
+                                    {submissionCounts[assignment.id]}
+                                  </span>
+                                ) : (
+                                  <span className="px-2 py-1 bg-gray-50 text-gray-400 rounded-md">
+                                    0
+                                  </span>
+                                )}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => navigateToAssignment(assignment.id)}
+                                >
+                                  View
+                                </Button>
+                                {user?.role !== "STUDENT" && (
+                                  <>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => setEditingAssignment(assignment)}
+                                    >
+                                      Edit
+                                    </Button>
+                                    <Button
+                                      variant="destructive"
+                                      size="sm"
+                                      onClick={() => setDeleteAssignment(assignment)}
+                                    >
+                                      Delete
+                                    </Button>
+                                  </>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
 
               {filteredAssignments && filteredAssignments.length > itemsPerPage && (
                 <div className="mt-4 flex justify-between items-center">
