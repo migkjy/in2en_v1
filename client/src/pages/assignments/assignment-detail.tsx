@@ -18,7 +18,16 @@ import { format } from "date-fns";
 import { useAuth } from "@/hooks/use-auth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import React, { useState, useMemo } from "react";
-import {AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction} from "@/components/ui/alert-dialog";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 
 export default function AssignmentDetail() {
   const [, params] = useRoute("/:role/assignments/:id");
@@ -26,21 +35,24 @@ export default function AssignmentDetail() {
   const assignmentId = params?.id;
   const { user } = useAuth();
   const { toast } = useToast();
-  const [deleteSubmissionId, setDeleteSubmissionId] = useState<number | null>(null);
+  const [deleteSubmissionId, setDeleteSubmissionId] = useState<number | null>(
+    null,
+  );
 
   // Get assignment details
-  const { data: assignment, isLoading: isAssignmentLoading } =
-    useQuery<Assignment & { class?: Class; branch?: Branch }>({
-      queryKey: ["/api/assignments", assignmentId],
-      queryFn: async () => {
-        const response = await fetch(`/api/assignments/${assignmentId}`);
-        if (!response.ok) {
-          throw new Error("Failed to fetch assignment");
-        }
-        return response.json();
-      },
-      enabled: !!assignmentId,
-    });
+  const { data: assignment, isLoading: isAssignmentLoading } = useQuery<
+    Assignment & { class?: Class; branch?: Branch }
+  >({
+    queryKey: ["/api/assignments", assignmentId],
+    queryFn: async () => {
+      const response = await fetch(`/api/assignments/${assignmentId}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch assignment");
+      }
+      return response.json();
+    },
+    enabled: !!assignmentId,
+  });
 
   // Get students list
   const { data: students } = useQuery<User[]>({
@@ -79,8 +91,8 @@ export default function AssignmentDetail() {
     if (!submissions || !students) return [];
 
     return [...submissions].sort((a, b) => {
-      const studentA = students.find(s => s.id === a.studentId)?.name || '';
-      const studentB = students.find(s => s.id === b.studentId)?.name || '';
+      const studentA = students.find((s) => s.id === a.studentId)?.name || "";
+      const studentB = students.find((s) => s.id === b.studentId)?.name || "";
       return studentA.localeCompare(studentB);
     });
   }, [submissions, students]);
@@ -91,7 +103,7 @@ export default function AssignmentDetail() {
       const response = await apiRequest(
         "POST",
         `/api/submissions/${assignmentId}/review`,
-        {}
+        {},
       );
       if (!response.ok) {
         const error = await response.text();
@@ -104,22 +116,30 @@ export default function AssignmentDetail() {
         title: "Starting AI Review",
         description: "AI review process has begun. Please wait...",
       });
-      const previousSubmissions = queryClient.getQueryData(["/api/submissions", assignmentId]);
-      queryClient.setQueryData(
-        ["/api/submissions", assignmentId],
-        (old: any) => old?.map((s: any) => ({
+      const previousSubmissions = queryClient.getQueryData([
+        "/api/submissions",
+        assignmentId,
+      ]);
+      queryClient.setQueryData(["/api/submissions", assignmentId], (old: any) =>
+        old?.map((s: any) => ({
           ...s,
-          status: s.status === "uploaded" || !s.ocrText ? "processing" : s.status
-        }))
+          status:
+            s.status === "uploaded" || !s.ocrText ? "processing" : s.status,
+        })),
       );
       return { previousSubmissions };
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/submissions", assignmentId] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/submissions", assignmentId],
+      });
     },
     onError: (error, _, context) => {
       if (context?.previousSubmissions) {
-        queryClient.setQueryData(["/api/submissions", assignmentId], context.previousSubmissions);
+        queryClient.setQueryData(
+          ["/api/submissions", assignmentId],
+          context.previousSubmissions,
+        );
       }
       toast({
         title: "Error",
@@ -143,7 +163,9 @@ export default function AssignmentDetail() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/submissions", assignmentId] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/submissions", assignmentId],
+      });
       toast({
         title: "Success",
         description: "Submission deleted successfully",
@@ -161,9 +183,11 @@ export default function AssignmentDetail() {
   });
 
   const isTeacherOrAdmin = user?.role === "TEACHER" || user?.role === "ADMIN";
-  const basePath = user?.role === "ADMIN" ? "/admin/assignments" : "/teacher/assignments";
+  const basePath =
+    user?.role === "ADMIN" ? "/admin/assignments" : "/teacher/assignments";
 
-  const backPath = user?.role === "ADMIN" ? "/admin/assignments" : "/teacher/assignments";
+  const backPath =
+    user?.role === "ADMIN" ? "/admin/assignments" : "/teacher/assignments";
 
   if (isAssignmentLoading) {
     return (
@@ -199,7 +223,6 @@ export default function AssignmentDetail() {
     navigate(`/submissions/${submissionId}`);
   };
 
-
   return (
     <>
       <div className="flex h-screen">
@@ -230,7 +253,8 @@ export default function AssignmentDetail() {
                     </div>
                     <div>
                       <span className="font-medium">Class:</span>{" "}
-                      {assignment.class?.name || "-"} - {assignment.class?.englishLevel || "-"}
+                      {assignment.class?.name || "-"} -{" "}
+                      {assignment.class?.englishLevel || "-"}
                     </div>
                     <div>
                       <span className="font-medium">Due:</span>{" "}
@@ -248,7 +272,9 @@ export default function AssignmentDetail() {
                   {/* Students List */}
                   {user?.role !== "STUDENT" && (
                     <div>
-                      <h3 className="text-sm font-medium mb-4">Class Students</h3>
+                      <h3 className="text-sm font-medium mb-4">
+                        Class Students
+                      </h3>
                       <div className="flex flex-wrap gap-2">
                         {students?.map((student) => (
                           <div
@@ -274,11 +300,15 @@ export default function AssignmentDetail() {
                       </Button>
                       <Button
                         onClick={() => {
-                          const uploadedSubmissions = submissions?.filter(s => s.status === "uploaded") || [];
+                          const uploadedSubmissions =
+                            submissions?.filter(
+                              (s) => s.status === "uploaded",
+                            ) || [];
                           if (uploadedSubmissions.length === 0) {
                             toast({
                               title: "No submissions to review",
-                              description: "There are no uploaded assignments to review",
+                              description:
+                                "There are no uploaded assignments to review",
                               variant: "destructive",
                             });
                             return;
@@ -329,7 +359,7 @@ export default function AssignmentDetail() {
                         <tbody className="bg-white divide-y divide-gray-200">
                           {submissions && submissions.length > 0 ? (
                             submissions
-                              .filter(submission => {
+                              .filter((submission) => {
                                 // For students, only show their own submissions
                                 if (user?.role === "STUDENT") {
                                   return submission.studentId === user.id;
@@ -337,75 +367,90 @@ export default function AssignmentDetail() {
                                 return true;
                               })
                               .sort((a, b) => {
-                                const studentA = students?.find(s => s.id === a.studentId)?.name || "";
-                                const studentB = students?.find(s => s.id === b.studentId)?.name || "";
+                                const studentA =
+                                  students?.find((s) => s.id === a.studentId)
+                                    ?.name || "";
+                                const studentB =
+                                  students?.find((s) => s.id === b.studentId)
+                                    ?.name || "";
                                 return studentA.localeCompare(studentB);
                               })
                               .map((submission) => {
-                                const studentName = students?.find(s => s.id === submission.studentId)?.name;
+                                const studentName = students?.find(
+                                  (s) => s.id === submission.studentId,
+                                )?.name;
                                 return (
-                                <tr key={submission.id}>
-                                  <td className="px-6 py-4 whitespace-nowrap">
-                                    {studentName || (user?.role === "STUDENT" ? user.name : "Unknown")}
-                                  </td>
-                                  <td className="px-6 py-4 whitespace-nowrap">
-                                    <span
-                                      className={`px-2 py-1 text-xs rounded-full ${
-                                        submission.status === "pending"
-                                          ? "bg-yellow-100 text-yellow-800"
+                                  <tr key={submission.id}>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                      {studentName ||
+                                        (user?.role === "STUDENT"
+                                          ? user.name
+                                          : "Unknown")}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                      <span
+                                        className={`px-2 py-1 text-xs rounded-full ${
+                                          submission.status === "pending"
+                                            ? "bg-yellow-100 text-yellow-800"
+                                            : submission.status === "reviewed"
+                                              ? "bg-green-100 text-green-800"
+                                              : submission.status === "uploaded"
+                                                ? "bg-blue-100 text-blue-800"
+                                                : submission.status ===
+                                                    "ai-reviewed"
+                                                  ? "bg-purple-100 text-purple-800"
+                                                  : submission.status ===
+                                                      "processing"
+                                                    ? "bg-gray-100 text-gray-800"
+                                                    : submission.status ===
+                                                        "failed"
+                                                      ? "bg-red-100 text-red-800"
+                                                      : "bg-gray-100 text-gray-800"
+                                        }`}
+                                      >
+                                        {submission.status === "pending"
+                                          ? "Pending"
                                           : submission.status === "reviewed"
-                                          ? "bg-green-100 text-green-800"
-                                          : submission.status === "uploaded"
-                                          ? "bg-blue-100 text-blue-800"
-                                          : submission.status === "ai-reviewed"
-                                          ? "bg-purple-100 text-purple-800"
-                                          : submission.status === "processing"
-                                          ? "bg-gray-100 text-gray-800"
-                                          : submission.status === "failed"
-                                          ? "bg-red-100 text-red-800"
-                                          : "bg-gray-100 text-gray-800"
-                                      }`}
-                                    >
-                                      {submission.status === "pending"
-                                        ? "Pending"
-                                        : submission.status === "reviewed"
-                                        ? "Reviewed"
-                                        : submission.status === "uploaded"
-                                        ? "Uploaded"
-                                        : submission.status === "ai-reviewed"
-                                        ? "AI Reviewed"
-                                        : submission.status === "processing"
-                                        ? "Processing"
-                                        : submission.status === "failed"
-                                        ? "Failed"
-                                        : submission.status}
-                                    </span>
-                                  </td>
-                                  <td className="px-6 py-4 whitespace-nowrap">
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() =>
-                                        handleViewSubmission(submission.id)
-                                      }
-                                    >
-                                      View
-                                    </Button>
-                                    {isTeacherOrAdmin && (
+                                            ? "Reviewed"
+                                            : submission.status === "uploaded"
+                                              ? "Uploaded"
+                                              : submission.status ===
+                                                  "ai-reviewed"
+                                                ? "AI Reviewed"
+                                                : submission.status ===
+                                                    "processing"
+                                                  ? "Processing"
+                                                  : submission.status ===
+                                                      "failed"
+                                                    ? "Failed"
+                                                    : submission.status}
+                                      </span>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
                                       <Button
                                         variant="outline"
                                         size="sm"
                                         onClick={() =>
-                                          setDeleteSubmissionId(submission.id)
+                                          handleViewSubmission(submission.id)
                                         }
-                                        className="ml-2 text-red-600 hover:text-red-800"
                                       >
-                                        Delete
+                                        View
                                       </Button>
-                                    )}
-                                  </td>
-                                </tr>
-                              );
+                                      {isTeacherOrAdmin && (
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() =>
+                                            setDeleteSubmissionId(submission.id)
+                                          }
+                                          className="ml-2 text-red-600 hover:text-red-800"
+                                        >
+                                          Delete
+                                        </Button>
+                                      )}
+                                    </td>
+                                  </tr>
+                                );
                               })
                           ) : (
                             <tr>
@@ -442,21 +487,25 @@ export default function AssignmentDetail() {
       </div>
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog 
-        open={!!deleteSubmissionId} 
+      <AlertDialog
+        open={!!deleteSubmissionId}
         onOpenChange={(open) => !open && setDeleteSubmissionId(null)}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Submission</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this submission? This action cannot be undone.
+              Are you sure you want to delete this submission? This action
+              cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={() => deleteSubmissionId && deleteSubmissionMutation.mutate(deleteSubmissionId)}
+            <AlertDialogAction
+              onClick={() =>
+                deleteSubmissionId &&
+                deleteSubmissionMutation.mutate(deleteSubmissionId)
+              }
             >
               Delete
             </AlertDialogAction>

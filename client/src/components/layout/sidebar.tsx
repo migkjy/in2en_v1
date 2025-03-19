@@ -139,11 +139,6 @@ export function Sidebar({ className }: SidebarProps) {
         )}>
           <NavigationLinks />
         </div>
-
-        {/* Main Content */}
-        <main className="flex-1 p-4 overflow-auto"> {/* Changed padding here */}
-          {/* Your main content here */}
-        </main>
       </div>
     </>
   );
