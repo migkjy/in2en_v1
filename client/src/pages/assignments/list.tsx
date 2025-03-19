@@ -393,7 +393,41 @@ export default function AssignmentList() {
                           )}
                           <div className="text-sm text-gray-600">
                             <div>Due: {formatDate(assignment.dueDate)}</div>
-                            <div>Status: {assignment.status}</div>
+                            <div className="flex items-center gap-2">
+                              Status: 
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    className={`px-2 py-1 rounded-full text-xs font-medium h-auto
+                                      ${assignment.status === 'draft' ? 'bg-gray-100 text-gray-800 hover:bg-gray-200' : ''}
+                                      ${assignment.status === 'published' ? 'bg-green-100 text-green-800 hover:bg-green-200' : ''}
+                                      ${assignment.status === 'completed' ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' : ''}
+                                    `}
+                                  >
+                                    {assignment.status?.toUpperCase()}
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent>
+                                  {["draft", "published", "completed"].map((status) => (
+                                    <DropdownMenuItem
+                                      key={status}
+                                      onClick={() => {
+                                        if (assignment.id) {
+                                          updateStatusMutation.mutate({
+                                            id: assignment.id,
+                                            status
+                                          });
+                                        }
+                                      }}
+                                      disabled={status === assignment.status}
+                                    >
+                                      {status.toUpperCase()}
+                                    </DropdownMenuItem>
+                                  ))}
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
                             <div>Submissions: {submissionCounts?.[assignment.id] || 0}</div>
                           </div>
                         </div>
