@@ -139,22 +139,8 @@ export default function AuthPage() {
                   )}
                 </div>
 
-                {isRegistering && (
-                  <div>
-                    <Select
-                      defaultValue="STUDENT"
-                      {...form.register("role")}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select role" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="STUDENT">Student</SelectItem>
-                        <SelectItem value="TEACHER">Teacher</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
+                {/* Role is set to STUDENT by default */}
+                <input type="hidden" {...form.register("role")} value="STUDENT" />
 
                 <Button
                   type="submit"
