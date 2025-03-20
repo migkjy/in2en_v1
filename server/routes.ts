@@ -395,7 +395,8 @@ export function registerRoutes(app: Express): Server {
     async (req, res) => {
       try {
         const students = await storage.getClassStudents(Number(req.params.id));
-        res.json(students);
+        const visibleStudents = students.filter(student => !student.isHidden);
+        res.json(visibleStudents);
       } catch (error) {
         console.error("Error fetching class students:", error);
         if (error instanceof Error) {
