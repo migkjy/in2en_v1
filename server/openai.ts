@@ -79,6 +79,7 @@ export async function generateFeedback(
   text: string,
   englishLevel: string,
   ageGroup: string,
+  studentName: string,
 ): Promise<FeedbackResponse> {
   try {
     console.log("Creating thread for feedback generation...");
@@ -89,6 +90,7 @@ export async function generateFeedback(
       role: "user",
       content: `Please provide feedback on the following text:
 Student Profile:
+- Name: ${studentName}
 - English Level: ${englishLevel}
 - Age Group: ${ageGroup}
 
