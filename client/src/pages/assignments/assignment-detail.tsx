@@ -329,65 +329,181 @@ export default function AssignmentDetail() {
                     </div>
                   )}
 
-                  {/* Submissions Table */}
+                  {/* Submissions */}
                   <div className="mt-8">
                     <h2 className="text-lg font-semibold">Submissions</h2>
-                    <div className="mt-4 overflow-x-auto">
-                      <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            <th
-                              scope="col"
-                              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                            >
-                              Student Name
-                            </th>
-                            <th
-                              scope="col"
-                              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                            >
-                              Status
-                            </th>
-                            <th
-                              scope="col"
-                              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                            >
-                              Actions
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
+                    <div className="mt-4">
+                      {/* Desktop View */}
+                      <div className="hidden md:block overflow-x-auto">
+                        <table className="min-w-full divide-y divide-gray-200">
+                          <thead className="bg-gray-50">
+                            <tr>
+                              <th
+                                scope="col"
+                                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                              >
+                                Student Name
+                              </th>
+                              <th
+                                scope="col"
+                                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                              >
+                                Status
+                              </th>
+                              <th
+                                scope="col"
+                                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                              >
+                                Actions
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody className="bg-white divide-y divide-gray-200">
                           {submissions && submissions.length > 0 ? (
-                            submissions
-                              .filter((submission) => {
-                                // For students, only show their own submissions
-                                if (user?.role === "STUDENT") {
-                                  return submission.studentId === user.id;
-                                }
-                                return true;
-                              })
-                              .sort((a, b) => {
-                                const studentA =
-                                  students?.find((s) => s.id === a.studentId)
-                                    ?.name || "";
-                                const studentB =
-                                  students?.find((s) => s.id === b.studentId)
-                                    ?.name || "";
-                                return studentA.localeCompare(studentB);
-                              })
-                              .map((submission) => {
-                                const studentName = students?.find(
-                                  (s) => s.id === submission.studentId,
-                                )?.name;
-                                return (
-                                  <tr key={submission.id}>
-                                    <td className="px-6 py-4 whitespace-nowrap">
+                              submissions
+                                .filter((submission) => {
+                                  if (user?.role === "STUDENT") {
+                                    return submission.studentId === user.id;
+                                  }
+                                  return true;
+                                })
+                                .sort((a, b) => {
+                                  const studentA =
+                                    students?.find((s) => s.id === a.studentId)
+                                      ?.name || "";
+                                  const studentB =
+                                    students?.find((s) => s.id === b.studentId)
+                                      ?.name || "";
+                                  return studentA.localeCompare(studentB);
+                                })
+                                .map((submission) => {
+                                  const studentName = students?.find(
+                                    (s) => s.id === submission.studentId,
+                                  )?.name;
+                                  return (
+                                    <tr key={submission.id}>
+                                      <td className="px-6 py-4 whitespace-nowrap">
+                                        {studentName ||
+                                          (user?.role === "STUDENT"
+                                            ? user.name
+                                            : "Unknown")}
+                                      </td>
+                                      <td className="px-6 py-4 whitespace-nowrap">
+                                        <span
+                                          className={`px-2 py-1 text-xs rounded-full ${
+                                            submission.status === "pending"
+                                              ? "bg-yellow-100 text-yellow-800"
+                                              : submission.status === "reviewed"
+                                                ? "bg-green-100 text-green-800"
+                                                : submission.status === "uploaded"
+                                                  ? "bg-blue-100 text-blue-800"
+                                                  : submission.status ===
+                                                      "ai-reviewed"
+                                                    ? "bg-purple-100 text-purple-800"
+                                                    : submission.status ===
+                                                        "processing"
+                                                      ? "bg-gray-100 text-gray-800"
+                                                      : submission.status ===
+                                                          "failed"
+                                                        ? "bg-red-100 text-red-800"
+                                                        : "bg-gray-100 text-gray-800"
+                                          }`}
+                                        >
+                                          {submission.status === "pending"
+                                            ? "Pending"
+                                            : submission.status === "reviewed"
+                                              ? "Reviewed"
+                                              : submission.status === "uploaded"
+                                                ? "Uploaded"
+                                                : submission.status ===
+                                                    "ai-reviewed"
+                                                  ? "AI Reviewed"
+                                                  : submission.status ===
+                                                      "processing"
+                                                    ? "Processing"
+                                                    : submission.status ===
+                                                        "failed"
+                                                      ? "Failed"
+                                                      : submission.status}
+                                        </span>
+                                      </td>
+                                      <td className="px-6 py-4 whitespace-nowrap">
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() =>
+                                            handleViewSubmission(submission.id)
+                                          }
+                                        >
+                                          View
+                                        </Button>
+                                        {isTeacherOrAdmin && (
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() =>
+                                              setDeleteSubmissionId(submission.id)
+                                            }
+                                            className="ml-2 text-red-600 hover:text-red-800"
+                                          >
+                                            Delete
+                                          </Button>
+                                        )}
+                                      </td>
+                                    </tr>
+                                  );
+                                })
+                            ) : (
+                              <tr>
+                                <td
+                                  colSpan={3}
+                                  className="px-6 py-4 text-center text-sm text-gray-500"
+                                >
+                                  No submissions yet
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Mobile View */}
+                      <div className="md:hidden space-y-4">
+                        {submissions && submissions.length > 0 ? (
+                          submissions
+                            .filter((submission) => {
+                              if (user?.role === "STUDENT") {
+                                return submission.studentId === user.id;
+                              }
+                              return true;
+                            })
+                            .sort((a, b) => {
+                              const studentA =
+                                students?.find((s) => s.id === a.studentId)
+                                  ?.name || "";
+                              const studentB =
+                                students?.find((s) => s.id === b.studentId)
+                                  ?.name || "";
+                              return studentA.localeCompare(studentB);
+                            })
+                            .map((submission) => {
+                              const studentName = students?.find(
+                                (s) => s.id === submission.studentId,
+                              )?.name;
+                              return (
+                                <div
+                                  key={submission.id}
+                                  className="bg-white p-4 rounded-lg border"
+                                >
+                                  <div className="flex flex-col space-y-2">
+                                    <div>
+                                      <span className="font-medium">Student: </span>
                                       {studentName ||
                                         (user?.role === "STUDENT"
                                           ? user.name
                                           : "Unknown")}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
+                                    </div>
+                                    <div>
                                       <span
                                         className={`px-2 py-1 text-xs rounded-full ${
                                           submission.status === "pending"
@@ -414,19 +530,17 @@ export default function AssignmentDetail() {
                                             ? "Reviewed"
                                             : submission.status === "uploaded"
                                               ? "Uploaded"
-                                              : submission.status ===
-                                                  "ai-reviewed"
+                                              : submission.status === "ai-reviewed"
                                                 ? "AI Reviewed"
                                                 : submission.status ===
                                                     "processing"
                                                   ? "Processing"
-                                                  : submission.status ===
-                                                      "failed"
+                                                  : submission.status === "failed"
                                                     ? "Failed"
                                                     : submission.status}
                                       </span>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
+                                    </div>
+                                    <div className="flex space-x-2 pt-2">
                                       <Button
                                         variant="outline"
                                         size="sm"
@@ -443,27 +557,22 @@ export default function AssignmentDetail() {
                                           onClick={() =>
                                             setDeleteSubmissionId(submission.id)
                                           }
-                                          className="ml-2 text-red-600 hover:text-red-800"
+                                          className="text-red-600 hover:text-red-800"
                                         >
                                           Delete
                                         </Button>
                                       )}
-                                    </td>
-                                  </tr>
-                                );
-                              })
-                          ) : (
-                            <tr>
-                              <td
-                                colSpan={3}
-                                className="px-6 py-4 text-center text-sm text-gray-500"
-                              >
-                                No submissions yet
-                              </td>
-                            </tr>
-                          )}
-                        </tbody>
-                      </table>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })
+                        ) : (
+                          <div className="text-center text-sm text-gray-500 py-4">
+                            No submissions yet
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     {/* Submit work button for students - hidden for now */}
