@@ -54,11 +54,6 @@ const formatDate = (dateString: string | undefined): string => {
   return format(new Date(dateString), "MM/dd/yyyy");
 };
 
-//const navigateToAssignment = (assignmentId: number) => { //Removed
-//  const { user } = useAuth();
-//  const basePath = user?.role === "STUDENT" ? "/student" : user?.role === "TEACHER" ? "/teacher" : "/admin";
-//  window.location.href = `${basePath}/assignments/${assignmentId}`;
-//};
 
 export default function AssignmentList() {
   const [, navigate] = useLocation();
@@ -68,7 +63,8 @@ export default function AssignmentList() {
   const queryClient = useQueryClient();
   const [selectedBranch, setSelectedBranch] = useState<string>("all");
   const [selectedClass, setSelectedClass] = useState<string>("all");
-  const [selectedStatus, setSelectedStatus] = useState<string>("all");
+  const [selectedStatus, setSelectedStatus] = useState<string>("published"); // Default to published
+  const [studentStatusFilter, setStudentStatusFilter] = useState<string>("published"); //Added for student filter
   const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(
     null,
   );
@@ -116,6 +112,7 @@ export default function AssignmentList() {
       selectedBranch,
       selectedClass,
       selectedStatus,
+      studentStatusFilter, //Added for student filter
     ],
     queryFn: async () => {
       const params = new URLSearchParams();
@@ -131,12 +128,16 @@ export default function AssignmentList() {
       if (user?.role === "TEACHER") {
         params.append("teacherId", user.id.toString());
       }
+      if (user?.role === "STUDENT" && studentStatusFilter !== "all") {
+        params.append("status", studentStatusFilter);
+      }
+
 
       const response = await fetch(`/api/assignments?${params.toString()}`);
       if (!response.ok) throw new Error("Failed to fetch assignments");
       return response.json();
     },
-    enabled: Boolean(selectedBranch),
+    enabled: Boolean(selectedBranch) || (user?.role === "STUDENT" && studentStatusFilter !== "all"), //Enabled when student changes filter
   });
 
   // Get accessible classes for each assignment
@@ -225,7 +226,7 @@ export default function AssignmentList() {
     queryFn: async () => {
       if (user?.role !== "STUDENT") return [];
       try {
-        const response = await fetch(`/api/submissions?studentId=${user.id}`); // Added studentId to filter submissions
+        const response = await fetch(`/api/submissions?studentId=${user.id}`); 
         if (!response.ok) {
           console.error("Error fetching submissions:", await response.text());
           return [];
@@ -291,7 +292,7 @@ export default function AssignmentList() {
             const submissions = await response.json();
             return { assignmentId: assignment.id, count: submissions.length };
           } else {
-            return { assignmentId: assignment.id, count: 0 }; // Handle errors gracefully
+            return { assignmentId: assignment.id, count: 0 }; 
           }
         }),
       );
@@ -324,7 +325,21 @@ export default function AssignmentList() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6">
-                {user?.role !== "STUDENT" && (
+                {user?.role === "STUDENT" ? (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Status</label>
+                    <Select value={studentStatusFilter} onValueChange={setStudentStatusFilter}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Filter by status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="published">Published</SelectItem>
+                        <SelectItem value="completed">Completed</SelectItem>
+                        <SelectItem value="all">All</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ) : (
                   <>
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Branch</label>
@@ -367,33 +382,29 @@ export default function AssignmentList() {
                         </SelectContent>
                       </Select>
                     </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Status</label>
+                      <Select
+                        value={selectedStatus}
+                        onValueChange={setSelectedStatus}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="All Statuses" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {STATUS_OPTIONS.map((status) => (
+                            <SelectItem key={status.value} value={status.value}>
+                              {status.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </>
-                )}
-                {/* Status Filter - Only for Admin and Teacher */}
-                {user?.role !== "STUDENT" && (
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Status</label>
-                    <Select
-                      value={selectedStatus}
-                      onValueChange={setSelectedStatus}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="All Statuses" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {STATUS_OPTIONS.map((status) => (
-                          <SelectItem key={status.value} value={status.value}>
-                            {status.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
                 )}
               </div>
 
               <div className="md:hidden">
-                {" "}
                 {/* Mobile View */}
                 {!loadingAssignments && filteredAssignments.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">
@@ -490,7 +501,6 @@ export default function AssignmentList() {
               </div>
 
               <div className="hidden md:block">
-                {" "}
                 {/* Desktop View */}
                 <Table>
                   <TableHeader>
