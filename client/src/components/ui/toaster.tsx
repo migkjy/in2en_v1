@@ -1,5 +1,3 @@
-
-import { memo } from "react"
 import { useToast } from "@/hooks/use-toast"
 import {
   Toast,
@@ -10,18 +8,14 @@ import {
   ToastViewport,
 } from "@/components/ui/toast"
 
-export const Toaster = memo(function Toaster() {
+export function Toaster() {
   const { toasts } = useToast()
 
   return (
-    <ToastProvider duration={2000} swipeDirection="right">
+    <ToastProvider>
       {toasts.map(function ({ id, title, description, action, ...props }) {
         return (
-          <Toast 
-            key={id} 
-            {...props}
-            className="fixed top-4 right-4 md:top-4 md:right-4 z-[100]"
-          >
+          <Toast key={id} {...props}>
             <div className="grid gap-1">
               {title && <ToastTitle>{title}</ToastTitle>}
               {description && (
@@ -33,7 +27,7 @@ export const Toaster = memo(function Toaster() {
           </Toast>
         )
       })}
-      <ToastViewport className="pointer-events-none" />
+      <ToastViewport />
     </ToastProvider>
   )
-})
+}
