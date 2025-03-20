@@ -51,15 +51,7 @@ function Router() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
 
-  const handleFormSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-  };
-
   useEffect(() => {
-    // Add global form submit handler
-    document.addEventListener('submit', handleFormSubmit, true);
-    
     if (user) {
       const homePath =
         user.role === "ADMIN"
@@ -69,10 +61,6 @@ function Router() {
             : "/student/assignments";
       setLocation(homePath);
     }
-
-    return () => {
-      document.removeEventListener('submit', handleFormSubmit, true);
-    };
   }, [user, setLocation]);
 
   return (
