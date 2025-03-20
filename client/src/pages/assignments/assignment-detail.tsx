@@ -531,7 +531,7 @@ export default function AssignmentDetail() {
                                             : submission.status === "uploaded"
                                               ? "Uploaded"
                                               : submission.status === "ai-reviewed"
-                                                ? "AI Reviewed"
+                                                ? "Reviewing"
                                                 : submission.status ===
                                                     "processing"
                                                   ? "Processing"
