@@ -96,7 +96,7 @@ export default function ClassList() {
   };
 
   if (isClassesLoading) {
-    return <div>Loading...</div>;
+    return <LoadingSpinner />;
   }
 
   return (
