@@ -112,7 +112,7 @@ export function Sidebar({ className }: SidebarProps) {
   );
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <>
       {/* Mobile Top Bar */}
       <div className="md:hidden fixed top-0 left-0 right-0 h-14 bg-white border-b z-40 flex items-center px-4">
         <Link href="/" className="flex-1">
@@ -130,7 +130,8 @@ export function Sidebar({ className }: SidebarProps) {
         </Sheet>
       </div>
 
-      <div className="flex flex-1">
+      <div className="flex h-screen overflow-hidden pt-14 md:pt-0"> {/* Added top padding for mobile */}
+
         {/* Desktop Sidebar */}
         <div className={cn(
           "hidden md:flex md:w-64 md:flex-col bg-white border-r shadow-sm",
@@ -138,14 +139,7 @@ export function Sidebar({ className }: SidebarProps) {
         )}>
           <NavigationLinks />
         </div>
-
-        {/* Main Content Area - Added padding top for mobile */}
-        <div className="flex-1 md:pl-64">
-          <main className="min-h-screen pt-14 md:pt-0">
-            {/* Content will be rendered here */}
-          </main>
-        </div>
       </div>
-    </div>
+    </>
   );
 }
