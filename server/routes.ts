@@ -76,17 +76,20 @@ export async function processSubmissionWithAI(submissionId: number) {
 
     // Generate AI feedback using the extracted text
     console.log("Generating feedback for submission:", submission.id);
-    // Get student info
-    const student = await storage.getUser(submission.studentId!);
-    if (!student) {
-      throw new Error("Student not found");
+    // Get student info and handle potential null studentId
+    let studentName = "Unknown Student";
+    if (submission.studentId) {
+      const student = await storage.getUser(submission.studentId);
+      if (student) {
+        studentName = student.name;
+      }
     }
 
     const feedback = await generateFeedback(
       text,
       classInfo.englishLevel,
       classInfo.ageGroup,
-      student.name,
+      studentName,
     );
     console.log("Generated feedback:", feedback);
 
