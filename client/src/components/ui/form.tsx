@@ -13,7 +13,24 @@ import {
 import { cn } from "@/lib/utils"
 import { Label } from "@/components/ui/label"
 
-const Form = FormProvider
+const Form = React.forwardRef<
+  HTMLFormElement,
+  React.FormHTMLAttributes<HTMLFormElement> & {
+    onSubmit?: (e: React.FormEvent<HTMLFormElement>) => void
+  }
+>(({ onSubmit, children, ...props }, ref) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    onSubmit?.(e)
+  }
+
+  return (
+    <form {...props} ref={ref} onSubmit={handleSubmit}>
+      <FormProvider>{children}</FormProvider>
+    </form>
+  )
+})
+Form.displayName = "Form"
 
 type FormFieldContextValue<
   TFieldValues extends FieldValues = FieldValues,
