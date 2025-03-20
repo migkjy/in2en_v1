@@ -13,7 +13,29 @@ import {
 import { cn } from "@/lib/utils"
 import { Label } from "@/components/ui/label"
 
-const Form = FormProvider
+// Extend Form component to handle form submission properly
+const Form = React.forwardRef<
+  HTMLFormElement,
+  React.FormHTMLAttributes<HTMLFormElement> & { onSubmit?: (e: React.FormEvent) => void }
+>(({ onSubmit, children, ...props }, ref) => {
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (onSubmit) {
+      onSubmit(e)
+    }
+  }
+
+  return (
+    <form ref={ref} onSubmit={handleSubmit} {...props}>
+      {children}
+    </form>
+  )
+})
+Form.displayName = "Form"
+
+// Export FormProvider as well for form state management
+const FormContext = FormProvider
 
 type FormFieldContextValue<
   TFieldValues extends FieldValues = FieldValues,
@@ -42,19 +64,13 @@ const FormField = <
 const useFormField = () => {
   const fieldContext = React.useContext(FormFieldContext)
   const itemContext = React.useContext(FormItemContext)
-  const formContext = useFormContext()
+  const { getFieldState, formState } = useFormContext()
 
-  if (!formContext) {
-    throw new Error("useFormField should be used within FormProvider")
-  }
-
-  const { getFieldState, formState } = formContext
+  const fieldState = getFieldState(fieldContext.name, formState)
 
   if (!fieldContext) {
     throw new Error("useFormField should be used within <FormField>")
   }
-
-  const fieldState = getFieldState(fieldContext.name, formState)
 
   const { id } = itemContext
 
@@ -179,4 +195,5 @@ export {
   FormDescription,
   FormMessage,
   FormField,
+  FormContext,
 }
