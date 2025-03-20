@@ -54,7 +54,6 @@ const formatDate = (dateString: string | undefined): string => {
   return format(new Date(dateString), "MM/dd/yyyy");
 };
 
-
 export default function AssignmentList() {
   const [, navigate] = useLocation();
   const { user } = useAuth();
@@ -73,7 +72,6 @@ export default function AssignmentList() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
   const [selectedFilter, setSelectedFilter] = useState<string>("published"); //Added for student filter
-
 
   // Get teacher's accessible classes first if user is a teacher
   const { data: teacherClasses } = useQuery<Class[]>({
@@ -222,7 +220,7 @@ export default function AssignmentList() {
     queryFn: async () => {
       if (user?.role !== "STUDENT") return [];
       try {
-        const response = await fetch(`/api/submissions?studentId=${user.id}`); 
+        const response = await fetch(`/api/submissions?studentId=${user.id}`);
         if (!response.ok) {
           console.error("Error fetching submissions:", await response.text());
           return [];
@@ -249,11 +247,13 @@ export default function AssignmentList() {
       );
 
       //Filter by selected status for students
-      relevantAssignments = relevantAssignments.filter(assignment => {
-        if(selectedFilter === "published" && assignment.status === "published") return true;
-        if(selectedFilter === "completed" && assignment.status === "completed") return true;
+      relevantAssignments = relevantAssignments.filter((assignment) => {
+        if (selectedFilter === "published" && assignment.status === "published")
+          return true;
+        if (selectedFilter === "completed" && assignment.status === "completed")
+          return true;
         return selectedFilter === "all"; //Show all if "all" is selected.
-      })
+      });
 
       return relevantAssignments.sort((a, b) => {
         if (!a.dueDate) return 1;
@@ -287,7 +287,7 @@ export default function AssignmentList() {
             const submissions = await response.json();
             return { assignmentId: assignment.id, count: submissions.length };
           } else {
-            return { assignmentId: assignment.id, count: 0 }; 
+            return { assignmentId: assignment.id, count: 0 };
           }
         }),
       );
@@ -311,11 +311,11 @@ export default function AssignmentList() {
               <CardTitle>Assignments Management</CardTitle>
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-4">
-                  <h1 className="text-2xl font-bold tracking-tight">
-                    Assignments
-                  </h1>
                   {user?.role === "STUDENT" && (
-                    <Select value={selectedFilter} onValueChange={setSelectedFilter}>
+                    <Select
+                      value={selectedFilter}
+                      onValueChange={setSelectedFilter}
+                    >
                       <SelectTrigger className="w-[180px]">
                         <SelectValue placeholder="Filter by status" />
                       </SelectTrigger>
