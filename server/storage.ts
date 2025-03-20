@@ -694,7 +694,12 @@ export class DatabaseStorage implements IStorage {
             eq(studentClassAccess.classId, classId)
           )
         )
-        .where(eq(users.role, UserRole.STUDENT));
+        .where(
+          and(
+            eq(users.role, UserRole.STUDENT),
+            eq(users.isHidden, false) // Add filter for hidden users
+          )
+        );
 
       return students;
     } catch (error) {
