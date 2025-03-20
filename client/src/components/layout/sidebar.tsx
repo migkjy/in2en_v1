@@ -41,8 +41,6 @@ export function Sidebar({ className }: SidebarProps) {
     { href: "/teacher/classes", icon: GraduationCap, label: "My Classes" },
     { href: "/teacher/assignments", icon: BookCheck, label: "Assignments" },
     { href: "/teacher/assignments/create", icon: BookOpen, label: "Create Assignment" },
-    { href: "/teacher/assignments/upload", icon: Upload, label: "Upload Homework" },
-    { href: "/teacher/assignments/review", icon: ClipboardList, label: "Review" },
   ];
 
   const studentLinks = [
