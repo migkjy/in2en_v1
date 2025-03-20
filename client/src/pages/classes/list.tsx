@@ -25,6 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAuth } from "@/hooks/use-auth";
+import { LoadingSpinner } from "@/components/ui/loading-spinner"; // Added import
 
 // Add interface for class with stats
 interface ClassWithStats extends Class {
@@ -96,7 +97,7 @@ export default function ClassList() {
   };
 
   if (isClassesLoading) {
-    return <div>Loading...</div>;
+    return <LoadingSpinner />; // Changed loading indicator
   }
 
   return (
