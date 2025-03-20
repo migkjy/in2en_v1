@@ -19,7 +19,9 @@ interface UploadFile extends File {
 export default function UploadAssignment() {
   const { user } = useAuth();
   const basePath = user?.role.toLowerCase();
-  const [, params] = useRoute("/assignments/:id/upload") || useRoute(`/${basePath}/assignments/:id/upload`);
+  const [, params] =
+    useRoute("/assignments/:id/upload") ||
+    useRoute(`/${basePath}/assignments/:id/upload`);
   const assignmentId = params?.id;
   const [, navigate] = useLocation();
   const { toast } = useToast();
@@ -40,7 +42,9 @@ export default function UploadAssignment() {
   const { data: students } = useQuery<{ id: number; name: string }[]>({
     queryKey: ["/api/classes", assignment?.classId, "students"],
     queryFn: async () => {
-      const response = await fetch(`/api/classes/${assignment?.classId}/students`);
+      const response = await fetch(
+        `/api/classes/${assignment?.classId}/students`,
+      );
       if (!response.ok) {
         throw new Error("Failed to fetch students");
       }
@@ -54,7 +58,8 @@ export default function UploadAssignment() {
       if (!user) throw new Error("Not authenticated");
       if (!assignmentId) throw new Error("Assignment ID is required");
       if (files.length === 0) throw new Error("No files selected");
-      if (files.some(f => !f.studentId)) throw new Error("Please assign all files to students");
+      if (files.some((f) => !f.studentId))
+        throw new Error("Please assign all files to students");
 
       const results = await Promise.all(
         files.map(async (file) => {
@@ -64,12 +69,17 @@ export default function UploadAssignment() {
           formData.append("assignmentId", assignmentId);
           formData.append("studentId", file.studentId!.toString());
 
-          const res = await apiRequest("POST", "/api/submissions/upload", formData, {
-            credentials: 'include',
-            headers: {
-              'Accept': 'application/json',
+          const res = await apiRequest(
+            "POST",
+            "/api/submissions/upload",
+            formData,
+            {
+              credentials: "include",
+              headers: {
+                Accept: "application/json",
+              },
             },
-          });
+          );
 
           if (!res.ok) {
             const text = await res.text();
@@ -77,7 +87,7 @@ export default function UploadAssignment() {
           }
 
           return res.json();
-        })
+        }),
       );
 
       return results;
@@ -100,11 +110,14 @@ export default function UploadAssignment() {
   });
 
   const generateUUID = () => {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-      const r = Math.random() * 16 | 0;
-      const v = c === 'x' ? r : (r & 0x3 | 0x8);
-      return v.toString(16);
-    });
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
+      /[xy]/g,
+      function (c) {
+        const r = (Math.random() * 16) | 0;
+        const v = c === "x" ? r : (r & 0x3) | 0x8;
+        return v.toString(16);
+      },
+    );
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -126,13 +139,11 @@ export default function UploadAssignment() {
   return (
     <div className="flex h-screen">
       <Sidebar className="w-64" />
-      <main className="flex-1 p-8 overflow-auto">
+      <main className="flex-1 p-8 overflow-auto mt-14">
         <div className="max-w-4xl mx-auto">
           <Card>
             <CardHeader>
-              <CardTitle>
-                Upload Homework - {assignment?.title}
-              </CardTitle>
+              <CardTitle>Upload Homework - {assignment?.title}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
@@ -153,7 +164,7 @@ export default function UploadAssignment() {
                         accept="image/*"
                         onChange={(e) => {
                           const selectedFiles = Array.from(
-                            e.target.files || []
+                            e.target.files || [],
                           ).map((file) => {
                             const id = generateUUID();
                             return Object.assign(file, {
@@ -196,8 +207,8 @@ export default function UploadAssignment() {
                               prev.map((f) =>
                                 f.id === file.id
                                   ? { ...f, studentId: Number(e.target.value) }
-                                  : f
-                              )
+                                  : f,
+                              ),
                             );
                           }}
                         >
@@ -216,7 +227,9 @@ export default function UploadAssignment() {
                 <div className="flex justify-end gap-4">
                   <Button
                     variant="outline"
-                    onClick={() => navigate(`/${basePath}/assignments/${assignmentId}`)}
+                    onClick={() =>
+                      navigate(`/${basePath}/assignments/${assignmentId}`)
+                    }
                   >
                     Cancel
                   </Button>
@@ -224,7 +237,7 @@ export default function UploadAssignment() {
                     disabled={
                       uploadMutation.isPending ||
                       files.length === 0 ||
-                      files.some(f => !f.studentId)
+                      files.some((f) => !f.studentId)
                     }
                     onClick={() => uploadMutation.mutate()}
                   >

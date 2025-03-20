@@ -63,14 +63,18 @@ const formatDate = (dateString: string | undefined): string => {
 export default function AssignmentList() {
   const [, navigate] = useLocation();
   const { user } = useAuth();
-  const basePath = user?.role.toLowerCase() || '';
+  const basePath = user?.role.toLowerCase() || "";
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedBranch, setSelectedBranch] = useState<string>("all");
   const [selectedClass, setSelectedClass] = useState<string>("all");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
-  const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null);
-  const [deleteAssignment, setDeleteAssignment] = useState<Assignment | null>(null);
+  const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(
+    null,
+  );
+  const [deleteAssignment, setDeleteAssignment] = useState<Assignment | null>(
+    null,
+  );
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
 
@@ -82,7 +86,7 @@ export default function AssignmentList() {
 
   const { data: branches } = useQuery<Branch[]>({
     queryKey: ["/api/branches"],
-    enabled: user?.role === "ADMIN" || user?.role === "TEACHER"
+    enabled: user?.role === "ADMIN" || user?.role === "TEACHER",
   });
 
   const { data: classes } = useQuery<Class[]>({
@@ -104,8 +108,15 @@ export default function AssignmentList() {
     setSelectedClass("all");
   }, [selectedBranch]);
 
-  const { data: assignments, isLoading: loadingAssignments } = useQuery<Assignment[]>({
-    queryKey: ["/api/assignments", selectedBranch, selectedClass, selectedStatus],
+  const { data: assignments, isLoading: loadingAssignments } = useQuery<
+    Assignment[]
+  >({
+    queryKey: [
+      "/api/assignments",
+      selectedBranch,
+      selectedClass,
+      selectedStatus,
+    ],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (selectedBranch !== "all") {
@@ -130,11 +141,13 @@ export default function AssignmentList() {
 
   // Get accessible classes for each assignment
   const assignmentClasses = useQuery<Record<number, Class>>({
-    queryKey: ["/api/assignments/classes", assignments?.map(a => a.classId)],
+    queryKey: ["/api/assignments/classes", assignments?.map((a) => a.classId)],
     queryFn: async () => {
       if (!assignments) return {};
 
-      const uniqueClassIds = Array.from(new Set(assignments.map(a => a.classId).filter(Boolean)));
+      const uniqueClassIds = Array.from(
+        new Set(assignments.map((a) => a.classId).filter(Boolean)),
+      );
       const classData: Record<number, Class> = {};
 
       for (const classId of uniqueClassIds) {
@@ -152,11 +165,9 @@ export default function AssignmentList() {
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: number; status: string }) => {
-      const response = await apiRequest(
-        "PUT",
-        `/api/assignments/${id}`,
-        { status }
-      );
+      const response = await apiRequest("PUT", `/api/assignments/${id}`, {
+        status,
+      });
       if (!response.ok) {
         throw new Error("Failed to update assignment status");
       }
@@ -194,7 +205,10 @@ export default function AssignmentList() {
       if (!response.ok) throw new Error("Failed to delete assignment");
 
       queryClient.invalidateQueries({ queryKey: ["/api/assignments"] });
-      toast({ title: "Success", description: "Assignment deleted successfully" });
+      toast({
+        title: "Success",
+        description: "Assignment deleted successfully",
+      });
       setDeleteAssignment(null);
     } catch (error) {
       toast({
@@ -222,7 +236,7 @@ export default function AssignmentList() {
         return [];
       }
     },
-    enabled: user?.role === "STUDENT"
+    enabled: user?.role === "STUDENT",
   });
 
   const filteredAssignments = useMemo(() => {
@@ -231,11 +245,13 @@ export default function AssignmentList() {
     // For students, we need to show assignments based on their submissions
     if (user?.role === "STUDENT" && studentSubmissions) {
       // Get all assignments where the student has a submission
-      const submissionAssignmentIds = studentSubmissions.map(sub => sub.assignmentId);
+      const submissionAssignmentIds = studentSubmissions.map(
+        (sub) => sub.assignmentId,
+      );
 
       // Get relevant assignments
-      let relevantAssignments = assignments.filter(assignment =>
-        submissionAssignmentIds.includes(assignment.id)
+      let relevantAssignments = assignments.filter((assignment) =>
+        submissionAssignmentIds.includes(assignment.id),
       );
 
       // Sort assignments by due date
@@ -260,35 +276,48 @@ export default function AssignmentList() {
 
   // Get submission counts for each assignment
   const { data: submissionCounts } = useQuery({
-    queryKey: ["/api/assignments/submission-counts", assignments?.map(a => a.id)],
+    queryKey: [
+      "/api/assignments/submission-counts",
+      assignments?.map((a) => a.id),
+    ],
     queryFn: async () => {
       if (!assignments) return {};
-      const results = await Promise.all(assignments.map(async (assignment) => {
-        const response = await fetch(`/api/submissions?assignmentId=${assignment.id}`);
-        if (response.ok) {
-          const submissions = await response.json();
-          return { assignmentId: assignment.id, count: submissions.length };
-        } else {
-          return { assignmentId: assignment.id, count: 0 }; // Handle errors gracefully
-        }
-      }));
-      return Object.fromEntries(results.map(item => [item.assignmentId, item.count]));
+      const results = await Promise.all(
+        assignments.map(async (assignment) => {
+          const response = await fetch(
+            `/api/submissions?assignmentId=${assignment.id}`,
+          );
+          if (response.ok) {
+            const submissions = await response.json();
+            return { assignmentId: assignment.id, count: submissions.length };
+          } else {
+            return { assignmentId: assignment.id, count: 0 }; // Handle errors gracefully
+          }
+        }),
+      );
+      return Object.fromEntries(
+        results.map((item) => [item.assignmentId, item.count]),
+      );
     },
     enabled: !!assignments && assignments.length > 0,
   });
 
-  const canCreateAssignment = user?.role === "ADMIN" || user?.role === "TEACHER";
+  const canCreateAssignment =
+    user?.role === "ADMIN" || user?.role === "TEACHER";
 
   return (
     <div className="flex h-screen">
       <Sidebar className="w-64" />
-      <main className="flex-1 p-4 overflow-auto pt-20">
+      <main className="flex-1 p-4 overflow-auto pt-20 mt-14">
         <div className="max-w-6xl mx-auto w-full">
           <Card>
             <CardHeader className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <CardTitle>Assignments Management</CardTitle>
               {canCreateAssignment && (
-                <Button className="w-full md:w-auto" onClick={handleCreateAssignment}>
+                <Button
+                  className="w-full md:w-auto"
+                  onClick={handleCreateAssignment}
+                >
                   Create New Assignment
                 </Button>
               )}
@@ -309,7 +338,10 @@ export default function AssignmentList() {
                         <SelectContent>
                           <SelectItem value="all">All Branches</SelectItem>
                           {branches?.map((branch) => (
-                            <SelectItem key={branch.id} value={branch.id.toString()}>
+                            <SelectItem
+                              key={branch.id}
+                              value={branch.id.toString()}
+                            >
                               {branch.name}
                             </SelectItem>
                           ))}
@@ -360,26 +392,42 @@ export default function AssignmentList() {
                 )}
               </div>
 
-              <div className="md:hidden"> {/* Mobile View */}
+              <div className="md:hidden">
+                {" "}
+                {/* Mobile View */}
                 {!loadingAssignments && filteredAssignments.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">
                     No assignments found
                   </div>
                 ) : (
-                  filteredAssignments.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+                  filteredAssignments
+                    .slice(
+                      (currentPage - 1) * itemsPerPage,
+                      currentPage * itemsPerPage,
+                    )
                     .map((assignment) => {
-                      const assignmentClass = assignmentClasses.data?.[assignment.classId!];
-                      const branch = branches?.find(b => b.id === assignmentClass?.branchId);
+                      const assignmentClass =
+                        assignmentClasses.data?.[assignment.classId!];
+                      const branch = branches?.find(
+                        (b) => b.id === assignmentClass?.branchId,
+                      );
 
                       return (
-                        <div key={assignment.id} className="border rounded-lg p-4 space-y-3 mb-4">
+                        <div
+                          key={assignment.id}
+                          className="border rounded-lg p-4 space-y-3 mb-4"
+                        >
                           <div className="flex justify-between items-start">
                             <h3 className="font-medium">{assignment.title}</h3>
                             <div className="flex gap-2">
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => navigate(`/${basePath}/assignments/${assignment.id}`)}
+                                onClick={() =>
+                                  navigate(
+                                    `/${basePath}/assignments/${assignment.id}`,
+                                  )
+                                }
                               >
                                 View
                               </Button>
@@ -394,41 +442,46 @@ export default function AssignmentList() {
                           <div className="text-sm text-gray-600">
                             <div>Due: {formatDate(assignment.dueDate)}</div>
                             <div className="flex items-center gap-2">
-                              Status: 
+                              Status:
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                   <Button
                                     variant="ghost"
                                     className={`px-2 py-1 rounded-full text-xs font-medium h-auto
-                                      ${assignment.status === 'draft' ? 'bg-gray-100 text-gray-800 hover:bg-gray-200' : ''}
-                                      ${assignment.status === 'published' ? 'bg-green-100 text-green-800 hover:bg-green-200' : ''}
-                                      ${assignment.status === 'completed' ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' : ''}
+                                      ${assignment.status === "draft" ? "bg-gray-100 text-gray-800 hover:bg-gray-200" : ""}
+                                      ${assignment.status === "published" ? "bg-green-100 text-green-800 hover:bg-green-200" : ""}
+                                      ${assignment.status === "completed" ? "bg-blue-100 text-blue-800 hover:bg-blue-200" : ""}
                                     `}
                                   >
                                     {assignment.status?.toUpperCase()}
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent>
-                                  {["draft", "published", "completed"].map((status) => (
-                                    <DropdownMenuItem
-                                      key={status}
-                                      onClick={() => {
-                                        if (assignment.id) {
-                                          updateStatusMutation.mutate({
-                                            id: assignment.id,
-                                            status
-                                          });
-                                        }
-                                      }}
-                                      disabled={status === assignment.status}
-                                    >
-                                      {status.toUpperCase()}
-                                    </DropdownMenuItem>
-                                  ))}
+                                  {["draft", "published", "completed"].map(
+                                    (status) => (
+                                      <DropdownMenuItem
+                                        key={status}
+                                        onClick={() => {
+                                          if (assignment.id) {
+                                            updateStatusMutation.mutate({
+                                              id: assignment.id,
+                                              status,
+                                            });
+                                          }
+                                        }}
+                                        disabled={status === assignment.status}
+                                      >
+                                        {status.toUpperCase()}
+                                      </DropdownMenuItem>
+                                    ),
+                                  )}
                                 </DropdownMenuContent>
                               </DropdownMenu>
                             </div>
-                            <div>Submissions: {submissionCounts?.[assignment.id] || 0}</div>
+                            <div>
+                              Submissions:{" "}
+                              {submissionCounts?.[assignment.id] || 0}
+                            </div>
                           </div>
                         </div>
                       );
@@ -436,7 +489,9 @@ export default function AssignmentList() {
                 )}
               </div>
 
-              <div className="hidden md:block"> {/* Desktop View */}
+              <div className="hidden md:block">
+                {" "}
+                {/* Desktop View */}
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -456,15 +511,25 @@ export default function AssignmentList() {
                   <TableBody>
                     {!loadingAssignments && filteredAssignments.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                        <TableCell
+                          colSpan={7}
+                          className="text-center py-8 text-gray-500"
+                        >
                           No assignments found
                         </TableCell>
                       </TableRow>
                     ) : (
-                      filteredAssignments.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+                      filteredAssignments
+                        .slice(
+                          (currentPage - 1) * itemsPerPage,
+                          currentPage * itemsPerPage,
+                        )
                         .map((assignment) => {
-                          const assignmentClass = assignmentClasses.data?.[assignment.classId!];
-                          const branch = branches?.find(b => b.id === assignmentClass?.branchId);
+                          const assignmentClass =
+                            assignmentClasses.data?.[assignment.classId!];
+                          const branch = branches?.find(
+                            (b) => b.id === assignmentClass?.branchId,
+                          );
 
                           return (
                             <TableRow key={assignment.id}>
@@ -487,36 +552,42 @@ export default function AssignmentList() {
                                     <Button
                                       variant="ghost"
                                       className={`px-2 py-1 rounded-full text-xs font-medium h-auto
-                                        ${assignment.status === 'draft' ? 'bg-gray-100 text-gray-800 hover:bg-gray-200' : ''}
-                                        ${assignment.status === 'published' ? 'bg-green-100 text-green-800 hover:bg-green-200' : ''}
-                                        ${assignment.status === 'completed' ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' : ''}
+                                        ${assignment.status === "draft" ? "bg-gray-100 text-gray-800 hover:bg-gray-200" : ""}
+                                        ${assignment.status === "published" ? "bg-green-100 text-green-800 hover:bg-green-200" : ""}
+                                        ${assignment.status === "completed" ? "bg-blue-100 text-blue-800 hover:bg-blue-200" : ""}
                                       `}
                                     >
                                       {assignment.status?.toUpperCase()}
                                     </Button>
                                   </DropdownMenuTrigger>
                                   <DropdownMenuContent>
-                                    {["draft", "published", "completed"].map((status) => (
-                                      <DropdownMenuItem
-                                        key={status}
-                                        onClick={() => {
-                                          if (assignment.id) {
-                                            updateStatusMutation.mutate({
-                                              id: assignment.id,
-                                              status
-                                            });
+                                    {["draft", "published", "completed"].map(
+                                      (status) => (
+                                        <DropdownMenuItem
+                                          key={status}
+                                          onClick={() => {
+                                            if (assignment.id) {
+                                              updateStatusMutation.mutate({
+                                                id: assignment.id,
+                                                status,
+                                              });
+                                            }
+                                          }}
+                                          disabled={
+                                            status === assignment.status
                                           }
-                                        }}
-                                        disabled={status === assignment.status}
-                                      >
-                                        {status.toUpperCase()}
-                                      </DropdownMenuItem>
-                                    ))}
+                                        >
+                                          {status.toUpperCase()}
+                                        </DropdownMenuItem>
+                                      ),
+                                    )}
                                   </DropdownMenuContent>
                                 </DropdownMenu>
                               </TableCell>
                               <TableCell>
-                                {submissionCounts && submissionCounts[assignment.id] !== undefined ? (
+                                {submissionCounts &&
+                                submissionCounts[assignment.id] !==
+                                  undefined ? (
                                   <span className="px-2 py-1 bg-blue-50 text-blue-600 rounded-md font-medium">
                                     {submissionCounts[assignment.id]}
                                   </span>
@@ -530,7 +601,11 @@ export default function AssignmentList() {
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  onClick={() => navigate(`/${basePath}/assignments/${assignment.id}`)}
+                                  onClick={() =>
+                                    navigate(
+                                      `/${basePath}/assignments/${assignment.id}`,
+                                    )
+                                  }
                                 >
                                   View
                                 </Button>
@@ -539,14 +614,18 @@ export default function AssignmentList() {
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      onClick={() => setEditingAssignment(assignment)}
+                                      onClick={() =>
+                                        setEditingAssignment(assignment)
+                                      }
                                     >
                                       Edit
                                     </Button>
                                     <Button
                                       variant="destructive"
                                       size="sm"
-                                      onClick={() => setDeleteAssignment(assignment)}
+                                      onClick={() =>
+                                        setDeleteAssignment(assignment)
+                                      }
                                     >
                                       Delete
                                     </Button>
@@ -561,38 +640,59 @@ export default function AssignmentList() {
                 </Table>
               </div>
 
-              {filteredAssignments && filteredAssignments.length > itemsPerPage && (
-                <div className="mt-4 flex justify-between items-center">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(page => Math.max(1, page - 1))}
-                    disabled={currentPage === 1}
-                  >
-                    Previous
-                  </Button>
-                  <div className="flex gap-2">
-                    {Array.from({ length: Math.ceil(filteredAssignments.length / itemsPerPage) }).map((_, index) => (
-                      <Button
-                        key={index + 1}
-                        variant={currentPage === index + 1 ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setCurrentPage(index + 1)}
-                      >
-                        {index + 1}
-                      </Button>
-                    ))}
+              {filteredAssignments &&
+                filteredAssignments.length > itemsPerPage && (
+                  <div className="mt-4 flex justify-between items-center">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setCurrentPage((page) => Math.max(1, page - 1))
+                      }
+                      disabled={currentPage === 1}
+                    >
+                      Previous
+                    </Button>
+                    <div className="flex gap-2">
+                      {Array.from({
+                        length: Math.ceil(
+                          filteredAssignments.length / itemsPerPage,
+                        ),
+                      }).map((_, index) => (
+                        <Button
+                          key={index + 1}
+                          variant={
+                            currentPage === index + 1 ? "default" : "outline"
+                          }
+                          size="sm"
+                          onClick={() => setCurrentPage(index + 1)}
+                        >
+                          {index + 1}
+                        </Button>
+                      ))}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setCurrentPage((page) =>
+                          Math.min(
+                            Math.ceil(
+                              filteredAssignments.length / itemsPerPage,
+                            ),
+                            page + 1,
+                          ),
+                        )
+                      }
+                      disabled={
+                        currentPage >=
+                        Math.ceil(filteredAssignments.length / itemsPerPage)
+                      }
+                    >
+                      Next
+                    </Button>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(page => Math.min(Math.ceil(filteredAssignments.length / itemsPerPage), page + 1))}
-                    disabled={currentPage >= Math.ceil(filteredAssignments.length / itemsPerPage)}
-                  >
-                    Next
-                  </Button>
-                </div>
-              )}
+                )}
             </CardContent>
           </Card>
         </div>
@@ -606,17 +706,23 @@ export default function AssignmentList() {
         />
       )}
 
-      <AlertDialog open={!!deleteAssignment} onOpenChange={(open) => !open && setDeleteAssignment(null)}>
+      <AlertDialog
+        open={!!deleteAssignment}
+        onOpenChange={(open) => !open && setDeleteAssignment(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Assignment</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this assignment? This action cannot be undone.
+              Are you sure you want to delete this assignment? This action
+              cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteAssignment}>Delete</AlertDialogAction>
+            <AlertDialogAction onClick={handleDeleteAssignment}>
+              Delete
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

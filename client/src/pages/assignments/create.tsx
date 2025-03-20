@@ -13,7 +13,7 @@ import { useAuth } from "@/hooks/use-auth";
 import type { Class, Branch } from "@shared/schema";
 import { z } from "zod";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { format } from 'date-fns';
+import { format } from "date-fns";
 import { useState } from "react";
 import {
   Select,
@@ -23,11 +23,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-const createAssignmentSchema = insertAssignmentSchema.omit({ 
-  id: true
-}).extend({
-  dueDate: z.string().optional()
-});
+const createAssignmentSchema = insertAssignmentSchema
+  .omit({
+    id: true,
+  })
+  .extend({
+    dueDate: z.string().optional(),
+  });
 
 type CreateAssignmentData = z.infer<typeof createAssignmentSchema>;
 
@@ -58,8 +60,10 @@ export default function CreateAssignment() {
     mutationFn: async (data: CreateAssignmentData) => {
       const payload = {
         ...data,
-        dueDate: data.dueDate ? format(new Date(data.dueDate), "yyyy-MM-dd'T'HH:mm:ss.SSSxxx") : null,
-        userId: user?.id
+        dueDate: data.dueDate
+          ? format(new Date(data.dueDate), "yyyy-MM-dd'T'HH:mm:ss.SSSxxx")
+          : null,
+        userId: user?.id,
       };
       const res = await apiRequest("POST", "/api/assignments", payload);
       return res.json();
@@ -70,7 +74,9 @@ export default function CreateAssignment() {
         title: "Success",
         description: "Assignment created successfully",
       });
-      navigate(user?.role === "ADMIN" ? "/admin/assignments" : "/teacher/assignments");
+      navigate(
+        user?.role === "ADMIN" ? "/admin/assignments" : "/teacher/assignments",
+      );
     },
     onError: (error) => {
       toast({
@@ -89,9 +95,9 @@ export default function CreateAssignment() {
       classId: undefined,
       dueDate: "",
       userId: user?.id,
-      status: "draft"
+      status: "draft",
     },
-    mode: "onChange"
+    mode: "onChange",
   });
 
   const onSubmit = form.handleSubmit((data) => {
@@ -101,7 +107,7 @@ export default function CreateAssignment() {
   return (
     <div className="flex h-screen">
       <Sidebar className="w-64" />
-      <main className="flex-1 p-8 overflow-auto">
+      <main className="flex-1 p-8 overflow-auto mt-14">
         <div className="max-w-2xl mx-auto">
           <Card>
             <CardHeader>
@@ -121,7 +127,10 @@ export default function CreateAssignment() {
                     <SelectContent>
                       <SelectItem value="all">All Branches</SelectItem>
                       {branches?.map((branch) => (
-                        <SelectItem key={branch.id} value={branch.id.toString()}>
+                        <SelectItem
+                          key={branch.id}
+                          value={branch.id.toString()}
+                        >
                           {branch.name}
                         </SelectItem>
                       ))}
@@ -134,7 +143,9 @@ export default function CreateAssignment() {
                   <Select
                     disabled={loadingClasses}
                     value={form.watch("classId")?.toString()}
-                    onValueChange={(value) => form.setValue("classId", parseInt(value))}
+                    onValueChange={(value) =>
+                      form.setValue("classId", parseInt(value))
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select a class" />
@@ -168,25 +179,31 @@ export default function CreateAssignment() {
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Due Date</label>
-                  <Input
-                    type="datetime-local"
-                    {...form.register("dueDate")}
-                  />
+                  <Input type="datetime-local" {...form.register("dueDate")} />
                 </div>
 
                 <div className="flex justify-end gap-4">
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => navigate(user?.role === "ADMIN" ? "/admin/assignments" : "/teacher/assignments")}
+                    onClick={() =>
+                      navigate(
+                        user?.role === "ADMIN"
+                          ? "/admin/assignments"
+                          : "/teacher/assignments",
+                      )
+                    }
                   >
                     Cancel
                   </Button>
                   <Button
                     type="submit"
-                    disabled={createMutation.isPending || !form.formState.isValid || 
-                      !form.watch("title") || 
-                      !form.watch("classId")}
+                    disabled={
+                      createMutation.isPending ||
+                      !form.formState.isValid ||
+                      !form.watch("title") ||
+                      !form.watch("classId")
+                    }
                   >
                     Create Assignment
                   </Button>

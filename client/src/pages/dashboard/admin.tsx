@@ -18,18 +18,24 @@ export default function AdminDashboard() {
   return (
     <div className="flex h-screen bg-gray-50/50">
       <Sidebar className="w-64" />
-      <main className="flex-1 p-8 overflow-auto">
+      <main className="flex-1 p-8 overflow-auto mt-14">
         <div className="max-w-6xl mx-auto space-y-8">
           <div>
-            <h1 className="text-3xl font-semibold tracking-tight text-gray-900">Admin Dashboard</h1>
-            <p className="mt-2 text-gray-500">Manage In2English branches, classes, and more.</p>
+            <h1 className="text-3xl font-semibold tracking-tight text-gray-900">
+              Admin Dashboard
+            </h1>
+            <p className="mt-2 text-gray-500">
+              Manage In2English branches, classes, and more.
+            </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Branches Section */}
             <Card className="border-0 shadow-sm hover:shadow-md transition-shadow duration-200">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-                <CardTitle className="text-xl font-semibold">Branches</CardTitle>
+                <CardTitle className="text-xl font-semibold">
+                  Branches
+                </CardTitle>
                 {/*Removed Add Branch Button*/}
               </CardHeader>
               <CardContent>
@@ -40,7 +46,10 @@ export default function AdminDashboard() {
                 ) : (
                   <div className="space-y-3">
                     {branches?.map((branch) => (
-                      <div key={branch.id} className="p-4 rounded-lg border border-gray-100">
+                      <div
+                        key={branch.id}
+                        className="p-4 rounded-lg border border-gray-100"
+                      >
                         <h3 className="font-medium text-gray-900">
                           {branch.name}
                         </h3>

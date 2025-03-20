@@ -20,7 +20,7 @@ const ReviewList = () => {
       if (!response.ok) throw new Error("Failed to fetch submissions");
       return response.json();
     },
-    enabled: false
+    enabled: false,
   });
 
   // Redirect to appropriate dashboard immediately
@@ -30,7 +30,8 @@ const ReviewList = () => {
     return null;
   }
 
-  const dashboardPath = user.role === "ADMIN" ? "/admin/assignments" : "/teacher/assignments";
+  const dashboardPath =
+    user.role === "ADMIN" ? "/admin/assignments" : "/teacher/assignments";
   navigate(dashboardPath);
   return null;
 };
@@ -49,12 +50,17 @@ const ReviewDetail = ({ id }: { id: string }) => {
 
   const submissionId = parseInt(id, 10);
   if (isNaN(submissionId)) {
-    const dashboardPath = user.role === "ADMIN" ? "/admin/assignments" : "/teacher/assignments";
+    const dashboardPath =
+      user.role === "ADMIN" ? "/admin/assignments" : "/teacher/assignments";
     navigate(dashboardPath);
     return null;
   }
 
-  const { data: submission, isLoading, error } = useQuery<Submission>({
+  const {
+    data: submission,
+    isLoading,
+    error,
+  } = useQuery<Submission>({
     queryKey: ["/api/submissions", submissionId],
     queryFn: async () => {
       const response = await fetch(`/api/submissions/${submissionId}`);
@@ -73,7 +79,11 @@ const ReviewDetail = ({ id }: { id: string }) => {
       teacherFeedback: string;
       status: string;
     }) => {
-      const res = await apiRequest("PATCH", `/api/submissions/${data.id}`, data);
+      const res = await apiRequest(
+        "PATCH",
+        `/api/submissions/${data.id}`,
+        data,
+      );
       return res.json();
     },
     onSuccess: () => {
@@ -93,7 +103,8 @@ const ReviewDetail = ({ id }: { id: string }) => {
   });
 
   if (error || !submission) {
-    const dashboardPath = user.role === "ADMIN" ? "/admin/assignments" : "/teacher/assignments";
+    const dashboardPath =
+      user.role === "ADMIN" ? "/admin/assignments" : "/teacher/assignments";
     navigate(dashboardPath);
     return null;
   }
@@ -102,7 +113,7 @@ const ReviewDetail = ({ id }: { id: string }) => {
     return (
       <div className="flex h-screen">
         <Sidebar className="w-64" />
-        <main className="flex-1 p-8">
+        <main className="flex-1 p-8 mt-14">
           <div className="max-w-2xl mx-auto">
             <Card>
               <CardContent className="p-6">
@@ -140,7 +151,9 @@ const ReviewDetail = ({ id }: { id: string }) => {
                     </div>
                     <div className="text-sm">
                       <p className="font-medium">AI Assessment:</p>
-                      <p className="text-gray-600">{submission.overallAssessment}</p>
+                      <p className="text-gray-600">
+                        {submission.overallAssessment}
+                      </p>
                     </div>
                   </div>
                 </div>

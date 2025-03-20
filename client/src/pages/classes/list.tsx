@@ -49,7 +49,9 @@ export default function ClassList() {
     queryKey: ["/api/branches"],
   });
 
-  const { data: classes, isLoading: isClassesLoading } = useQuery<ClassWithStats[]>({
+  const { data: classes, isLoading: isClassesLoading } = useQuery<
+    ClassWithStats[]
+  >({
     queryKey: ["/api/classes", selectedBranch],
     queryFn: async () => {
       const params = new URLSearchParams();
@@ -75,7 +77,9 @@ export default function ClassList() {
       if (!response.ok) throw new Error("Failed to delete class");
 
       // Invalidate queries
-      queryClient.invalidateQueries({ queryKey: ["/api/classes", selectedBranch] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/classes", selectedBranch],
+      });
       queryClient.invalidateQueries({ queryKey: [`/api/classes/${classId}`] });
 
       toast({
@@ -98,7 +102,7 @@ export default function ClassList() {
   return (
     <div className="flex h-screen">
       <Sidebar className="w-64" />
-      <main className="flex-1 p-8 overflow-auto">
+      <main className="flex-1 p-8 overflow-auto mt-14">
         <div className="max-w-6xl mx-auto">
           <Card className="mb-8">
             <CardHeader>
@@ -119,7 +123,10 @@ export default function ClassList() {
               <div className="flex gap-2">
                 {role === "ADMIN" && (
                   <>
-                    <Button onClick={() => setIsManageOptionsOpen(true)} variant="outline">
+                    <Button
+                      onClick={() => setIsManageOptionsOpen(true)}
+                      variant="outline"
+                    >
                       <Settings className="w-4 h-4 mr-2" />
                       Manage Options
                     </Button>
@@ -132,7 +139,9 @@ export default function ClassList() {
             </CardHeader>
             <CardContent>
               <div className="mb-6">
-                <label className="text-sm font-medium block mb-2">Filter by Branch</label>
+                <label className="text-sm font-medium block mb-2">
+                  Filter by Branch
+                </label>
                 <Select
                   value={selectedBranch}
                   onValueChange={setSelectedBranch}
@@ -168,7 +177,8 @@ export default function ClassList() {
                     <TableRow key={cls.id}>
                       <TableCell>{cls.name}</TableCell>
                       <TableCell>
-                        {branches?.find((b) => b.id === cls.branchId)?.name || "-"}
+                        {branches?.find((b) => b.id === cls.branchId)?.name ||
+                          "-"}
                       </TableCell>
                       <TableCell>{cls.englishLevel || "-"}</TableCell>
                       <TableCell>{cls.ageGroup || "-"}</TableCell>
@@ -179,7 +189,9 @@ export default function ClassList() {
                           variant="outline"
                           size="sm"
                           className="mr-2"
-                          onClick={() => navigate(`${basePath}/classes/${cls.id}`)}
+                          onClick={() =>
+                            navigate(`${basePath}/classes/${cls.id}`)
+                          }
                         >
                           View Details
                         </Button>

@@ -16,7 +16,7 @@ export default function StudentDashboard() {
   return (
     <div className="flex h-screen">
       <Sidebar className="w-64" />
-      <main className="flex-1 p-8 overflow-auto">
+      <main className="flex-1 p-8 overflow-auto mt-14">
         <div className="max-w-6xl mx-auto">
           <h1 className="text-3xl font-bold mb-8">Student Dashboard</h1>
 

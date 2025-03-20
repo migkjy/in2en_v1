@@ -61,7 +61,12 @@ export default function BranchDetail() {
   }
 
   const handleDeleteClass = async (classId: number) => {
-    if (!confirm("Are you sure you want to delete this class? This will also remove all related data.")) return;
+    if (
+      !confirm(
+        "Are you sure you want to delete this class? This will also remove all related data.",
+      )
+    )
+      return;
 
     try {
       // First delete related records
@@ -88,7 +93,8 @@ export default function BranchDetail() {
       console.error("Delete class error:", error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to delete class",
+        description:
+          error instanceof Error ? error.message : "Failed to delete class",
         variant: "destructive",
       });
     }
@@ -97,7 +103,7 @@ export default function BranchDetail() {
   return (
     <div className="flex h-screen">
       <Sidebar className="w-64" />
-      <main className="flex-1 p-8 overflow-auto">
+      <main className="flex-1 p-8 overflow-auto mt-14">
         <div className="max-w-6xl mx-auto">
           <Card className="mb-8">
             <CardHeader>

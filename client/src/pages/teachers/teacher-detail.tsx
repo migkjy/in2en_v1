@@ -55,7 +55,7 @@ export default function TeacherDetail() {
   return (
     <div className="flex h-screen">
       <Sidebar className="w-64" />
-      <main className="flex-1 p-8 overflow-auto">
+      <main className="flex-1 p-8 overflow-auto mt-14">
         <div className="max-w-6xl mx-auto">
           {/* Added Back Button */}
           <Button

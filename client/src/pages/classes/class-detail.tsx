@@ -15,7 +15,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Check, X, ArrowLeft } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
@@ -40,8 +45,10 @@ export default function ClassDetail() {
   const classId = params?.id;
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [isAssignTeacherDialogOpen, setIsAssignTeacherDialogOpen] = useState(false);
-  const [isAssignStudentDialogOpen, setIsAssignStudentDialogOpen] = useState(false);
+  const [isAssignTeacherDialogOpen, setIsAssignTeacherDialogOpen] =
+    useState(false);
+  const [isAssignStudentDialogOpen, setIsAssignStudentDialogOpen] =
+    useState(false);
 
   const { data: classData, isLoading: isClassLoading } = useQuery<Class>({
     queryKey: ["/api/classes", classId],
@@ -103,21 +110,28 @@ export default function ClassDetail() {
   const assignStudentMutation = useMutation({
     mutationFn: async (studentId: number) => {
       // Check if student is already assigned
-      const isAlreadyAssigned = assignedStudents.some(student => student.id === studentId);
+      const isAlreadyAssigned = assignedStudents.some(
+        (student) => student.id === studentId,
+      );
       if (isAlreadyAssigned) {
         return;
       }
 
-      const response = await fetch(`/api/classes/${classId}/students/${studentId}`, {
-        method: "PUT",
-      });
+      const response = await fetch(
+        `/api/classes/${classId}/students/${studentId}`,
+        {
+          method: "PUT",
+        },
+      );
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || "Failed to assign student");
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/classes", classId, "students"] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/classes", classId, "students"],
+      });
     },
     onError: (error: Error) => {
       toast({
@@ -130,16 +144,21 @@ export default function ClassDetail() {
 
   const removeStudentMutation = useMutation({
     mutationFn: async (studentId: number) => {
-      const response = await fetch(`/api/classes/${classId}/students/${studentId}`, {
-        method: "DELETE",
-      });
+      const response = await fetch(
+        `/api/classes/${classId}/students/${studentId}`,
+        {
+          method: "DELETE",
+        },
+      );
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || "Failed to remove student");
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/classes", classId, "students"] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/classes", classId, "students"],
+      });
     },
     onError: (error: Error) => {
       toast({
@@ -150,7 +169,6 @@ export default function ClassDetail() {
     },
   });
 
-
   if (isClassLoading) {
     return <div>Loading...</div>;
   }
@@ -159,29 +177,41 @@ export default function ClassDetail() {
     return <div>Class not found</div>;
   }
 
-  const branch = branchData?.find(b => b.id === classData.branchId);
+  const branch = branchData?.find((b) => b.id === classData.branchId);
 
   // Only admin can assign/remove teachers and modify roles
-  const handleAssignTeacher = async (teacherId: number, isLead: boolean, hasAccess: boolean) => {
+  const handleAssignTeacher = async (
+    teacherId: number,
+    isLead: boolean,
+    hasAccess: boolean,
+  ) => {
     if (role !== "ADMIN") return;
 
     try {
-      const response = await fetch(`/api/classes/${classId}/teachers/${teacherId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isLead, hasAccess }),
-      });
+      const response = await fetch(
+        `/api/classes/${classId}/teachers/${teacherId}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ isLead, hasAccess }),
+        },
+      );
 
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || "Failed to update teacher roles");
       }
 
-      queryClient.invalidateQueries({ queryKey: ["/api/classes", classId, "teachers"] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/classes", classId, "teachers"],
+      });
     } catch (error) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to update teacher roles",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to update teacher roles",
         variant: "destructive",
       });
     }
@@ -190,19 +220,27 @@ export default function ClassDetail() {
   const handleRemoveTeacher = async (teacherId: number) => {
     if (role !== "ADMIN") return;
 
-    if (!confirm("Are you sure you want to remove this teacher from the class?")) return;
+    if (
+      !confirm("Are you sure you want to remove this teacher from the class?")
+    )
+      return;
 
     try {
-      const response = await fetch(`/api/classes/${classId}/teachers/${teacherId}`, {
-        method: "DELETE",
-      });
+      const response = await fetch(
+        `/api/classes/${classId}/teachers/${teacherId}`,
+        {
+          method: "DELETE",
+        },
+      );
 
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || "Failed to remove teacher");
       }
 
-      queryClient.invalidateQueries({ queryKey: ["/api/classes", classId, "teachers"] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/classes", classId, "teachers"],
+      });
       toast({
         title: "Success",
         description: "Teacher removed successfully",
@@ -210,17 +248,17 @@ export default function ClassDetail() {
     } catch (error) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to remove teacher",
+        description:
+          error instanceof Error ? error.message : "Failed to remove teacher",
         variant: "destructive",
       });
     }
   };
 
-
   return (
     <div className="flex h-screen">
       <Sidebar className="w-64" />
-      <main className="flex-1 p-8 overflow-auto">
+      <main className="flex-1 p-8 overflow-auto mt-14">
         <div className="max-w-6xl mx-auto">
           <Button
             variant="outline"
@@ -270,23 +308,37 @@ export default function ClassDetail() {
                   <TableRow>
                     <TableHead>Name</TableHead>
                     <TableHead>Email</TableHead>
-                    <TableHead className="w-[100px] text-center">Lead</TableHead>
-                    <TableHead className="w-[100px] text-center">Access</TableHead>
-                    {role === "ADMIN" && <TableHead className="w-[100px]">Actions</TableHead>}
+                    <TableHead className="w-[100px] text-center">
+                      Lead
+                    </TableHead>
+                    <TableHead className="w-[100px] text-center">
+                      Access
+                    </TableHead>
+                    {role === "ADMIN" && (
+                      <TableHead className="w-[100px]">Actions</TableHead>
+                    )}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {assignedTeachers
-                    .filter(teacher => teacher.hasAccess)
+                    .filter((teacher) => teacher.hasAccess)
                     .map((teacher) => (
                       <TableRow key={teacher.id}>
                         <TableCell>{teacher.name}</TableCell>
                         <TableCell>{teacher.email}</TableCell>
                         <TableCell className="text-center">
-                          {teacher.isLead ? <Check className="mx-auto" /> : <X className="mx-auto text-muted-foreground" />}
+                          {teacher.isLead ? (
+                            <Check className="mx-auto" />
+                          ) : (
+                            <X className="mx-auto text-muted-foreground" />
+                          )}
                         </TableCell>
                         <TableCell className="text-center">
-                          {teacher.hasAccess ? <Check className="mx-auto" /> : <X className="mx-auto text-muted-foreground" />}
+                          {teacher.hasAccess ? (
+                            <Check className="mx-auto" />
+                          ) : (
+                            <X className="mx-auto text-muted-foreground" />
+                          )}
                         </TableCell>
                         {role === "ADMIN" && (
                           <TableCell>
@@ -328,7 +380,9 @@ export default function ClassDetail() {
                         <span>{student.name}</span>
                         {canManageStudents && (
                           <button
-                            onClick={() => removeStudentMutation.mutate(student.id)}
+                            onClick={() =>
+                              removeStudentMutation.mutate(student.id)
+                            }
                             className="text-muted-foreground hover:text-destructive"
                           >
                             <X className="h-4 w-4" />
@@ -358,23 +412,31 @@ export default function ClassDetail() {
                 <DialogHeader>
                   <DialogTitle>Assign Teachers to {classData.name}</DialogTitle>
                   <p className="text-sm text-muted-foreground">
-                    Select teachers to assign to this class. Teachers can be given lead and access permissions.
+                    Select teachers to assign to this class. Teachers can be
+                    given lead and access permissions.
                   </p>
                 </DialogHeader>
-                <div className="mt-4 overflow-y-auto" style={{ maxHeight: "calc(80vh - 200px)" }}>
+                <div
+                  className="mt-4 overflow-y-auto"
+                  style={{ maxHeight: "calc(80vh - 200px)" }}
+                >
                   <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead>Name</TableHead>
                         <TableHead>Email</TableHead>
-                        <TableHead className="w-[80px] text-center">Lead</TableHead>
-                        <TableHead className="w-[80px] text-center">Access</TableHead>
+                        <TableHead className="w-[80px] text-center">
+                          Lead
+                        </TableHead>
+                        <TableHead className="w-[80px] text-center">
+                          Access
+                        </TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {teachers?.map((teacher) => {
                         const assignedTeacher = assignedTeachers.find(
-                          (at) => at.id === teacher.id
+                          (at) => at.id === teacher.id,
                         );
                         return (
                           <TableRow key={teacher.id}>
@@ -387,7 +449,7 @@ export default function ClassDetail() {
                                   handleAssignTeacher(
                                     teacher.id,
                                     checked as boolean,
-                                    assignedTeacher?.hasAccess || false
+                                    assignedTeacher?.hasAccess || false,
                                   );
                                 }}
                                 onClick={(e) => e.stopPropagation()} // Stop event propagation
@@ -400,7 +462,7 @@ export default function ClassDetail() {
                                   handleAssignTeacher(
                                     teacher.id,
                                     assignedTeacher?.isLead || false,
-                                    checked as boolean
+                                    checked as boolean,
                                   );
                                 }}
                                 onClick={(e) => e.stopPropagation()} // Stop event propagation
@@ -429,14 +491,19 @@ export default function ClassDetail() {
                     Select students to assign to this class.
                   </p>
                 </DialogHeader>
-                <div className="mt-4 overflow-y-auto" style={{ maxHeight: "calc(80vh - 200px)" }}>
+                <div
+                  className="mt-4 overflow-y-auto"
+                  style={{ maxHeight: "calc(80vh - 200px)" }}
+                >
                   <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead>Name</TableHead>
                         <TableHead>Email</TableHead>
                         <TableHead>Phone</TableHead>
-                        <TableHead className="w-[80px] text-center">Assign</TableHead>
+                        <TableHead className="w-[80px] text-center">
+                          Assign
+                        </TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -444,13 +511,15 @@ export default function ClassDetail() {
                         .sort((a, b) => a.name.localeCompare(b.name))
                         .map((student) => {
                           const isAssigned = assignedStudents.find(
-                            (as) => as.id === student.id
+                            (as) => as.id === student.id,
                           );
                           return (
                             <TableRow key={student.id}>
                               <TableCell>{student.name}</TableCell>
                               <TableCell>{student.email}</TableCell>
-                              <TableCell>{student.phone_number || "-"}</TableCell>
+                              <TableCell>
+                                {student.phone_number || "-"}
+                              </TableCell>
                               <TableCell className="text-center">
                                 <Checkbox
                                   checked={!!isAssigned}
