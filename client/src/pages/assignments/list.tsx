@@ -558,42 +558,50 @@ export default function AssignmentList() {
                                 {formatDate(assignment.dueDate)}
                               </TableCell>
                               <TableCell>
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button
-                                      variant="ghost"
-                                      className={`px-2 py-1 rounded-full text-xs font-medium h-auto
-                                        ${assignment.status === "draft" ? "bg-gray-100 text-gray-800 hover:bg-gray-200" : ""}
-                                        ${assignment.status === "published" ? "bg-green-100 text-green-800 hover:bg-green-200" : ""}
-                                        ${assignment.status === "completed" ? "bg-blue-100 text-blue-800 hover:bg-blue-200" : ""}
-                                      `}
-                                    >
-                                      {assignment.status?.toUpperCase()}
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent>
-                                    {["draft", "published", "completed"].map(
-                                      (status) => (
-                                        <DropdownMenuItem
-                                          key={status}
-                                          onClick={() => {
-                                            if (assignment.id) {
-                                              updateStatusMutation.mutate({
-                                                id: assignment.id,
-                                                status,
-                                              });
-                                            }
-                                          }}
-                                          disabled={
-                                            status === assignment.status
-                                          }
-                                        >
-                                          {status.toUpperCase()}
-                                        </DropdownMenuItem>
-                                      ),
-                                    )}
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
+                                {user?.role === "STUDENT" ? (
+                                  <span className={`px-2 py-1 rounded-full text-xs font-medium h-auto inline-block
+                                    ${assignment.status === "draft" ? "bg-gray-100 text-gray-800" : ""}
+                                    ${assignment.status === "published" ? "bg-green-100 text-green-800" : ""}
+                                    ${assignment.status === "completed" ? "bg-blue-100 text-blue-800" : ""}
+                                  `}>
+                                    {assignment.status?.toUpperCase()}
+                                  </span>
+                                ) : (
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <Button
+                                        variant="ghost"
+                                        className={`px-2 py-1 rounded-full text-xs font-medium h-auto
+                                          ${assignment.status === "draft" ? "bg-gray-100 text-gray-800 hover:bg-gray-200" : ""}
+                                          ${assignment.status === "published" ? "bg-green-100 text-green-800 hover:bg-green-200" : ""}
+                                          ${assignment.status === "completed" ? "bg-blue-100 text-blue-800 hover:bg-blue-200" : ""}
+                                        `}
+                                      >
+                                        {assignment.status?.toUpperCase()}
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent>
+                                      {["draft", "published", "completed"].map(
+                                        (status) => (
+                                          <DropdownMenuItem
+                                            key={status}
+                                            onClick={() => {
+                                              if (assignment.id) {
+                                                updateStatusMutation.mutate({
+                                                  id: assignment.id,
+                                                  status,
+                                                });
+                                              }
+                                            }}
+                                            disabled={status === assignment.status}
+                                          >
+                                            {status.toUpperCase()}
+                                          </DropdownMenuItem>
+                                        ),
+                                      )}
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                )}
                               </TableCell>
                               <TableCell>
                                 {submissionCounts &&
