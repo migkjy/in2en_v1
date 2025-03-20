@@ -45,7 +45,6 @@ function ProtectedRoute({ component: Component, ...rest }) {
 
 function Router() {
   const { user } = useAuth();
-  const { LoadingSpinner } = lazy(() => import("@/components/ui/loading"));
   const [, setLocation] = useLocation();
 
   useEffect(() => {
@@ -60,8 +59,7 @@ function Router() {
   return (
     <Suspense fallback={<div>Loading...</div>}>
       <Switch>
-        <Suspense fallback={<LoadingSpinner />}>
-          <Route path="/auth" component={AuthPage} />
+        <Route path="/auth" component={AuthPage} />
 
         {/* Common Routes */}
         <Route path="/assignments/:id/upload" component={(props) => <ProtectedRoute component={UploadAssignment} {...props} />} />
@@ -115,7 +113,6 @@ function Router() {
 
         {/* Not found route */}
         <Route component={NotFound} />
-        </Suspense>
       </Switch>
     </Suspense>
   );
