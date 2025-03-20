@@ -512,12 +512,6 @@ const CommentsSection = ({ submissionId }: { submissionId: number }) => {
     },
   });
 
-  // Scroll to bottom on new comments
-  useEffect(() => {
-    if (commentsEndRef.current) {
-      commentsEndRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [comments]);
 
   // Post comment mutation
   const postCommentMutation = useMutation({
