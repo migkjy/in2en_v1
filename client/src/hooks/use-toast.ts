@@ -6,7 +6,7 @@ import type {
 } from "@/components/ui/toast"
 
 const TOAST_LIMIT = 1
-const TOAST_REMOVE_DELAY = 3000
+const TOAST_REMOVE_DELAY = 1000000
 
 type ToasterToast = ToastProps & {
   id: string
@@ -100,14 +100,16 @@ export const reducer = (state: State, action: Action): State => {
         })
       }
 
-      const updatedToasts = state.toasts.map((t) =>
-        t.id === toastId || toastId === undefined
-          ? { ...t, open: false }
-          : t
-      );
       return {
         ...state,
-        toasts: updatedToasts.filter(t => t.open),
+        toasts: state.toasts.map((t) =>
+          t.id === toastId || toastId === undefined
+            ? {
+                ...t,
+                open: false,
+              }
+            : t
+        ),
       }
     }
     case "REMOVE_TOAST":
