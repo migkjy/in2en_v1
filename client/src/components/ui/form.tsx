@@ -13,29 +13,7 @@ import {
 import { cn } from "@/lib/utils"
 import { Label } from "@/components/ui/label"
 
-// Extend Form component to handle form submission properly
-const Form = React.forwardRef<
-  HTMLFormElement,
-  React.FormHTMLAttributes<HTMLFormElement> & { onSubmit?: (e: React.FormEvent) => void }
->(({ onSubmit, children, ...props }, ref) => {
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    if (onSubmit) {
-      onSubmit(e)
-    }
-  }
-
-  return (
-    <form ref={ref} onSubmit={handleSubmit} {...props}>
-      {children}
-    </form>
-  )
-})
-Form.displayName = "Form"
-
-// Export FormProvider as well for form state management
-const FormContext = FormProvider
+const Form = FormProvider
 
 type FormFieldContextValue<
   TFieldValues extends FieldValues = FieldValues,
@@ -195,5 +173,4 @@ export {
   FormDescription,
   FormMessage,
   FormField,
-  FormContext,
 }
