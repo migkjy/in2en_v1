@@ -106,7 +106,7 @@ Respond with JSON in this format:
 
     console.log("Creating run with assistant...");
     const run = await openai.beta.threads.runs.create(thread.id, {
-      assistant_id: "asst_9N8UIiXaRZ9KngTTwg2rxAE7",
+      assistant_id: "asst_djvMiB9cAI8332bSzeWkGbxC",
       response_format: { type: "json_object" },
     });
 
