@@ -140,7 +140,10 @@ export default function AuthPage() {
                 </div>
 
                 <div>
-                  <Select {...form.register("role")}>
+                  <Select
+                    value={form.watch("role")}
+                    onValueChange={(value) => form.setValue("role", value)}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select role..." />
                     </SelectTrigger>
