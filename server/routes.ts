@@ -390,7 +390,7 @@ export function registerRoutes(app: Express): Server {
   );
 
   app.get(
-    "/api/classes/:id/students",
+    "/api/classes/:id/students", 
     requireRole([UserRole.ADMIN, UserRole.TEACHER]),
     async (req, res) => {
       try {
@@ -640,9 +640,16 @@ export function registerRoutes(app: Express): Server {
         }
       }
 
+      // Get class students and filter out hidden ones
+      let students = [];
+      if (assignment.classId) {
+        students = await storage.getClassStudents(assignment.classId);
+        students = students.filter(student => !student.isHidden);
+      }
+
       res.json({
         ...assignment,
-        class: classInfo,
+        class: {...classInfo, students},
         branch: branch,
       });
     } catch (error) {
