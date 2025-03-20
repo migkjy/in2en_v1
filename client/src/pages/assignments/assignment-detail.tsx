@@ -220,7 +220,7 @@ export default function AssignmentDetail() {
   };
 
   const handleViewSubmission = (submissionId: number) => {
-    navigate(`/student/assignments/${assignmentId}/submissions/${submissionId}`); //Corrected Navigation
+    navigate(`/submissions/${submissionId}`);
   };
 
   return (
@@ -395,7 +395,8 @@ export default function AssignmentDetail() {
                                               ? "bg-yellow-100 text-yellow-800"
                                               : submission.status === "reviewed"
                                                 ? "bg-green-100 text-green-800"
-                                                : submission.status === "uploaded"
+                                                : submission.status ===
+                                                    "uploaded"
                                                   ? "bg-blue-100 text-blue-800"
                                                   : submission.status ===
                                                       "ai-reviewed"
@@ -442,7 +443,9 @@ export default function AssignmentDetail() {
                                             variant="outline"
                                             size="sm"
                                             onClick={() =>
-                                              setDeleteSubmissionId(submission.id)
+                                              setDeleteSubmissionId(
+                                                submission.id,
+                                              )
                                             }
                                             className="ml-2 text-red-600 hover:text-red-800"
                                           >
@@ -497,7 +500,9 @@ export default function AssignmentDetail() {
                                 >
                                   <div className="flex flex-col space-y-2">
                                     <div>
-                                      <span className="font-medium">Student: </span>
+                                      <span className="font-medium">
+                                        Student:{" "}
+                                      </span>
                                       {studentName ||
                                         (user?.role === "STUDENT"
                                           ? user.name
@@ -530,12 +535,14 @@ export default function AssignmentDetail() {
                                             ? "Reviewed"
                                             : submission.status === "uploaded"
                                               ? "Uploaded"
-                                              : submission.status === "ai-reviewed"
+                                              : submission.status ===
+                                                  "ai-reviewed"
                                                 ? "Reviewing"
                                                 : submission.status ===
                                                     "processing"
                                                   ? "Processing"
-                                                  : submission.status === "failed"
+                                                  : submission.status ===
+                                                      "failed"
                                                     ? "Failed"
                                                     : submission.status}
                                       </span>

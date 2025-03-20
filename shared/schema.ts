@@ -25,6 +25,7 @@ export const users = pgTable("users", {
   branchId: integer("branch_id").references(() => branches.id),
   phone_number: varchar("phone_number", { length: 20 }),
   birth_date: varchar("birth_date", { length: 20 }),
+  isHidden: boolean("is_hidden").notNull().default(false),
 });
 
 export const branches = pgTable("branches", {

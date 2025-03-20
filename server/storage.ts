@@ -105,12 +105,24 @@ export class DatabaseStorage implements IStorage {
 
   // User operations
   async getUser(id: number): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(and(
+        eq(users.id, id),
+        eq(users.isHidden, false)
+      ));
     return user;
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.email, email));
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(and(
+        eq(users.email, email),
+        eq(users.isHidden, false)
+      ));
     return user;
   }
 
@@ -127,7 +139,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async listUsers(): Promise<User[]> {
-    return await db.select().from(users);
+    return await db
+      .select()
+      .from(users)
+      .where(eq(users.isHidden, false));
   }
 
   async updateUser(id: number, data: Partial<User>): Promise<User | undefined> {
@@ -147,25 +162,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteUser(id: number): Promise<void> {
-    await db.transaction(async (tx) => {
-      // First delete from all related tables
-      await tx.delete(studentClassAccess).where(eq(studentClassAccess.studentId, id));
-      await tx.delete(teacherClassAccess).where(eq(teacherClassAccess.teacherId, id));
-      await tx.delete(teacherBranchAccess).where(eq(teacherBranchAccess.teacherId, id));
-      await tx.delete(classLeadTeachers).where(eq(classLeadTeachers.teacherId, id));
-
-      // Delete assignments created by this user
-      await tx.delete(assignments).where(eq(assignments.userId, id));
-
-      // Delete comments made by this user
-      await tx.delete(comments).where(eq(comments.userId, id));
-
-      // Delete submissions made by this user
-      await tx.delete(submissions).where(eq(submissions.studentId, id));
-
-      // Finally delete the user
-      await tx.delete(users).where(eq(users.id, id));
-    });
+    await db
+      .update(users)
+      .set({ isHidden: true })
+      .where(eq(users.id, id));
   }
 
   // Branch operations
