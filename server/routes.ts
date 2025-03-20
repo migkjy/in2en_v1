@@ -393,17 +393,10 @@ export function registerRoutes(app: Express): Server {
     "/api/classes/:id/students",
     requireRole([UserRole.ADMIN, UserRole.TEACHER]),
     async (req, res) => {
-      try {
-        const students = await storage.getClassStudents(Number(req.params.id));
-        res.json(students);
-      } catch (error) {
-        console.error("Error fetching class students:", error);
-        if (error instanceof Error) {
-          res.status(500).json({ message: error.message });
-        } else {
-          res.status(500).json({ message: "An unknown error occurred" });
-        }
-      }
+      const classId = parseInt(req.params.id);
+      const students = await storage.getClassStudents(classId);
+      const visibleStudents = students.filter(student => !student.is_hidden);
+      res.json(visibleStudents);
     },
   );
 
@@ -940,7 +933,7 @@ export function registerRoutes(app: Express): Server {
             message: "Invalid status parameter",
           });
         }
-        
+
         const submissions = await storage.listAllSubmissions(status);
         return res.json(submissions);
       }
@@ -963,7 +956,7 @@ export function registerRoutes(app: Express): Server {
     if (!req.isAuthenticated() || !req.user) {
       return res.status(401).json({ message: "You must be logged in to comment" });
     }
-    
+
     try {
       const comment = await storage.createComment({
         ...req.body,
@@ -985,7 +978,7 @@ export function registerRoutes(app: Express): Server {
       if (isNaN(submissionId)) {
         return res.status(400).json({ message: "Invalid submission ID" });
       }
-      
+
       // Get the comments with user information
       const comments = await storage.listCommentsWithUsers(submissionId);
       res.json(comments);
@@ -998,23 +991,23 @@ export function registerRoutes(app: Express): Server {
       }
     }
   });
-  
+
   // File upload route for comments
   app.post("/api/upload", upload.single("file"), async (req, res) => {
     if (!req.isAuthenticated() || !req.user) {
       return res.status(401).json({ message: "You must be logged in to upload files" });
     }
-    
+
     try {
       const file = req.file;
       if (!file) {
         return res.status(400).json({ message: "No file uploaded" });
       }
-      
+
       // Convert file to base64 data URL
       const base64Image = file.buffer.toString("base64");
       const dataUrl = `data:${file.mimetype};base64,${base64Image}`;
-      
+
       res.status(200).json({ 
         url: dataUrl,
         filename: file.originalname,
@@ -1249,7 +1242,7 @@ export function registerRoutes(app: Express): Server {
 
         // If password is empty string or undefined, remove it from the request body
         const updateData = { ...req.body };
-        
+
         // Handle password - validate if present
         if (updateData.password) {
           // Password validation
@@ -1258,7 +1251,7 @@ export function registerRoutes(app: Express): Server {
               message: "Password must be at least 6 characters long" 
             });
           }
-          
+
           // Hashing is now handled in the storage layer
         } else {
           delete updateData.password;
@@ -1531,27 +1524,27 @@ export function registerRoutes(app: Express): Server {
       }
 
       const { currentPassword, newPassword } = req.body;
-      
+
       // Get the user
       const user = await storage.getUser(id);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
-      
+
       // Check if passwords are set
       if (!currentPassword || !newPassword) {
         return res.status(400).json({ message: "Current and new passwords are required" });
       }
-      
+
       // Verify current password
       const isValid = await storage.verifyPassword(user, currentPassword);
       if (!isValid) {
         return res.status(400).json({ message: "Current password is incorrect" });
       }
-      
+
       // Update the password
       await storage.updateUserPassword(id, newPassword);
-      
+
       res.json({ message: "Password updated successfully" });
     } catch (error) {
       console.error("Error changing password:", error);
