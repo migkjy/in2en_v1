@@ -545,6 +545,11 @@ export function registerRoutes(app: Express): Server {
         status as string | undefined,
       );
 
+      // For students, only return published and completed assignments
+      if (req.user?.role === "STUDENT") {
+        assignments = assignments.filter(a => ["published", "completed"].includes(a.status || ""));
+      }
+
       // Get all classes for filtering
       const allClasses = await storage.listClasses();
 
