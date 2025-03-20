@@ -341,7 +341,7 @@ export default function SubmissionDetail() {
                   <div className="space-y-4">
                     <div>
                       <div className="flex justify-between items-center mb-2">
-                        <h3 className="section-title">AI Corrections</h3>
+                        <h3 className="section-title">Corrections</h3>
                         {isTeacherOrAdmin && (
                           <div className="flex gap-2">
                             {isEditingCorrections ? (
@@ -393,7 +393,7 @@ export default function SubmissionDetail() {
 
                     <div>
                       <div className="flex justify-between items-center mb-2">
-                        <h3 className="section-title">AI Assessment</h3>
+                        <h3 className="section-title">Assessment</h3>
                         {isTeacherOrAdmin && (
                           <div className="flex gap-2">
                             {isEditingAssessment ? (
