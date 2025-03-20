@@ -903,10 +903,13 @@ export function registerRoutes(app: Express): Server {
       // Special case for students
       if (req.isAuthenticated() && req.user?.role === "STUDENT") {
         console.log("Listing submissions for student:", req.user.id);
-        // Get all submissions for the authenticated student regardless of query params
+        // Get submissions filtered by assignmentId if provided
         const studentSubmissions = await storage.listUserSubmissions(req.user.id);
-        console.log(`Found ${studentSubmissions.length} submissions for student ${req.user.id}`);
-        return res.json(studentSubmissions);
+        const filteredSubmissions = assignmentId 
+          ? studentSubmissions.filter(s => s.assignmentId === parseInt(assignmentId as string))
+          : studentSubmissions;
+        console.log(`Found ${filteredSubmissions.length} submissions for student ${req.user.id}`);
+        return res.json(filteredSubmissions);
       }
 
       // For non-students or unauthenticated users, continue with normal flow

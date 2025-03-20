@@ -220,7 +220,7 @@ export default function AssignmentDetail() {
   };
 
   const handleViewSubmission = (submissionId: number) => {
-    navigate(`/submissions/${submissionId}`);
+    navigate(`/student/assignments/${assignmentId}/submissions/${submissionId}`); //Corrected Navigation
   };
 
   return (
@@ -359,7 +359,7 @@ export default function AssignmentDetail() {
                             </tr>
                           </thead>
                           <tbody className="bg-white divide-y divide-gray-200">
-                          {submissions && submissions.length > 0 ? (
+                            {submissions && submissions.length > 0 ? (
                               submissions
                                 .filter((submission) => {
                                   if (user?.role === "STUDENT") {
