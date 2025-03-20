@@ -246,7 +246,7 @@ export default function AssignmentDetail() {
               <CardContent>
                 <div className="space-y-6">
                   {/* Assignment Info */}
-                  <div className="flex justify-between text-sm text-gray-600">
+                  <div className="md:flex md:justify-between text-sm text-gray-600 space-y-2 md:space-y-0">
                     <div>
                       <span className="font-medium">Branch:</span>{" "}
                       {assignment.branch?.name || "-"}
