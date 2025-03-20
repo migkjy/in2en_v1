@@ -23,7 +23,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import LoadingSpinner from "@/components/LoadingSpinner"; // Assuming LoadingSpinner component exists
 
 export default function StudentList() {
   const [isCreateStudentDialogOpen, setIsCreateStudentDialogOpen] =
@@ -73,7 +72,7 @@ export default function StudentList() {
   };
 
   if (isStudentsLoading) {
-    return <LoadingSpinner />;
+    return <div>Loading...</div>;
   }
 
   const getBranchName = (branchId: number | null | undefined) => {

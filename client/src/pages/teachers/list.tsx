@@ -15,7 +15,6 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CreateTeacherDialog } from "./create-dialog";
 import { useLocation } from "wouter";
-import LoadingSpinner from "@/components/LoadingSpinner"; // Assumed component
 
 export default function TeacherList() {
   const [isCreateTeacherDialogOpen, setIsCreateTeacherDialogOpen] =
@@ -61,7 +60,7 @@ export default function TeacherList() {
   };
 
   if (isTeachersLoading) {
-    return <LoadingSpinner />;
+    return <div>Loading...</div>;
   }
 
   return (
