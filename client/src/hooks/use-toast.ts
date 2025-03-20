@@ -90,8 +90,7 @@ export const reducer = (state: State, action: Action): State => {
     case "DISMISS_TOAST": {
       const { toastId } = action
 
-      // ! Side effects ! - This could be extracted into a dismissToast() action,
-      // but I'll keep it here for simplicity
+      // Side effect handling for removal queue
       if (toastId) {
         addToRemoveQueue(toastId)
       } else {
@@ -100,16 +99,16 @@ export const reducer = (state: State, action: Action): State => {
         })
       }
 
-      const updatedToasts = state.toasts.map((t) =>
-        t.id === toastId || toastId === undefined
-          ? { ...t, open: false }
-          : t
-      );
       return {
         ...state,
-        toasts: updatedToasts.filter(t => t.open),
+        toasts: state.toasts.map((t) =>
+          t.id === toastId || toastId === undefined
+            ? { ...t, open: false }
+            : t
+        )
       }
     }
+
     case "REMOVE_TOAST":
       if (action.toastId === undefined) {
         return {
@@ -121,6 +120,8 @@ export const reducer = (state: State, action: Action): State => {
         ...state,
         toasts: state.toasts.filter((t) => t.id !== action.toastId),
       }
+      default:
+        return state
   }
 }
 
