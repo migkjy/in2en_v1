@@ -79,7 +79,6 @@ export async function generateFeedback(
   text: string,
   englishLevel: string,
   ageGroup: string,
-  studentName: string,
 ): Promise<FeedbackResponse> {
   try {
     console.log("Creating thread for feedback generation...");
@@ -90,7 +89,6 @@ export async function generateFeedback(
       role: "user",
       content: `Please provide feedback on the following text:
 Student Profile:
-- Name: ${studentName}
 - English Level: ${englishLevel}
 - Age Group: ${ageGroup}
 
@@ -106,7 +104,7 @@ Respond with JSON in this format:
 
     console.log("Creating run with assistant...");
     const run = await openai.beta.threads.runs.create(thread.id, {
-      assistant_id: "asst_djvMiB9cAI8332bSzeWkGbxC",
+      assistant_id: "asst_9N8UIiXaRZ9KngTTwg2rxAE7",
       response_format: { type: "json_object" },
     });
 
