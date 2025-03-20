@@ -436,7 +436,10 @@ export class DatabaseStorage implements IStorage {
     const [user] = await db
       .select()
       .from(users)
-      .where(eq(users.id, teacherId));
+      .where(and(
+        eq(users.id, teacherId),
+        eq(users.isHidden, false)
+      ));
 
     // If user is ADMIN, return all branches
     if (user?.role === UserRole.ADMIN) {
@@ -468,7 +471,10 @@ export class DatabaseStorage implements IStorage {
     const [user] = await db
       .select()
       .from(users)
-      .where(eq(users.id, teacherId));
+      .where(and(
+        eq(users.id, teacherId),
+        eq(users.isHidden, false)
+      ));
 
     // If user is ADMIN, return all classes
     if (user?.role === UserRole.ADMIN) {
@@ -773,10 +779,14 @@ export class DatabaseStorage implements IStorage {
         branchId: users.branchId,
         password: users.password,
         phone_number: users.phone_number,
-        birth_date: users.birth_date
+        birth_date: users.birth_date,
+        isHidden: users.isHidden
       })
       .from(users)
-      .where(eq(users.role, UserRole.TEACHER));
+      .where(and(
+        eq(users.role, UserRole.TEACHER),
+        eq(users.isHidden, false)
+      ));
 
     const leadTeachers = await db
       .select()
