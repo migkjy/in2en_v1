@@ -122,10 +122,6 @@ export default function SubmissionDetail() {
       queryClient.invalidateQueries({
         queryKey: ["/api/submissions", submissionId],
       });
-      toast({
-        title: "Success",
-        description: "Changes saved successfully",
-      });
       setIsEditingCorrections(false);
       setIsEditingAssessment(false);
     },
@@ -155,10 +151,6 @@ export default function SubmissionDetail() {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["/api/submissions", submissionId],
-      });
-      toast({
-        title: "Success",
-        description: "Submission is being reprocessed with AI",
       });
     },
     onError: (error) => {
