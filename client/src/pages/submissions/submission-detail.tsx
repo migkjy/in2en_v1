@@ -270,7 +270,7 @@ export default function SubmissionDetail() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>
-                {assignment.title} - {student.name}
+                {assignment?.title} - {student?.name || 'Unknown Student'}
               </CardTitle>
               {isTeacherOrAdmin && (
                 <Button
