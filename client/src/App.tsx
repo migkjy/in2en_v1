@@ -4,6 +4,7 @@ import { queryClient } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { Suspense, lazy, useEffect } from 'react';
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 // Lazy loading components
 const AuthPage = lazy(() => import("@/pages/auth-page"));
@@ -37,7 +38,7 @@ function ProtectedRoute({ component: Component, ...rest }) {
   }, [user, isLoading, setLocation]);
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <LoadingSpinner />;
   }
 
   return user ? <Component {...rest} /> : null;
@@ -57,7 +58,7 @@ function Router() {
   }, [user, setLocation]);
 
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<LoadingSpinner />}>
       <Switch>
         <Route path="/auth" component={AuthPage} />
 
