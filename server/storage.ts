@@ -279,7 +279,8 @@ export class DatabaseStorage implements IStorage {
       classId: data.classId || null,
       userId: data.userId || null,
       dueDate: data.dueDate || null,
-      status: data.status || 'draft'
+      status: data.status || 'draft',
+      isHidden: data.isHidden || false
     }).returning();
     return assignment;
   }
@@ -290,10 +291,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async listAssignments(classId?: number, status?: string): Promise<Assignment[]> {
-    const baseQuery = db.select().from(assignments);
+    const baseQuery = db.select().from(assignments).where(eq(assignments.isHidden, false));
 
     // Build the where conditions
-    const conditions = [];
+    const conditions = [eq(assignments.isHidden, false)];
 
     if (classId) {
       conditions.push(eq(assignments.classId, classId));
@@ -303,12 +304,8 @@ export class DatabaseStorage implements IStorage {
       conditions.push(eq(assignments.status, status));
     }
 
-    // Apply conditions if any exist
-    if (conditions.length > 0) {
-      return await baseQuery.where(and(...conditions));
-    }
-
-    return await baseQuery;
+    // Apply conditions
+    return await baseQuery.where(and(...conditions));
   }
 
   async updateAssignment(id: number, data: Partial<Assignment>): Promise<Assignment | undefined> {
@@ -321,7 +318,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteAssignment(id: number): Promise<void> {
-    await db.delete(assignments).where(eq(assignments.id, id));
+    await db
+      .update(assignments)
+      .set({ isHidden: true })
+      .where(eq(assignments.id, id));
   }
 
   // List all submissions with optional status filter

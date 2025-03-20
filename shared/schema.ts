@@ -72,6 +72,7 @@ export const assignments = pgTable("assignments", {
   userId: integer("user_id").references(() => users.id),
   dueDate: timestamp("due_date", { mode: 'string' }),
   status: varchar("status", { length: 50 }).default("draft"),
+  isHidden: boolean("is_hidden").notNull().default(false),
 });
 
 export const submissions = pgTable("submissions", {
