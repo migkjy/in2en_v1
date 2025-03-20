@@ -54,11 +54,6 @@ const formatDate = (dateString: string | undefined): string => {
   return format(new Date(dateString), "MM/dd/yyyy");
 };
 
-//const navigateToAssignment = (assignmentId: number) => { //Removed
-//  const { user } = useAuth();
-//  const basePath = user?.role === "STUDENT" ? "/student" : user?.role === "TEACHER" ? "/teacher" : "/admin";
-//  window.location.href = `${basePath}/assignments/${assignmentId}`;
-//};
 
 export default function AssignmentList() {
   const [, navigate] = useLocation();
@@ -77,6 +72,8 @@ export default function AssignmentList() {
   );
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
+  const [selectedFilter, setSelectedFilter] = useState<string>("published"); //Added for student filter
+
 
   // Get teacher's accessible classes first if user is a teacher
   const { data: teacherClasses } = useQuery<Class[]>({
@@ -225,7 +222,7 @@ export default function AssignmentList() {
     queryFn: async () => {
       if (user?.role !== "STUDENT") return [];
       try {
-        const response = await fetch(`/api/submissions?studentId=${user.id}`); // Added studentId to filter submissions
+        const response = await fetch(`/api/submissions?studentId=${user.id}`); 
         if (!response.ok) {
           console.error("Error fetching submissions:", await response.text());
           return [];
@@ -242,37 +239,36 @@ export default function AssignmentList() {
   const filteredAssignments = useMemo(() => {
     if (!assignments) return [];
 
-    // For students, we need to show assignments based on their submissions
+    // For students, we need to show assignments based on their submissions and selected filter
     if (user?.role === "STUDENT" && studentSubmissions) {
-      // Get all assignments where the student has a submission
       const submissionAssignmentIds = studentSubmissions.map(
         (sub) => sub.assignmentId,
       );
-
-      // Get relevant assignments
       let relevantAssignments = assignments.filter((assignment) =>
         submissionAssignmentIds.includes(assignment.id),
       );
 
-      // Sort assignments by due date
+      //Filter by selected status for students
+      relevantAssignments = relevantAssignments.filter(assignment => {
+        if(selectedFilter === "published" && assignment.status === "published") return true;
+        if(selectedFilter === "completed" && assignment.status === "completed") return true;
+        return selectedFilter === "all"; //Show all if "all" is selected.
+      })
+
       return relevantAssignments.sort((a, b) => {
-        // Handle assignments without due dates (push them to the end)
         if (!a.dueDate) return 1;
         if (!b.dueDate) return -1;
-
         return new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime();
       });
     }
 
     // For teachers and admins, show all assignments
     return [...assignments].sort((a, b) => {
-      // Handle assignments without due dates (push them to the end)
       if (!a.dueDate) return 1;
       if (!b.dueDate) return -1;
-
       return new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime();
     });
-  }, [assignments, studentSubmissions, user]);
+  }, [assignments, studentSubmissions, user, selectedFilter]);
 
   // Get submission counts for each assignment
   const { data: submissionCounts } = useQuery({
@@ -291,7 +287,7 @@ export default function AssignmentList() {
             const submissions = await response.json();
             return { assignmentId: assignment.id, count: submissions.length };
           } else {
-            return { assignmentId: assignment.id, count: 0 }; // Handle errors gracefully
+            return { assignmentId: assignment.id, count: 0 }; 
           }
         }),
       );
@@ -313,14 +309,33 @@ export default function AssignmentList() {
           <Card>
             <CardHeader className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <CardTitle>Assignments Management</CardTitle>
-              {canCreateAssignment && (
-                <Button
-                  className="w-full md:w-auto"
-                  onClick={handleCreateAssignment}
-                >
-                  Create New Assignment
-                </Button>
-              )}
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-4">
+                  <h1 className="text-2xl font-bold tracking-tight">
+                    Assignments
+                  </h1>
+                  {user?.role === "STUDENT" && (
+                    <Select value={selectedFilter} onValueChange={setSelectedFilter}>
+                      <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Filter by status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All</SelectItem>
+                        <SelectItem value="published">Published</SelectItem>
+                        <SelectItem value="completed">Completed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
+                {canCreateAssignment && (
+                  <Button
+                    className="w-full md:w-auto"
+                    onClick={handleCreateAssignment}
+                  >
+                    Create New Assignment
+                  </Button>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6">
@@ -393,8 +408,6 @@ export default function AssignmentList() {
               </div>
 
               <div className="md:hidden">
-                {" "}
-                {/* Mobile View */}
                 {!loadingAssignments && filteredAssignments.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">
                     No assignments found
@@ -490,8 +503,6 @@ export default function AssignmentList() {
               </div>
 
               <div className="hidden md:block">
-                {" "}
-                {/* Desktop View */}
                 <Table>
                   <TableHeader>
                     <TableRow>
