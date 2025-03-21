@@ -59,11 +59,11 @@ export default function AuthPage() {
   return (
     <div className="min-h-screen flex">
       {/* Top section - hidden on mobile */}
-      <div className="hidden md:flex w-1/2 bg-gradient-to-br from-blue-500 to-purple-600 items-center justify-center text-white">
+      <div className="hidden md:flex w-1/2 bg-gradient-to-br from-blue-500 to-purple-600 items-center justify-center">
         <div className="max-w-lg p-4">
           <div className="text-center">
-            <h1 className="text-6xl md:text-7xl font-bold mb-2 tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 uppercase">Welcome to</h1>
-            <h1 className="text-6xl md:text-7xl font-bold tracking-wider text-transparent bg-clip-text bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-600 uppercase animate-pulse">In2English</h1>
+            <h1 className="text-6xl md:text-7xl font-bold mb-2 tracking-wider bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-transparent uppercase">Welcome to</h1>
+            <h1 className="text-6xl md:text-7xl font-bold tracking-wider bg-gradient-to-br from-blue-100 via-purple-100 to-indigo-100 bg-clip-text text-transparent uppercase animate-pulse">In2English</h1>
           </div>
         </div>
       </div>
