@@ -112,10 +112,6 @@ export function CreateClassDialog({ open, onOpenChange, branchId, classToEdit }:
       if (branchId) {
         queryClient.invalidateQueries({ queryKey: ["/api/branches", branchId] });
       }
-      toast({
-        title: "Success",
-        description: classToEdit ? "Class updated successfully" : "Class created successfully",
-      });
       form.reset();
       onOpenChange(false);
     },

@@ -151,10 +151,6 @@ export function CreateStudentDialog({ open, onOpenChange, student }: CreateStude
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/students"] });
-      toast({
-        title: "Success",
-        description: "Student updated successfully",
-      });
       form.reset();
       onOpenChange(false);
     },
@@ -198,10 +194,6 @@ export function CreateStudentDialog({ open, onOpenChange, student }: CreateStude
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/students"] });
-      toast({
-        title: "Success",
-        description: "Student created successfully",
-      });
       form.reset();
       onOpenChange(false);
     },

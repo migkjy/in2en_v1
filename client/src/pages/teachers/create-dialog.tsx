@@ -87,10 +87,7 @@ export function CreateTeacherDialog({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/teachers"] });
-      toast({
-        title: "Success",
-        description: teacherToEdit ? "Teacher updated successfully" : "Teacher created successfully",
-      });
+      // toast removed
       form.reset();
       onOpenChange(false);
     },
