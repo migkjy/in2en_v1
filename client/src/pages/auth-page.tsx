@@ -159,10 +159,10 @@ export default function AuthPage() {
                   )}
                 </div>
 
-                {/* <div>
+                <div>
                   <Select
                     value={form.watch("role")}
-                    onValueChange={(value) => form.setValue("role", value)}
+                    onValueChange={(value: "ADMIN" | "TEACHER" | "STUDENT") => form.setValue("role", value)}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select role..." />
@@ -178,7 +178,7 @@ export default function AuthPage() {
                       {form.formState.errors.role.message}
                     </p>
                   )}
-                </div> */}
+                </div>
 
                 <Button
                   type="submit"
