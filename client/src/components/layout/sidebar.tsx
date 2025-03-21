@@ -27,13 +27,17 @@ export function Sidebar({ className }: SidebarProps) {
 
   const isActive = (path: string) => location === path;
 
+  const isMainAdmin = user?.email === "migkjy@naver.com";
+
   const adminLinks = [
     { href: "/admin", icon: LayoutDashboard, label: "Dashboard" },
-    { href: "/admin/branches", icon: School, label: "Branches" },
-    { href: "/admin/classes", icon: GraduationCap, label: "Classes" },
-    { href: "/admin/teachers", icon: Users, label: "Teachers" },
-    { href: "/admin/students", icon: StudentIcon, label: "Students" },
     { href: "/admin/assignments", icon: BookCheck, label: "Assignments" },
+    ...(isMainAdmin ? [
+      { href: "/admin/branches", icon: School, label: "Branches" },
+      { href: "/admin/classes", icon: GraduationCap, label: "Classes" },
+      { href: "/admin/teachers", icon: Users, label: "Teachers" },
+      { href: "/admin/students", icon: StudentIcon, label: "Students" },
+    ] : []),
   ];
 
   const teacherLinks = [
