@@ -425,8 +425,9 @@ export default function SubmissionDetail() {
                           <textarea
                             value={editedAssessment}
                             onChange={(e) => setEditedAssessment(e.target.value)}
-                            className="w-full min-h-[100px] p-2 border rounded"
+                            className="w-full min-h-[300px] p-2 border rounded resize-y"
                             placeholder="Enter assessment..."
+                            style={{ height: 'auto' }}
                           />
                         ) : (
                           <ReactMarkdown remarkPlugins={[remarkGfm]}>
