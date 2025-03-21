@@ -119,23 +119,29 @@ export default function ClassList() {
             </CardContent>
           </Card>
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Classes Management</CardTitle>
-              <div className="flex gap-2">
-                {role === "ADMIN" && (
-                  <>
-                    <Button
-                      onClick={() => setIsManageOptionsOpen(true)}
-                      variant="outline"
-                    >
-                      <Settings className="w-4 h-4 mr-2" />
-                      Manage Options
-                    </Button>
-                    <Button onClick={() => setIsCreateDialogOpen(true)}>
-                      Create New Class
-                    </Button>
-                  </>
-                )}
+            <CardHeader>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <CardTitle>Classes Management</CardTitle>
+                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                  {role === "ADMIN" && (
+                    <>
+                      <Button
+                        onClick={() => setIsManageOptionsOpen(true)}
+                        variant="outline"
+                        className="w-full sm:w-auto"
+                      >
+                        <Settings className="w-4 h-4 mr-2" />
+                        Manage Options
+                      </Button>
+                      <Button 
+                        onClick={() => setIsCreateDialogOpen(true)}
+                        className="w-full sm:w-auto"
+                      >
+                        Create New Class
+                      </Button>
+                    </>
+                  )}
+                </div>
               </div>
             </CardHeader>
             <CardContent>
