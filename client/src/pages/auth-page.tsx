@@ -159,13 +159,14 @@ export default function AuthPage() {
                   )}
                 </div>
 
-                {/* <div>
-                  <Select
-                    value={form.watch("role")}
-                    onValueChange={(value) => form.setValue("role", value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select role..." />
+                {isRegistering && (
+                  <div>
+                    <Select
+                      value={form.watch("role")}
+                      onValueChange={(value: "ADMIN" | "TEACHER" | "STUDENT") => form.setValue("role", value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select role..." />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="ADMIN">Admin</SelectItem>
@@ -175,10 +176,11 @@ export default function AuthPage() {
                   </Select>
                   {form.formState.errors.role && (
                     <p className="text-sm text-red-500">
-                      {form.formState.errors.role.message}
+                      {form.formState.errors.role?.message}
                     </p>
                   )}
-                </div> */}
+                </div>
+                )}
 
                 <Button
                   type="submit"
