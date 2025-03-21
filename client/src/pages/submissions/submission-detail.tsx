@@ -422,9 +422,11 @@ export default function SubmissionDetail() {
                       </div>
                       <div className="bg-green-50 p-4 rounded prose prose-sm max-w-none">
                         {isEditingAssessment ? (
-                          <RichTextEditor
-                            content={editedAssessment}
-                            onChange={setEditedAssessment}
+                          <textarea
+                            value={editedAssessment}
+                            onChange={(e) => setEditedAssessment(e.target.value)}
+                            className="w-full min-h-[100px] p-2 border rounded"
+                            placeholder="Enter assessment..."
                           />
                         ) : (
                           <ReactMarkdown remarkPlugins={[remarkGfm]}>
