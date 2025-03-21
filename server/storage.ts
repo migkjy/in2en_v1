@@ -134,6 +134,11 @@ export class DatabaseStorage implements IStorage {
       user.password = `${derivedKey.toString('hex')}.${salt}`;
     }
 
+    // Convert empty phone_number to null
+    if (user.phone_number === '') {
+      user.phone_number = null;
+    }
+
     const [newUser] = await db.insert(users).values([user]).returning();
     return newUser;
   }
@@ -151,6 +156,11 @@ export class DatabaseStorage implements IStorage {
       const salt = randomBytes(16).toString('hex');
       const derivedKey = (await scryptAsync(data.password, salt, 64)) as Buffer;
       data.password = `${derivedKey.toString('hex')}.${salt}`;
+    }
+
+    // Convert empty phone_number to null
+    if (data.phone_number === '') {
+      data.phone_number = null;
     }
 
     const [user] = await db
