@@ -14,7 +14,8 @@ import {
   User,
   Users,
   Menu,
-  BookCheck
+  BookCheck,
+  UserPlus // Add this import
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { GraduationCap as StudentIcon } from "lucide-react";
@@ -34,6 +35,12 @@ export function Sidebar({ className }: SidebarProps) {
     { href: "/admin/teachers", icon: Users, label: "Teachers" },
     { href: "/admin/students", icon: StudentIcon, label: "Students" },
     { href: "/admin/assignments", icon: BookCheck, label: "Assignments" },
+    { 
+      href: "/admin/create-user", 
+      icon: UserPlus, 
+      label: "Create User",
+      hidden: (user?.email !== "migkjy@naver.com")
+    },
   ];
 
   const teacherLinks = [
@@ -63,7 +70,7 @@ export function Sidebar({ className }: SidebarProps) {
             In2English
           </h2>
           <div className="space-y-1">
-            {links.map((link) => (
+            {links.filter(link => !link.hidden).map((link) => (
               <Link key={link.href} href={link.href}>
                 <Button
                   variant={isActive(link.href) ? "secondary" : "ghost"}

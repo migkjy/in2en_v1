@@ -26,6 +26,8 @@ const TeacherList = lazy(() => import("@/pages/teachers/list"));
 const TeacherDetail = lazy(() => import("@/pages/teachers/detail"));
 const StudentList = lazy(() => import("@/pages/students/list"));
 const NotFound = lazy(() => import("@/pages/not-found"));
+const AdminAuthPage = lazy(() => import("@/pages/admin-auth-page")); // Added import
+
 
 function ProtectedRoute({ component: Component, ...rest }) {
   const { user, isLoading } = useAuth();
@@ -50,9 +52,9 @@ function Router() {
 
   useEffect(() => {
     if (user) {
-      const homePath = 
+      const homePath =
         user.role === "ADMIN" ? "/admin" :
-        user.role === "TEACHER" ? "/teacher" : "/student/assignments";
+          user.role === "TEACHER" ? "/teacher" : "/student/assignments";
       setLocation(homePath);
     }
   }, [user, setLocation]);
@@ -82,6 +84,7 @@ function Router() {
         <Route path="/admin/teachers/:id" component={(props) => <ProtectedRoute component={TeacherDetail} {...props} />} />
         <Route path="/admin/teachers" component={(props) => <ProtectedRoute component={TeacherList} {...props} />} />
         <Route path="/admin/students" component={(props) => <ProtectedRoute component={StudentList} {...props} />} />
+        <Route path="/admin/create-user" component={(props) => <ProtectedRoute component={AdminAuthPage} {...props} />} /> {/* Added route */}
 
         {/* Teacher Routes */}
         <Route path="/teacher" component={(props) => <ProtectedRoute component={TeacherDashboard} {...props} />} />
