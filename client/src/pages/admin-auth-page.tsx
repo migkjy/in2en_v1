@@ -43,8 +43,13 @@ export default function AdminAuthPage() {
     <div className="min-h-screen flex">
       <div className="w-full flex items-center justify-center p-4">
         <Card className="w-full max-w-[400px]">
-          <CardHeader>
-            <CardTitle>Create New User</CardTitle>
+          <CardHeader className="space-y-4">
+            <div className="flex items-center justify-between">
+              <CardTitle>Create New User</CardTitle>
+              <Button variant="outline" onClick={() => window.history.back()}>
+                Back
+              </Button>
+            </div>
             <CardDescription>
               Create a new user account with specified role
             </CardDescription>
