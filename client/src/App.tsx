@@ -26,7 +26,6 @@ const TeacherList = lazy(() => import("@/pages/teachers/list"));
 const TeacherDetail = lazy(() => import("@/pages/teachers/detail"));
 const StudentList = lazy(() => import("@/pages/students/list"));
 const NotFound = lazy(() => import("@/pages/not-found"));
-const AdminAuthPage = lazy(() => import("@/pages/admin-auth-page"));
 
 function ProtectedRoute({ component: Component, ...rest }) {
   const { user, isLoading } = useAuth();
@@ -62,7 +61,6 @@ function Router() {
     <Suspense fallback={<LoadingSpinner />}>
       <Switch>
         <Route path="/auth" component={AuthPage} />
-        <Route path="/admin/auth" component={AdminAuthPage} />
 
         {/* Common Routes */}
         <Route path="/assignments/:id/upload" component={(props) => <ProtectedRoute component={UploadAssignment} {...props} />} />

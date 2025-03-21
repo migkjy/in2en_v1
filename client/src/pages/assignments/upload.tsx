@@ -94,6 +94,10 @@ export default function UploadAssignment() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/submissions"] });
+      toast({
+        title: "Success",
+        description: "Homework files uploaded successfully",
+      });
       navigate(`/${basePath}/assignments/${assignmentId}`);
     },
     onError: (error) => {
