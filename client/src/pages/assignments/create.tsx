@@ -70,10 +70,6 @@ export default function CreateAssignment() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/assignments"] });
-      toast({
-        title: "Success",
-        description: "Assignment created successfully",
-      });
       navigate(
         user?.role === "ADMIN" ? "/admin/assignments" : "/teacher/assignments",
       );

@@ -46,7 +46,6 @@ export function EditAssignmentDialog({ assignment, open, onOpenChange }: EditAss
       if (!response.ok) throw new Error("Failed to update assignment");
 
       await queryClient.invalidateQueries({ queryKey: ["/api/assignments"] });
-      toast({ title: "Success", description: "Assignment updated successfully" });
       onOpenChange(false);
     } catch (error) {
       toast({
