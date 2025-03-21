@@ -62,8 +62,8 @@ export default function AuthPage() {
       <div className="hidden md:flex w-1/2 bg-gradient-to-br from-blue-500 to-purple-600 items-center justify-center text-white">
         <div className="max-w-lg p-4">
           <div className="text-center">
-            <h1 className="text-6xl md:text-7xl font-bold mb-2 tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 uppercase">Welcome to</h1>
-            <h1 className="text-6xl md:text-7xl font-bold tracking-wider text-transparent bg-clip-text bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-600 uppercase animate-pulse">In2English</h1>
+            <h1 className="text-6xl md:text-7xl font-bold mb-2 tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-purple-700 uppercase">Welcome to</h1>
+            <h1 className="text-6xl md:text-7xl font-bold tracking-wider text-transparent bg-clip-text bg-gradient-to-br from-blue-700 via-purple-700 to-indigo-700 uppercase animate-pulse">In2English</h1>
           </div>
         </div>
       </div>
