@@ -61,24 +61,10 @@ export default function AuthPage() {
       {/* Top section - hidden on mobile */}
       <div className="hidden md:flex w-1/2 bg-gradient-to-br from-blue-500 to-purple-600 items-center justify-center text-white">
         <div className="max-w-lg p-4">
-          <h1 className="text-3xl md:text-4xl font-bold mb-4 md:mb-6">Welcome to In2English</h1>
-          <p className="text-lg md:text-xl mb-6 md:mb-8">
-            Experience enhanced English learning with AI-powered feedback and structured assignments.
-          </p>
-          <ul className="space-y-4">
-            <li className="flex items-center">
-              <span className="mr-2">•</span>
-              Automated text extraction
-            </li>
-            <li className="flex items-center">
-              <span className="mr-2">•</span>
-              Instant AI feedback
-            </li>
-            <li className="flex items-center">
-              <span className="mr-2">•</span>
-              Progress tracking
-            </li>
-          </ul>
+          <div className="text-center">
+            <h1 className="text-5xl md:text-6xl font-bold mb-2">Welcome to</h1>
+            <h1 className="text-5xl md:text-6xl font-bold">In2English</h1>
+          </div>
         </div>
       </div>
 
