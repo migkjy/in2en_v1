@@ -260,7 +260,7 @@ export default function SubmissionDetail() {
           </Button>
 
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <CardTitle>
                 {assignment?.title} - {student?.name || 'Unknown Student'}
               </CardTitle>
@@ -733,7 +733,7 @@ const CommentsSection = ({ submissionId }: { submissionId: number }) => {
                     className="max-h-40 rounded shadow-sm group-hover:shadow-md transition-shadow"
                   />
                   <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-opacity flex items-center justify-center">
-                    <span className="text-transparent group-hover:text-white text-sm font-medium transition-colors">
+                    <span className="text-transparent group-hover:text-white text-xs font-medium transition-colors">
                       Click to download
                     </span>
                   </div>
